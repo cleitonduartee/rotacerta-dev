@@ -105,7 +105,26 @@ export default function LoginPage() {
       const { data, error } = await supabase.functions.invoke('complete-signup', {
         body: { nome: nome.trim(), cpf: onlyDigits(cpf), email: email.trim() || null },
       });
-      if (error) throw error;
+      // Tenta extrair mensagem do corpo da resposta, mesmo em erro 4xx/5xx
+      const serverError = (data as any)?.error;
+      if (serverError) {
+        toast.error(String(serverError));
+        return;
+      }
+      if (error) {
+        // Fallback: tenta ler o context.body do FunctionsHttpError
+        let msg = error.message;
+        try {
+          const ctx: any = (error as any).context;
+          if (ctx?.body) {
+            const txt = typeof ctx.body === 'string' ? ctx.body : await new Response(ctx.body).text();
+            const parsed = JSON.parse(txt);
+            if (parsed?.error) msg = parsed.error;
+          }
+        } catch {}
+        toast.error(msg ?? 'Falha no cadastro');
+        return;
+      }
       setRecoveryCode(data.recovery_code);
       await refreshProfile();
     } catch (e: any) { toast.error(e.message ?? 'Falha no cadastro'); }
