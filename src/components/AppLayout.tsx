@@ -17,7 +17,7 @@ export function AppLayout() {
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur">
         <div>
-          <p className="font-display text-2xl leading-none text-primary">TRUCKTRIP</p>
+          <p className="font-display text-2xl leading-none text-primary">ROTACERTA</p>
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Estrada na palma da mão</p>
         </div>
         <SyncIndicator />

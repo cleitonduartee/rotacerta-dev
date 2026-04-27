@@ -23,7 +23,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.text('TRUCKTRIP — Fechamento de Safra', 40, 35);
+  doc.text('ROTACERTA — Fechamento de Safra', 40, 35);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text(`${input.harvest.nome} • ${input.harvest.tipo} • ${input.harvest.ano}`, 40, 55);
@@ -112,7 +112,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   }
 
   doc.setFontSize(8); doc.setTextColor(140, 140, 140);
-  doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')} • TruckTrip`, 40, 820);
+  doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')} • RotaCerta`, 40, 820);
 
   return doc.output('blob');
 }

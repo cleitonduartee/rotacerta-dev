@@ -65,12 +65,6 @@ export default function TripForm() {
     if (editingId) return;
     if (truckId === '' && trucks[0]) setTruckId(trucks[0].id!);
     if (kind === 'safra') {
-      // safra atual = ano corrente, aberta
-      if (harvestId === '') {
-        const year = new Date(data).getFullYear();
-        const h = harvests.find(h => h.ano === year && !h.fechada) ?? harvests.find(h => !h.fechada);
-        if (h) setHarvestId(h.id!);
-      }
       // último produtor: ler do localStorage
       if (producerId === '') {
         const last = localStorage.getItem('lastProducerId');
@@ -78,6 +72,22 @@ export default function TripForm() {
       }
     }
   }, [trucks, harvests, producers, kind, data]);
+
+  // Quando o produtor mudar, auto-selecionar a safra do contrato vigente (não fechado)
+  useEffect(() => {
+    if (editingId || kind !== 'safra' || producerId === '') return;
+    const abertos = contracts.filter(c => c.producerId === producerId && !c.fechado);
+    // Se a safra atual não tem contrato com este produtor, escolher um contrato aberto
+    const jaTemContratoNaSafraAtual = harvestId !== '' &&
+      contracts.some(c => c.producerId === producerId && c.harvestId === harvestId);
+    if (jaTemContratoNaSafraAtual) return;
+    if (abertos.length >= 1) {
+      // Preferir safra do ano da viagem
+      const year = new Date(data).getFullYear();
+      const h = abertos.find(c => harvests.find(h => h.id === c.harvestId)?.ano === year) ?? abertos[0];
+      setHarvestId(h.harvestId);
+    }
+  }, [producerId, contracts, harvests, kind, data, editingId]);
 
   // Contrato vigente (produtor + safra)
   const contract = useMemo(() => {
@@ -100,12 +110,14 @@ export default function TripForm() {
   }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada]);
 
   const harvestFechada = harvestId !== '' && harvests.find(h => h.id === harvestId)?.fechada;
+  const contratoFechado = contract?.fechado;
 
   async function save() {
     if (!truckId) return toast.error('Selecione um caminhão');
     if (!origem || !destino) return toast.error('Informe origem e destino');
     if (kind === 'safra') {
       if (!contract) return toast.error('Cadastre um contrato para este produtor + safra');
+      if (contratoFechado) return toast.error('Contrato fechado — não é possível cadastrar viagens');
       if (harvestFechada) return toast.error('Safra fechada — não é possível cadastrar viagens');
       if (pesoKgNum <= 0) return toast.error('Informe o peso');
     } else {
@@ -197,9 +209,33 @@ export default function TripForm() {
               </select>
             </Field>
 
-            {kind === 'safra' && producerId !== '' && harvestId !== '' && !contract && (
+            {producerId !== '' && harvestId !== '' && !contract && (
               <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
-                Sem contrato cadastrado para este produtor + safra. Vá em <strong>Safras → Contratos</strong>.
+                Sem contrato para este produtor nesta safra.
+                {(() => {
+                  const outros = contracts.filter(c => c.producerId === producerId && !c.fechado);
+                  if (outros.length === 0) return <> Cadastre em <strong>Safras → Contratos</strong>.</>;
+                  return (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs">Contratos disponíveis para este produtor:</p>
+                      {outros.map(c => {
+                        const h = harvests.find(h => h.id === c.harvestId);
+                        return (
+                          <button key={c.id} type="button" onClick={() => setHarvestId(c.harvestId)}
+                            className="block w-full rounded-lg border border-warning/40 bg-card px-3 py-2 text-left text-sm text-foreground">
+                            Usar safra <strong>{h?.nome ?? '?'}</strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {contratoFechado && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                Contrato fechado — não é possível cadastrar viagens.
               </div>
             )}
 

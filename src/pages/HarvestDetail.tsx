@@ -1,9 +1,9 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Lock, FileDown, Share2 } from 'lucide-react';
+import { Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 
@@ -36,11 +36,7 @@ export default function HarvestDetail() {
     return { truck: tr, viagens: ts.length, sacos: ts.reduce((s, t) => s + (t.sacos || 0), 0), valor: ts.reduce((s, t) => s + t.valorTotal, 0) };
   }).filter(r => r.viagens > 0);
 
-  async function fechar() {
-    if (!confirm('Fechar a safra bloqueia novas edições. Confirma?')) return;
-    await db.harvests.update(harvestId, { fechada: true, fechadaEm: Date.now(), syncStatus: 'pending', updatedAt: Date.now() });
-    toast.success('Safra fechada');
-  }
+  // Fechamento agora é por contrato — veja seção "Contratos" abaixo.
 
   async function pdf() {
     const blob = await generateHarvestReport({
@@ -70,12 +66,6 @@ export default function HarvestDetail() {
     <div className="animate-fade-in">
       <PageHeader title={harvest.nome} subtitle={`${harvest.tipo} • ${harvest.ano}`} />
       <div className="space-y-4 px-4 pb-6">
-        {harvest.fechada && (
-          <div className="flex items-center gap-2 rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-warning">
-            <Lock className="h-4 w-4" /> Safra fechada — não é possível editar viagens.
-          </div>
-        )}
-
         <div className="rounded-2xl gradient-primary p-5 shadow-elevated">
           <p className="text-xs uppercase tracking-widest text-primary-foreground/80">Sacos totais (60kg)</p>
           <p className="font-display text-5xl text-primary-foreground">{fmtNum(totalSacos, 2)}</p>
@@ -88,6 +78,47 @@ export default function HarvestDetail() {
           <Box label="Viagens" v={harvestTrips.length} />
           <Box label="Líquido" v={fmtBRL(liquido)} highlight />
         </div>
+
+        <section>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="font-display text-xl">Contratos</h3>
+            <Link to="/safras/contratos" className="text-xs font-semibold uppercase tracking-wider text-primary">Gerenciar</Link>
+          </div>
+          {contracts.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-border bg-card/50 p-4 text-center text-sm text-muted-foreground">
+              Nenhum contrato nesta safra. <Link to="/safras/contratos" className="text-primary underline">Cadastrar</Link>
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {contracts.map(c => {
+                const p = producers.find(p => p.id === c.producerId);
+                const ts = harvestTrips.filter(t => t.contractId === c.id);
+                const sc = ts.reduce((s, t) => s + (t.sacos || 0), 0);
+                const vt = ts.reduce((s, t) => s + t.valorTotal, 0);
+                return (
+                  <li key={c.id} className="rounded-xl border border-border bg-card p-3">
+                    <div className="flex items-center justify-between">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate">{p?.nome ?? '?'}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {ts.length} viagens • {fmtNum(sc, 1)} sacos • {fmtBRL(c.valorPorSaco)}/saco
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-display text-lg text-primary">{fmtBRL(vt)}</span>
+                        <span className={'flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase ' +
+                          (c.fechado ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
+                          {c.fechado ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                          {c.fechado ? 'Fechado' : 'Aberto'}
+                        </span>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
 
         <section>
           <h3 className="mb-2 font-display text-xl">Por caminhão</h3>
@@ -110,22 +141,21 @@ export default function HarvestDetail() {
 
         <div className="grid grid-cols-2 gap-3">
           <button onClick={pdf} className="flex items-center justify-center gap-2 rounded-xl border border-border bg-card py-3 font-semibold">
-            <FileDown className="h-4 w-4" /> Gerar PDF
+            <FileDown className="h-4 w-4" /> PDF da safra
           </button>
           <button onClick={whatsapp} className="flex items-center justify-center gap-2 rounded-xl bg-success py-3 font-bold text-success-foreground">
             <Share2 className="h-4 w-4" /> WhatsApp
           </button>
         </div>
 
-        {!harvest.fechada && (
-          <button onClick={fechar} className="flex w-full items-center justify-center gap-2 rounded-xl border border-warning/40 bg-warning/10 py-4 font-bold text-warning">
-            <Lock className="h-5 w-5" /> Fechar safra
-          </button>
-        )}
+        <p className="text-center text-xs text-muted-foreground">
+          O fechamento agora é feito por contrato. Acesse <Link to="/safras/contratos" className="text-primary underline">Contratos</Link> para fechar.
+        </p>
       </div>
     </div>
   );
 }
+
 
 function Box({ label, v, highlight }: { label: string; v: any; highlight?: boolean }) {
   return (

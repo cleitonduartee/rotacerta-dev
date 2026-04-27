@@ -40,6 +40,8 @@ export interface HarvestContract {
   producerId: number;
   harvestId: number;
   valorPorSaco: number;  // R$ por saco de 60kg
+  fechado?: boolean;
+  fechadoEm?: number;
   syncStatus: SyncStatus;
   updatedAt: number;
 }
