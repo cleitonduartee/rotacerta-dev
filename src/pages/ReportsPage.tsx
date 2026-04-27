@@ -155,6 +155,7 @@ export default function ReportsPage() {
                   <th className="pr-2">Tipo</th>
                   <th className="pr-2">Caminhão</th>
                   <th className="pr-2">Origem → Destino</th>
+                  <th className="pr-2">Nota</th>
                   <th className="pr-2 text-right">Sacos</th>
                   <th className="pr-2 text-right">Valor</th>
                 </tr>
@@ -166,6 +167,7 @@ export default function ReportsPage() {
                     <td className="pr-2">{t.kind === 'safra' ? 'Safra' : 'Frete'}</td>
                     <td className="pr-2">{placa(t.truckId)}</td>
                     <td className="pr-2">{t.origem} → {t.destino}</td>
+                    <td className="pr-2">{t.notaProdutor || '—'}</td>
                     <td className="pr-2 text-right">{t.sacos ? fmtNum(t.sacos, 1) : '—'}</td>
                     <td className="pr-2 text-right font-semibold">{fmtBRL(t.valorTotal)}</td>
                   </tr>
@@ -173,7 +175,7 @@ export default function ReportsPage() {
               </tbody>
               <tfoot>
                 <tr className="font-bold">
-                  <td colSpan={5} className="pt-2 text-right pr-2">Total receita</td>
+                  <td colSpan={6} className="pt-2 text-right pr-2">Total receita</td>
                   <td className="pt-2 text-right pr-2 text-primary">{fmtBRL(receita)}</td>
                 </tr>
               </tfoot>
