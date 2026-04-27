@@ -135,7 +135,7 @@ export default function TripForm() {
     if (!truckId) return toast.error('Selecione um caminhão');
     if (!origem || !destino) return toast.error('Informe origem e destino');
     if (kind === 'safra') {
-      if (!contract) return toast.error('Cadastre um contrato para este produtor + safra');
+      if (!contract) return toast.error('Cadastre um contrato para este produtor + lavoura');
       if (contratoFechado) return toast.error('Contrato fechado — não é possível cadastrar viagens');
       if (harvestFechada) return toast.error('Safra fechada — não é possível cadastrar viagens');
       if (pesoKgNum <= 0) return toast.error('Informe o peso');
@@ -192,7 +192,7 @@ export default function TripForm() {
               className={'rounded-lg py-3 text-sm font-bold uppercase tracking-wide transition ' +
                 (kind === k ? 'gradient-primary text-primary-foreground shadow-elevated' : 'text-muted-foreground')}
             >
-              {k === 'safra' ? 'Safra' : 'Frete avulso'}
+              {k === 'safra' ? 'Lavoura' : 'Frete avulso'}
             </button>
           ))}
         </div>

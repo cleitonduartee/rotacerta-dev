@@ -34,7 +34,7 @@ export default function TripsList() {
                 <div className="flex items-center gap-2">
                   <span className={'inline-block rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ' +
                     (t.kind === 'safra' ? 'bg-primary/20 text-primary' : 'bg-accent/20 text-accent')}>
-                    {t.kind}
+                    {t.kind === 'safra' ? 'lavoura' : t.kind}
                   </span>
                   <span className="text-xs text-muted-foreground">{fmtDate(t.data)}</span>
                   {t.syncStatus === 'pending' && (
