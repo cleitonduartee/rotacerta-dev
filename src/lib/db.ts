@@ -5,7 +5,8 @@ export type SyncStatus = 'pending' | 'synced';
 export interface Driver {
   id?: number;
   nome: string;
-  cpf?: string;
+  docType?: 'cpf' | 'cnpj';
+  cpf?: string;       // mantido para compat — armazena CPF ou CNPJ formatado
   telefone?: string;
 }
 

@@ -6,6 +6,7 @@ import { fmtBRL, fmtNum } from '@/lib/format';
 import { Plus, Trash2, Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
+import { maskMoneyInput, parseMoney } from '@/lib/masks';
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
@@ -22,7 +23,7 @@ export default function ContractsPage() {
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
-    const v = parseFloat(valor.replace(',', '.'));
+    const v = parseMoney(valor);
     if (!v) return toast.error('Valor inválido');
     const exists = contracts.find(c => c.producerId === Number(producerId) && c.harvestId === Number(harvestId));
     if (exists) return toast.error('Já existe contrato para este produtor + safra');
