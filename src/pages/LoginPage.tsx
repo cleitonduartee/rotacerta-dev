@@ -31,14 +31,16 @@ export default function LoginPage() {
   // Se já há sessão ativa ao chegar em /login:
   // - Profile completo → vai pro app
   // - Profile incompleto (cadastro travou) → pula direto para a tela de cadastro
+  // IMPORTANTE: não mexer em step se já mostramos o recoveryCode (tela "Guarde seu código")
   useEffect(() => {
     if (!session || !profileLoaded) return;
+    if (recoveryCode) return;
     if (profile?.cpf && profile?.nome) {
       nav('/', { replace: true });
-    } else if (step === 'phone' || step === 'code') {
+    } else if (step === 'phone') {
       setStep('signup');
     }
-  }, [session, profile, profileLoaded, step, nav]);
+  }, [session, profile, profileLoaded, step, nav, recoveryCode]);
 
   async function sendCode(targetTel?: string) {
     const t = onlyDigits(targetTel ?? tel);
