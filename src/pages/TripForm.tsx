@@ -60,6 +60,7 @@ export default function TripForm() {
         setValorPorTonelada(t.valorPorTonelada?.toString() ?? '');
       }
       setObservacao(t.observacao ?? '');
+      setNotaProdutor(t.notaProdutor ?? '');
       setLoaded(true);
     });
   }, [editingId, contracts]);
