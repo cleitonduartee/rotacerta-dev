@@ -101,7 +101,7 @@ class TruckTripDB extends Dexie {
   settings!: Table<Setting, string>;
 
   constructor() {
-    super('rotacerta');
+    super('trucktrip');
     this.version(1).stores({
       drivers: '++id, nome',
       trucks: '++id, placa, syncStatus',
