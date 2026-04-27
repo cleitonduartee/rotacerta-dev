@@ -43,11 +43,8 @@ export function AppLayout() {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto pb-36">
+      <main className="flex-1 overflow-y-auto pb-32">
         <Outlet />
-        <p className="mt-8 px-4 text-center text-[10px] uppercase tracking-widest text-muted-foreground/70">
-          Desenvolvido por CLEITON DUARTE © {new Date().getFullYear()}
-        </p>
       </main>
 
       {/* FAB nova viagem */}
@@ -79,6 +76,9 @@ export function AppLayout() {
             </li>
           ))}
         </ul>
+        <p className="pb-1 pt-0.5 text-center text-[9px] font-medium uppercase tracking-widest text-muted-foreground/70">
+          Desenvolvido por CLEITON DUARTE © {new Date().getFullYear()}
+        </p>
       </nav>
     </div>
   );
