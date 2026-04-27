@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/lib/auth';
@@ -9,6 +9,7 @@ import { Phone, KeyRound, ArrowLeft, User, IdCard, Mail, ShieldCheck, Copy, Chec
 type Step = 'phone' | 'code' | 'signup' | 'recovery';
 
 export default function LoginPage() {
+  const { session, profile, profileLoaded, refreshProfile } = useAuth();
   const [step, setStep] = useState<Step>('phone');
   const [tel, setTel] = useState('');
   const [code, setCode] = useState('');
@@ -26,7 +27,18 @@ export default function LoginPage() {
   const [confirmedSaved, setConfirmedSaved] = useState(false);
 
   const nav = useNavigate();
-  const { refreshProfile } = useAuth();
+
+  // Se já há sessão ativa ao chegar em /login:
+  // - Profile completo → vai pro app
+  // - Profile incompleto (cadastro travou) → pula direto para a tela de cadastro
+  useEffect(() => {
+    if (!session || !profileLoaded) return;
+    if (profile?.cpf && profile?.nome) {
+      nav('/', { replace: true });
+    } else if (step === 'phone' || step === 'code') {
+      setStep('signup');
+    }
+  }, [session, profile, profileLoaded, step, nav]);
 
   async function sendCode(targetTel?: string) {
     const t = onlyDigits(targetTel ?? tel);
