@@ -56,11 +56,13 @@ export default function LoginPage() {
       const { error: sErr } = await supabase.auth.signInWithPassword({ email, password });
       if (sErr) throw sErr;
       if (needs_signup) {
+        // Não navega — fica em /login para concluir cadastro (Nome, CPF, Email)
         setStep('signup');
         toast.success('Telefone confirmado. Complete seu cadastro.');
       } else {
-        await refreshProfile();
         toast.success('Bem-vindo de volta!');
+        // Atualiza profile em background; navega imediatamente
+        refreshProfile();
         nav('/', { replace: true });
       }
     } catch (e: any) { toast.error(e.message ?? 'Falha ao validar'); }
