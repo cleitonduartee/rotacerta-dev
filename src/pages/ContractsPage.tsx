@@ -65,7 +65,12 @@ export default function ContractsPage() {
     const harvest = harvests.find(h => h.id === c.harvestId);
     if (!harvest) return;
     const r = calcContrato(c.id);
-    const exps = expenses.filter(e => e.harvestId === c.harvestId);
+    const tripIds = new Set(r.trips.map(t => t.id));
+    const exps = expenses.filter(e =>
+      e.contractId === c.id ||
+      (e.tripId && tripIds.has(e.tripId)) ||
+      e.harvestId === c.harvestId
+    );
     const totalToneladas = (r.sacos * 60) / 1000;
     const despesas = exps.reduce((s, e) => s + e.valor, 0);
     const blob = await generateHarvestReport({
@@ -97,14 +102,42 @@ export default function ContractsPage() {
     const harvest = harvests.find(h => h.id === c.harvestId);
     const p = producers.find(p => p.id === c.producerId);
     const r = calcContrato(c.id);
+    const tripIds = new Set(r.trips.map(t => t.id));
+    const exps = expenses.filter(e =>
+      e.contractId === c.id ||
+      (e.tripId && tripIds.has(e.tripId)) ||
+      e.harvestId === c.harvestId
+    );
+    const despesas = exps.reduce((s, e) => s + e.valor, 0);
+    const liquido = r.receita - despesas;
+
+    const tripsOrd = [...r.trips].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    const linhasViagens = tripsOrd.map((t, i) => {
+      const sacos = t.sacos ?? 0;
+      const nota = t.notaProdutor ? ` • Nota ${t.notaProdutor}` : '';
+      const peso = t.pesoKg ? ` • ${fmtNum(t.pesoKg / 1000, 2)}t` : '';
+      return `${i + 1}. ${fmtDate(t.data)}${peso} • ${fmtNum(sacos, 2)} sc • ${fmtBRL(t.valorTotal)}${nota}`;
+    }).join('\n');
+
+    const porTipo = new Map<string, number>();
+    for (const e of exps) porTipo.set(e.tipo || 'Outros', (porTipo.get(e.tipo || 'Outros') ?? 0) + (e.valor || 0));
+    const linhasDesp = [...porTipo.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([tipo, v]) => `  - ${tipo}: ${fmtBRL(v)}`)
+      .join('\n');
+
     const msg =
       `*Fechamento de contrato*\n` +
       `Produtor: ${p?.nome}\n` +
       `Safra: ${harvest?.nome} (${harvest?.tipo})\n` +
-      `Viagens: ${r.viagens}\n` +
-      `Sacos (60kg): ${fmtNum(r.sacos, 2)}\n` +
       `Valor / saco: ${fmtBRL(c.valorPorSaco)}\n` +
-      `*Total: ${fmtBRL(r.receita)}*`;
+      `\n*Viagens (${r.viagens})*\n${linhasViagens || '—'}\n` +
+      `\nTotal sacos (60kg): ${fmtNum(r.sacos, 2)}\n` +
+      `*Receita: ${fmtBRL(r.receita)}*\n` +
+      (exps.length > 0
+        ? `\n*Despesas: ${fmtBRL(despesas)}*\n${linhasDesp}\n`
+        : '') +
+      `\n*LÍQUIDO: ${fmtBRL(liquido)}*`;
     shareWhatsApp(msg);
   }
 
