@@ -43,11 +43,8 @@ export function AppLayout() {
         </div>
       )}
 
-      <main className="flex-1 overflow-y-auto pb-36">
+      <main className="flex-1 overflow-y-auto pb-32">
         <Outlet />
-        <p className="mt-8 px-4 text-center text-[10px] uppercase tracking-widest text-muted-foreground/70">
-          Desenvolvido por CLEITON DUARTE © {new Date().getFullYear()}
-        </p>
       </main>
 
       {/* FAB nova viagem */}
