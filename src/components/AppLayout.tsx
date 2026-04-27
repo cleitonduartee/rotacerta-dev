@@ -76,8 +76,8 @@ export function AppLayout() {
             </li>
           ))}
         </ul>
-        <p className="pb-1 pt-0.5 text-center text-[9px] font-medium uppercase tracking-widest text-muted-foreground/70">
-          Desenvolvido por CLEITON DUARTE © {new Date().getFullYear()}
+        <p className="pb-0.5 text-center text-[7px] font-normal tracking-normal text-muted-foreground/60">
+          Desenvolvido por Cleiton Duarte © {new Date().getFullYear()}
         </p>
       </nav>
     </div>
