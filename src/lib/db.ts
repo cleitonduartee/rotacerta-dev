@@ -77,11 +77,12 @@ export interface Trip {
 export interface Expense {
   id?: number;
   data: string;
-  tipo: string;
+  tipo: string;            // categoria (Combustível, Pedágio, ... ou texto livre se "Outros")
   valor: number;
   descricao?: string;
-  harvestId?: number;
-  tripId?: number;
+  contractId?: number;     // vínculo opcional ao contrato (safra)
+  harvestId?: number;      // mantido para compat
+  tripId?: number;         // vínculo opcional à viagem (frete avulso)
   syncStatus: SyncStatus;
   updatedAt: number;
 }
