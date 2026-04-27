@@ -233,7 +233,7 @@ export default function Dashboard() {
 
       {/* Gráfico — Receita por Safra */}
       {pizzaSafra.length > 0 && (
-      <ChartCard title="Receita por Safra" subtitle={periodoLabel}>
+      <ChartCard title="Receita por Tipo de Frete" subtitle={periodoLabel}>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
