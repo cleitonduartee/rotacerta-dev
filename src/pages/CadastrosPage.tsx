@@ -2,9 +2,11 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock, Pencil } from 'lucide-react';
+import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock, Pencil, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 import {
   maskCpfCnpj,
   maskCPF,
@@ -82,11 +84,31 @@ export default function CadastrosPage() {
 }
 
 function DriverSection({ driver }: { driver?: any }) {
+  const { profile, user } = useAuth();
   const [nome, setNome] = useState('');
   const [docType, setDocType] = useState<'cpf' | 'cnpj'>('cpf');
   const [doc, setDoc] = useState('');
   const [tel, setTel] = useState('');
+  const [email, setEmail] = useState('');
   const [editing, setEditing] = useState(false);
+  const [seeded, setSeeded] = useState(false);
+
+  // Seed automático do registro local com dados do profile (Cloud) na primeira vez
+  useEffect(() => {
+    if (seeded) return;
+    if (driver) { setSeeded(true); return; }
+    if (!profile) return;
+    setSeeded(true);
+    const cpfDigits = onlyDigits(profile.cpf ?? '');
+    if (!profile.nome && !cpfDigits && !profile.telefone && !profile.email) return;
+    db.drivers.add({
+      nome: profile.nome ?? '',
+      docType: 'cpf',
+      cpf: cpfDigits ? maskCPF(cpfDigits) : '',
+      telefone: profile.telefone ? maskPhone(profile.telefone) : '',
+      email: profile.email ?? '',
+    });
+  }, [profile, driver, seeded]);
 
   useEffect(() => {
     if (driver) {
@@ -95,32 +117,55 @@ function DriverSection({ driver }: { driver?: any }) {
       setDocType(dt);
       setDoc(dt === 'cpf' ? maskCPF(driver.cpf ?? '') : maskCNPJ(driver.cpf ?? ''));
       setTel(maskPhone(driver.telefone ?? ''));
+      setEmail(driver.email ?? '');
       setEditing(false);
     } else {
+      // pré-preenche a partir do profile (Cloud) quando ainda não há driver local
+      if (profile) {
+        const cpfDigits = onlyDigits(profile.cpf ?? '');
+        setNome(profile.nome ?? '');
+        setDocType('cpf');
+        setDoc(cpfDigits ? maskCPF(cpfDigits) : '');
+        setTel(profile.telefone ? maskPhone(profile.telefone) : '');
+        setEmail(profile.email ?? '');
+      }
       setEditing(true);
     }
-  }, [driver]);
+  }, [driver, profile]);
 
   const dirty = !driver
-    ? Boolean(nome || doc || tel)
+    ? Boolean(nome || doc || tel || email)
     : (
         nome !== (driver.nome ?? '') ||
         doc !== (driver.docType === 'cnpj' ? maskCNPJ(driver.cpf ?? '') : maskCPF(driver.cpf ?? '')) ||
         tel !== maskPhone(driver.telefone ?? '') ||
+        email !== (driver.email ?? '') ||
         docType !== (driver.docType ?? (onlyDigits(driver.cpf ?? '').length > 11 ? 'cnpj' : 'cpf'))
       );
 
   const docValid = !doc || isValidCpfCnpj(doc);
-  const canSave = editing && Boolean(nome) && docValid && dirty;
+  const emailValid = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const canSave = editing && Boolean(nome) && docValid && emailValid && dirty;
 
   async function save() {
     if (!nome) return toast.error('Informe seu nome');
     if (doc && !isValidCpfCnpj(doc)) {
       return toast.error(docType === 'cpf' ? 'CPF inválido' : 'CNPJ inválido');
     }
-    const payload = { nome, docType, cpf: doc, telefone: tel };
+    if (email && !emailValid) return toast.error('Email inválido');
+    const payload = { nome, docType, cpf: doc, telefone: tel, email: email.trim() };
     if (driver) await db.drivers.update(driver.id, payload);
     else await db.drivers.add(payload);
+
+    // Sincroniza email com o profile (Cloud) — útil para recuperação se trocar de número
+    if (user && email.trim() && email.trim() !== (profile?.email ?? '')) {
+      try {
+        await supabase.from('profiles')
+          .update({ email: email.trim().toLowerCase() })
+          .eq('user_id', user.id);
+      } catch (e) { /* offline → tudo bem, fica só no local */ }
+    }
+
     setEditing(false);
     toast.success('Dados salvos');
   }
@@ -140,6 +185,7 @@ function DriverSection({ driver }: { driver?: any }) {
       setDocType(dt);
       setDoc(dt === 'cpf' ? maskCPF(driver.cpf ?? '') : maskCNPJ(driver.cpf ?? ''));
       setTel(maskPhone(driver.telefone ?? ''));
+      setEmail(driver.email ?? '');
       setEditing(false);
     }
   }
@@ -152,6 +198,7 @@ function DriverSection({ driver }: { driver?: any }) {
           <InfoRow label="Nome" value={driver.nome} />
           <InfoRow label={(driver.docType ?? 'cpf').toUpperCase()} value={driver.cpf || '—'} />
           <InfoRow label="Telefone" value={driver.telefone || '—'} />
+          <InfoRow label="Email" value={driver.email || '—'} />
         </div>
         <button
           onClick={() => setEditing(true)}
@@ -202,7 +249,26 @@ function DriverSection({ driver }: { driver?: any }) {
           disabled={!editing}
         />
 
-        <div className="flex gap-2">
+        <div className="space-y-1">
+          <input
+            className={fieldCls}
+            type="email"
+            inputMode="email"
+            placeholder="email@exemplo.com (opcional)"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            disabled={!editing}
+          />
+          <p className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+            <Info className="mt-0.5 h-3 w-3 flex-shrink-0 text-primary" />
+            <span>O email é <strong>opcional</strong>, mas será <strong>essencial</strong> para recuperar sua conta caso você troque de número no futuro.</span>
+          </p>
+          {email && !emailValid && (
+            <p className="text-xs text-destructive">Email inválido</p>
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-1">
           {driver && (
             <button onClick={cancel} className="flex-1 rounded-lg border border-border bg-secondary py-2.5 font-bold text-foreground">
               Cancelar

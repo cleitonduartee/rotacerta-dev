@@ -31,14 +31,16 @@ export default function LoginPage() {
   // Se já há sessão ativa ao chegar em /login:
   // - Profile completo → vai pro app
   // - Profile incompleto (cadastro travou) → pula direto para a tela de cadastro
+  // IMPORTANTE: não mexer em step se já mostramos o recoveryCode (tela "Guarde seu código")
   useEffect(() => {
     if (!session || !profileLoaded) return;
+    if (recoveryCode) return;
     if (profile?.cpf && profile?.nome) {
       nav('/', { replace: true });
-    } else if (step === 'phone' || step === 'code') {
+    } else if (step === 'phone') {
       setStep('signup');
     }
-  }, [session, profile, profileLoaded, step, nav]);
+  }, [session, profile, profileLoaded, step, nav, recoveryCode]);
 
   async function sendCode(targetTel?: string) {
     const t = onlyDigits(targetTel ?? tel);
@@ -65,17 +67,30 @@ export default function LoginPage() {
       });
       if (error) throw error;
       const { email, password, needs_signup } = data;
-      const { error: sErr } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signRes, error: sErr } = await supabase.auth.signInWithPassword({ email, password });
       if (sErr) throw sErr;
       if (needs_signup) {
-        // Não navega — fica em /login para concluir cadastro (Nome, CPF, Email)
         setStep('signup');
         toast.success('Telefone confirmado. Complete seu cadastro.');
       } else {
-        toast.success('Bem-vindo de volta!');
-        // Atualiza profile em background; navega imediatamente
-        refreshProfile();
-        nav('/', { replace: true });
+        // Busca profile DIRETO antes de navegar para decidir se cadastro está completo
+        const uid = signRes.user?.id;
+        let complete = false;
+        if (uid) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('nome, cpf')
+            .eq('user_id', uid).maybeSingle();
+          complete = Boolean(prof?.nome && prof?.cpf);
+        }
+        if (complete) {
+          toast.success('Bem-vindo de volta!');
+          refreshProfile();
+          nav('/', { replace: true });
+        } else {
+          setStep('signup');
+          toast.success('Complete seu cadastro para continuar.');
+        }
       }
     } catch (e: any) { toast.error(e.message ?? 'Falha ao validar'); }
     finally { setLoading(false); }
