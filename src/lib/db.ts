@@ -111,8 +111,11 @@ class TruckTripDB extends Dexie {
       harvests: '++id, ano, fechada, syncStatus',
       contracts: '++id, producerId, harvestId, syncStatus',
       trips: '++id, data, kind, truckId, contractId, syncStatus',
-      expenses: '++id, data, harvestId, tripId, contractId, syncStatus',
+      expenses: '++id, data, harvestId, tripId, syncStatus',
       settings: 'key',
+    });
+    this.version(2).stores({
+      expenses: '++id, data, harvestId, tripId, contractId, syncStatus',
     });
   }
 }
