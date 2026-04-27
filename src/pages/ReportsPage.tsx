@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
@@ -12,6 +12,7 @@ export default function ReportsPage() {
   const hoje = new Date();
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
   const [harvestId, setHarvestId] = useState<number | ''>('');
+  const [harvestTouched, setHarvestTouched] = useState(false);
 
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
