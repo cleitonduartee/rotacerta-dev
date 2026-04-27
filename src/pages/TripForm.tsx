@@ -214,7 +214,7 @@ export default function TripForm() {
                 Sem contrato para este produtor nesta safra.
                 {(() => {
                   const outros = contracts.filter(c => c.producerId === producerId && !c.fechado);
-                  if (outros.length === 0) return <> Cadastre em <strong>Safras → Contratos</strong>.</>;
+                  if (outros.length === 0) return <> Cadastre em <strong>Contratos</strong>.</>;
                   return (
                     <div className="mt-2 space-y-1">
                       <p className="text-xs">Contratos disponíveis para este produtor:</p>

@@ -121,7 +121,13 @@ export default function ContractsPage() {
             <option value="">Safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome}</option>)}
           </select>
-          <input className={inputCls} inputMode="decimal" placeholder="R$ por saco (60kg)" value={valor} onChange={e => setValor(e.target.value)} />
+          <input
+            className={inputCls}
+            inputMode="decimal"
+            placeholder="R$ por saco (60kg) — ex: 1.234,56"
+            value={valor}
+            onChange={e => setValor(maskMoneyInput(e.target.value))}
+          />
           <button onClick={add} className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">
             <Plus className="h-4 w-4" /> Adicionar contrato
           </button>
