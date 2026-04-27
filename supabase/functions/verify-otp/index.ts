@@ -77,11 +77,48 @@ Deno.serve(async (req) => {
     let user_id: string | null = null;
 
     if (existingProfile?.user_id) {
+      // Profile existente: garante que email/senha do auth estão alinhados com o telefone.
       user_id = existingProfile.user_id;
-      // garante senha
-      await admin.auth.admin.updateUserById(user_id, { password });
+
+      // Antes de atualizar, limpa qualquer auth.user órfão (sem profile) que já tenha esse email,
+      // para evitar conflito do unique key users_email_partial_key.
+      try {
+        const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const orphans = (list?.users ?? []).filter(
+          (u) => u.email === email && u.id !== user_id,
+        );
+        for (const u of orphans) {
+          // só remove se realmente não tem profile vinculado
+          const { data: p } = await admin.from("profiles")
+            .select("user_id").eq("user_id", u.id).maybeSingle();
+          if (!p) await admin.auth.admin.deleteUser(u.id);
+        }
+      } catch (e) {
+        console.warn("cleanup orphan auth users falhou", e);
+      }
+
+      const { error: uErr } = await admin.auth.admin.updateUserById(user_id, {
+        email, password, email_confirm: true, user_metadata: { telefone: tel },
+      });
+      if (uErr) return json({ error: uErr.message }, 500);
     } else {
-      // cria usuário Supabase mas SEM perfil ainda — UI fará cadastro
+      // Não há profile para esse telefone → é cadastro novo.
+      // Antes, limpa qualquer auth.user órfão (sem profile) com o mesmo email-alvo,
+      // resíduo de tentativas anteriores que falharam no meio.
+      try {
+        const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const sameEmail = (list?.users ?? []).filter((u) => u.email === email);
+        for (const u of sameEmail) {
+          const { data: p } = await admin.from("profiles")
+            .select("user_id").eq("user_id", u.id).maybeSingle();
+          if (!p) await admin.auth.admin.deleteUser(u.id);
+        }
+      } catch (e) {
+        console.warn("cleanup orphan auth users (signup) falhou", e);
+      }
+
+      // Tenta criar; se ainda assim houver conflito (ex: usuário com profile real),
+      // significa que esse email está realmente em uso → erro claro.
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email, password, email_confirm: true, user_metadata: { telefone: tel },
       });
