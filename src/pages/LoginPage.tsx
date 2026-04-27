@@ -182,6 +182,18 @@ export default function LoginPage() {
 
         {step === 'signup' && !recoveryCode && (
           <>
+            <button
+              onClick={async () => {
+                if (!confirm('Voltar irá encerrar esta sessão. Você precisará receber um novo código. Continuar?')) return;
+                await supabase.auth.signOut();
+                setStep('phone');
+                setCode(''); setDevCode(null);
+                setNome(''); setCpf(''); setEmail('');
+              }}
+              className="mb-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" /> Voltar
+            </button>
             <h1 className="mb-2 font-display text-2xl">Complete seu cadastro</h1>
             <p className="mb-4 text-sm text-muted-foreground">Precisamos desses dados para criar sua conta com segurança.</p>
             <Field icon={<User className="h-4 w-4" />} label="Nome completo">
