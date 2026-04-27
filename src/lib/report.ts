@@ -92,7 +92,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   const linhas: [string, string][] = [
     ['Total de sacos (60kg)', fmtNum(input.totals.totalSacos, 2)],
     ['Receita bruta', fmtBRL(input.totals.receita)],
-    ['Despesas', `− ${fmtBRL(input.totals.despesas)}`],
+    ['Despesas', `- ${fmtBRL(input.totals.despesas)}`],
   ];
   let ly = y + 52;
   linhas.forEach(([k, v]) => {
@@ -141,7 +141,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
   doc.text('Data', 40, y);
   doc.text('Caminhão', 95, y);
-  doc.text('Origem → Destino', 165, y);
+  doc.text('Origem -> Destino', 165, y);
   doc.text('Nota', 340, y);
   doc.text('Sacos', 410, y, { align: 'right' });
   doc.text('Valor', W - 50, y, { align: 'right' });
@@ -152,8 +152,8 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     const tr = input.trucks.find(x => x.id === t.truckId);
     doc.text(fmtDate(t.data), 40, y);
     doc.text((tr?.placa ?? '—').slice(0, 12), 95, y);
-    const od = `${t.origem} → ${t.destino}`;
-    doc.text(od.length > 32 ? od.slice(0, 30) + '…' : od, 165, y);
+    const od = `${t.origem} -> ${t.destino}`;
+    doc.text(od.length > 32 ? od.slice(0, 30) + '...' : od, 165, y);
     doc.text((t.notaProdutor ?? '—').toString().slice(0, 12), 340, y);
     doc.text(fmtNum(t.sacos ?? 0, 1), 410, y, { align: 'right' });
     doc.text(fmtBRL(t.valorTotal), W - 50, y, { align: 'right' });
