@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Truck, Wheat, Package, Receipt } from 'lucide-react';
+import { Truck, Wheat, Package, Receipt, FileBarChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
@@ -47,6 +47,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3">
         <QuickLink to="/viagens/nova" label="Nova viagem" icon={Truck} primary />
         <QuickLink to="/despesas/nova" label="Nova despesa" icon={Receipt} />
+        <QuickLink to="/relatorios" label="Relatórios" icon={FileBarChart} />
+        <QuickLink to="/contratos" label="Contratos" icon={Wheat} />
       </div>
 
       {/* Últimas viagens */}

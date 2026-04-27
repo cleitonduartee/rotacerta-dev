@@ -4,18 +4,22 @@ import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, todayISO } from '@/lib/format';
 import { Plus, Trash2 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { maskMoneyInput, parseMoney } from '@/lib/masks';
+
+const TIPOS_PADRAO = ['Combustível', 'Pedágio', 'Manutenção', 'Alimentação', 'Hospedagem', 'Frete retorno', 'Socorro mecânico'];
 
 export function ExpensesList() {
   const expenses = useLiveQuery(() => db.expenses.orderBy('data').reverse().toArray(), []) ?? [];
+  const navigate = useNavigate();
   const total = expenses.reduce((s, e) => s + e.valor, 0);
   return (
     <div className="animate-fade-in">
       <PageHeader title="Despesas" subtitle={fmtBRL(total)} />
       <div className="px-4 pb-6 space-y-3">
         <button
-          onClick={() => location.assign('/despesas/nova')}
+          onClick={() => navigate('/despesas/nova')}
           className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated"
         >
           <Plus className="h-5 w-5" /> Nova despesa
@@ -26,17 +30,22 @@ export function ExpensesList() {
           </p>
         )}
         {expenses.map(e => (
-          <div key={e.id} className="rounded-xl border border-border bg-card p-3 flex items-center justify-between">
-            <div>
-              <p className="font-semibold">{e.tipo}</p>
-              <p className="text-xs text-muted-foreground">{fmtDate(e.data)}{e.descricao ? ` • ${e.descricao}` : ''}</p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
-              <button onClick={async () => { if (confirm('Excluir?')) { await db.expenses.delete(e.id!); toast.success('Excluído'); } }}
-                className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
-                <Trash2 className="h-4 w-4" />
-              </button>
+          <div key={e.id} className="rounded-xl border border-border bg-card p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="font-semibold truncate">{e.tipo}</p>
+                <p className="text-xs text-muted-foreground">{fmtDate(e.data)}</p>
+                {e.descricao && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{e.descricao}</p>}
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
+                <button
+                  onClick={async () => { if (confirm('Excluir?')) { await db.expenses.delete(e.id!); toast.success('Excluído'); } }}
+                  className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
@@ -49,73 +58,185 @@ export function ExpenseForm() {
   const { id } = useParams();
   const editingId = id ? Number(id) : undefined;
   const navigate = useNavigate();
+
+  // Carregamentos leves e independentes — evitam tela branca
+  const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
+  const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const trips = useLiveQuery(() => db.trips.orderBy('data').reverse().limit(50).toArray(), []) ?? [];
+  const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
 
-  const [tipo, setTipo] = useState('Combustível');
+  const [tipo, setTipo] = useState<string>('Combustível');
+  const [tipoOutro, setTipoOutro] = useState('');
   const [valor, setValor] = useState('');
   const [data, setData] = useState(todayISO());
   const [descricao, setDescricao] = useState('');
-  const [harvestId, setHarvestId] = useState<number | ''>('');
+  const [vinculo, setVinculo] = useState<'nenhum' | 'contrato' | 'viagem'>('nenhum');
+  const [contractId, setContractId] = useState<number | ''>('');
   const [tripId, setTripId] = useState<number | ''>('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!editingId) return;
     db.expenses.get(editingId).then(e => {
       if (!e) return;
-      setTipo(e.tipo); setValor(String(e.valor)); setData(e.data);
+      const ehPadrao = TIPOS_PADRAO.includes(e.tipo);
+      setTipo(ehPadrao ? e.tipo : 'Outros');
+      if (!ehPadrao) setTipoOutro(e.tipo);
+      setValor(e.valor ? maskMoneyInput(String(Math.round(e.valor * 100))) : '');
+      setData(e.data);
       setDescricao(e.descricao ?? '');
-      setHarvestId(e.harvestId ?? ''); setTripId(e.tripId ?? '');
+      if (e.contractId) { setVinculo('contrato'); setContractId(e.contractId); }
+      else if (e.tripId) { setVinculo('viagem'); setTripId(e.tripId); }
     });
   }, [editingId]);
 
+  const contratosLabel = useMemo(() => {
+    return contracts.map(c => {
+      const p = producers.find(pp => pp.id === c.producerId);
+      const h = harvests.find(hh => hh.id === c.harvestId);
+      return { id: c.id!, label: `${p?.nome ?? '?'} — ${h?.nome ?? '?'}` };
+    });
+  }, [contracts, producers, harvests]);
+
+  const viagensLabel = useMemo(() => {
+    return trips.map(t => {
+      const tr = trucks.find(x => x.id === t.truckId);
+      return {
+        id: t.id!,
+        label: `${fmtDate(t.data)} • ${tr?.placa ?? '—'} • ${t.origem}→${t.destino}`,
+      };
+    });
+  }, [trips, trucks]);
+
   async function save() {
-    const v = parseFloat(valor.replace(',', '.'));
-    if (!tipo || !v) return toast.error('Informe tipo e valor');
-    const payload = {
-      tipo, valor: v, data, descricao,
-      harvestId: harvestId === '' ? undefined : Number(harvestId),
-      tripId: tripId === '' ? undefined : Number(tripId),
-      ...stamp(),
-    };
-    if (editingId) await db.expenses.update(editingId, payload);
-    else await db.expenses.add(payload);
-    toast.success('Despesa salva');
-    navigate('/despesas');
+    const v = parseMoney(valor);
+    const tipoFinal = tipo === 'Outros' ? tipoOutro.trim() : tipo;
+    if (!tipoFinal) return toast.error('Informe o tipo da despesa');
+    if (!v) return toast.error('Informe um valor válido');
+
+    setLoading(true);
+    try {
+      const payload: any = {
+        tipo: tipoFinal,
+        valor: v,
+        data,
+        descricao,
+        ...stamp(),
+      };
+      if (vinculo === 'contrato' && contractId) {
+        payload.contractId = Number(contractId);
+        const c = contracts.find(cc => cc.id === Number(contractId));
+        if (c) payload.harvestId = c.harvestId; // mantém compat com filtros por safra
+      } else if (vinculo === 'viagem' && tripId) {
+        payload.tripId = Number(tripId);
+      }
+
+      if (editingId) await db.expenses.update(editingId, payload);
+      else await db.expenses.add(payload);
+      toast.success('Despesa salva');
+      navigate('/despesas');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Nova despesa" />
+      <PageHeader title={editingId ? 'Editar despesa' : 'Nova despesa'} />
       <div className="space-y-4 px-4 pb-6">
-        <Field label="Tipo">
+        <div>
+          <span className={labelCls}>Tipo</span>
           <select className={inputCls} value={tipo} onChange={e => setTipo(e.target.value)}>
-            {['Combustível', 'Pedágio', 'Manutenção', 'Alimentação', 'Hospedagem', 'Frete retorno', 'Outros'].map(t => <option key={t}>{t}</option>)}
+            {TIPOS_PADRAO.map(t => <option key={t} value={t}>{t}</option>)}
+            <option value="Outros">Outros (digitar)</option>
           </select>
-        </Field>
-        <Field label="Valor (R$)">
-          <input className={inputCls} inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} placeholder="0,00" />
-        </Field>
-        <Field label="Data">
+          {tipo === 'Outros' && (
+            <input
+              className={inputCls + ' mt-2'}
+              placeholder="Ex: Lavagem, multa, estacionamento…"
+              value={tipoOutro}
+              onChange={e => setTipoOutro(e.target.value)}
+              autoFocus
+            />
+          )}
+        </div>
+
+        <div>
+          <span className={labelCls}>Valor (R$)</span>
+          <input
+            className={inputCls}
+            inputMode="decimal"
+            value={valor}
+            onChange={e => setValor(maskMoneyInput(e.target.value))}
+            placeholder="0,00"
+          />
+        </div>
+
+        <div>
+          <span className={labelCls}>Data</span>
           <input className={inputCls} type="date" value={data} onChange={e => setData(e.target.value)} />
-        </Field>
-        <Field label="Vincular à safra (opcional)">
-          <select className={inputCls} value={harvestId} onChange={e => setHarvestId(e.target.value === '' ? '' : Number(e.target.value))}>
-            <option value="">Nenhuma</option>
-            {harvests.map(h => <option key={h.id} value={h.id}>{h.nome}</option>)}
-          </select>
-        </Field>
-        <Field label="Vincular à viagem (opcional)">
-          <select className={inputCls} value={tripId} onChange={e => setTripId(e.target.value === '' ? '' : Number(e.target.value))}>
-            <option value="">Nenhuma</option>
-            {trips.map(t => <option key={t.id} value={t.id}>{fmtDate(t.data)} — {t.origem} → {t.destino}</option>)}
-          </select>
-        </Field>
-        <Field label="Descrição">
-          <textarea className={inputCls + ' min-h-[80px]'} value={descricao} onChange={e => setDescricao(e.target.value)} />
-        </Field>
-        <button onClick={save} className="w-full rounded-xl gradient-primary py-4 text-lg font-bold text-primary-foreground shadow-elevated">
-          Salvar despesa
+        </div>
+
+        <div>
+          <span className={labelCls}>Vincular despesa</span>
+          <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+            {([
+              ['nenhum', 'Nenhum'],
+              ['contrato', 'Contrato'],
+              ['viagem', 'Viagem'],
+            ] as const).map(([v, l]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setVinculo(v)}
+                className={'rounded-md py-1.5 ' + (vinculo === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          {vinculo === 'contrato' && (
+            <select
+              className={inputCls + ' mt-2'}
+              value={contractId}
+              onChange={e => setContractId(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <option value="">Selecione um contrato…</option>
+              {contratosLabel.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+          )}
+          {vinculo === 'viagem' && (
+            <select
+              className={inputCls + ' mt-2'}
+              value={tripId}
+              onChange={e => setTripId(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+              <option value="">Selecione uma viagem…</option>
+              {viagensLabel.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
+            </select>
+          )}
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Use <strong>Contrato</strong> para despesas da safra (combustível, manutenção etc) e <strong>Viagem</strong> para despesas de fretes avulsos.
+          </p>
+        </div>
+
+        <div>
+          <span className={labelCls}>Descrição (aparece no relatório)</span>
+          <textarea
+            className={inputCls + ' min-h-[80px]'}
+            value={descricao}
+            onChange={e => setDescricao(e.target.value)}
+            placeholder="Detalhe a despesa: posto, peça trocada, motivo…"
+          />
+        </div>
+
+        <button
+          onClick={save}
+          disabled={loading}
+          className="w-full rounded-xl gradient-primary py-4 text-lg font-bold text-primary-foreground shadow-elevated disabled:opacity-60"
+        >
+          {loading ? 'Salvando…' : 'Salvar despesa'}
         </button>
       </div>
     </div>
@@ -123,11 +244,4 @@ export function ExpenseForm() {
 }
 
 const inputCls = 'w-full rounded-lg border border-border bg-input px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary';
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
-      {children}
-    </label>
-  );
-}
+const labelCls = 'mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground';
