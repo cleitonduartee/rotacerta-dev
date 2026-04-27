@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, FileSignature, Receipt, FileText, Plus } from 'lucide-react';
+import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut } from 'lucide-react';
 import { SyncIndicator } from './SyncIndicator';
+import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -13,6 +14,7 @@ const tabs = [
 
 export function AppLayout() {
   const navigate = useNavigate();
+  const { signOut } = useAuth();
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur">
@@ -20,7 +22,16 @@ export function AppLayout() {
           <p className="font-display text-2xl leading-none text-primary">ROTACERTA</p>
           <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Estrada na palma da mão</p>
         </div>
-        <SyncIndicator />
+        <div className="flex items-center gap-2">
+          <SyncIndicator />
+          <button
+            onClick={async () => { await signOut(); navigate('/login', { replace: true }); }}
+            aria-label="Sair"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto pb-32">
