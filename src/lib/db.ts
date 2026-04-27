@@ -8,6 +8,7 @@ export interface Driver {
   docType?: 'cpf' | 'cnpj';
   cpf?: string;       // mantido para compat — armazena CPF ou CNPJ formatado
   telefone?: string;
+  email?: string;     // opcional, útil para recuperação se trocar de número
 }
 
 export interface Truck {
