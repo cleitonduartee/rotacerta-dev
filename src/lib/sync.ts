@@ -110,7 +110,7 @@ async function pullHarvests(uid: string) {
       tipo: r.tipo,
       ano: r.ano,
       fechada: r.fechada,
-      fechadaEm: r.fechado_em ? fromIso(r.fechado_em) : undefined,
+      fechadaEm: r.fechada_em ? fromIso(r.fechada_em) : undefined,
       syncStatus: 'synced' as SyncStatus,
       updatedAt: remoteUpdatedAt,
     };
@@ -235,10 +235,10 @@ async function pushTable<T extends { id?: number; remoteId?: string; syncStatus:
     const payload = toServer(row);
     if (!payload) continue; // dependência ainda não tem remoteId — tenta na próxima rodada
     if (row.remoteId) {
-      const { error } = await supabase.from(table).update(payload).eq('id', row.remoteId);
+      const { error } = await (supabase.from(table) as any).update(payload).eq('id', row.remoteId);
       if (!error) await (t as any).update(row.id!, { syncStatus: 'synced' });
     } else {
-      const { data, error } = await supabase.from(table).insert(payload).select('id').single();
+      const { data, error } = await (supabase.from(table) as any).insert(payload).select('id').single();
       if (!error && data) await (t as any).update(row.id!, { remoteId: data.id, syncStatus: 'synced' });
     }
   }
