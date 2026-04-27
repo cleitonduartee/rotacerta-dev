@@ -6,6 +6,7 @@ import { fmtBRL, fmtNum } from '@/lib/format';
 import { Plus, Trash2, Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
+import { maskMoneyInput, parseMoney } from '@/lib/masks';
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
@@ -22,7 +23,7 @@ export default function ContractsPage() {
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
-    const v = parseFloat(valor.replace(',', '.'));
+    const v = parseMoney(valor);
     if (!v) return toast.error('Valor inválido');
     const exists = contracts.find(c => c.producerId === Number(producerId) && c.harvestId === Number(harvestId));
     if (exists) return toast.error('Já existe contrato para este produtor + safra');
@@ -120,7 +121,13 @@ export default function ContractsPage() {
             <option value="">Safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome}</option>)}
           </select>
-          <input className={inputCls} inputMode="decimal" placeholder="R$ por saco (60kg)" value={valor} onChange={e => setValor(e.target.value)} />
+          <input
+            className={inputCls}
+            inputMode="decimal"
+            placeholder="R$ por saco (60kg) — ex: 1.234,56"
+            value={valor}
+            onChange={e => setValor(maskMoneyInput(e.target.value))}
+          />
           <button onClick={add} className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">
             <Plus className="h-4 w-4" /> Adicionar contrato
           </button>

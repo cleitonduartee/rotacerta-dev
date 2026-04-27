@@ -1,12 +1,12 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, Wheat, Receipt, FileText, Plus } from 'lucide-react';
+import { Home, Truck, FileSignature, Receipt, FileText, Plus } from 'lucide-react';
 import { SyncIndicator } from './SyncIndicator';
 import { cn } from '@/lib/utils';
 
 const tabs = [
   { to: '/', icon: Home, label: 'Início' },
   { to: '/viagens', icon: Truck, label: 'Viagens' },
-  { to: '/safras', icon: Wheat, label: 'Safras' },
+  { to: '/contratos', icon: FileSignature, label: 'Contratos' },
   { to: '/despesas', icon: Receipt, label: 'Despesas' },
   { to: '/cadastros', icon: FileText, label: 'Cadastros' },
 ];

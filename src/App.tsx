@@ -26,6 +26,7 @@ const App = () => (
             <Route path="/viagens" element={<TripsList />} />
             <Route path="/viagens/nova" element={<TripForm />} />
             <Route path="/viagens/:id" element={<TripForm />} />
+            <Route path="/contratos" element={<ContractsPage />} />
             <Route path="/safras" element={<HarvestsList />} />
             <Route path="/safras/contratos" element={<ContractsPage />} />
             <Route path="/safras/:id" element={<HarvestDetail />} />

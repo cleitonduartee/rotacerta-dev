@@ -2,17 +2,27 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, User, Truck as TruckIcon, Wheat } from 'lucide-react';
+import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock } from 'lucide-react';
 import { toast } from 'sonner';
+import { Link } from 'react-router-dom';
+import {
+  maskCpfCnpj,
+  maskCPF,
+  maskCNPJ,
+  maskPhone,
+  isValidCpfCnpj,
+  onlyDigits,
+} from '@/lib/masks';
 
 export default function CadastrosPage() {
   const driver = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
+  const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
 
   return (
     <div className="animate-fade-in">
-      <PageHeader title="Cadastros" subtitle="Caminhoneiro, caminhões e produtores" />
+      <PageHeader title="Cadastros" subtitle="Motorista, caminhões, produtores e safras" />
       <div className="space-y-6 px-4 pb-6">
         <DriverSection driver={driver[0]} />
 
@@ -35,6 +45,37 @@ export default function CadastrosPage() {
             {producers.length === 0 && <Empty>Cadastre o primeiro produtor.</Empty>}
           </ul>
         </Section>
+
+        <Section title="Safras" icon={Wheat}>
+          <p className="mb-2 text-xs text-muted-foreground">
+            A safra serve para identificar o período (ex.: Safra 2026 — Soja). Os contratos e o faturamento ficam em <Link to="/contratos" className="font-semibold text-primary">Contratos</Link>.
+          </p>
+          <AddHarvest />
+          <ul className="space-y-2 mt-3">
+            {harvests.map(h => (
+              <li key={h.id} className="flex items-center justify-between rounded-lg border border-border bg-secondary/40 p-2.5">
+                <div className="min-w-0">
+                  <p className="font-semibold truncate">{h.nome}</p>
+                  <p className="text-xs text-muted-foreground">{h.tipo} • {h.ano}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ' +
+                    (h.fechada ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
+                    {h.fechada ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+                    {h.fechada ? 'Fechada' : 'Aberta'}
+                  </span>
+                  <button
+                    onClick={async () => { if (confirm('Excluir safra?')) await db.harvests.delete(h.id!); }}
+                    className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </li>
+            ))}
+            {harvests.length === 0 && <Empty>Cadastre sua primeira safra.</Empty>}
+          </ul>
+        </Section>
       </div>
     </div>
   );
@@ -42,25 +83,73 @@ export default function CadastrosPage() {
 
 function DriverSection({ driver }: { driver?: any }) {
   const [nome, setNome] = useState('');
-  const [cpf, setCpf] = useState('');
+  const [docType, setDocType] = useState<'cpf' | 'cnpj'>('cpf');
+  const [doc, setDoc] = useState('');
   const [tel, setTel] = useState('');
+
   useEffect(() => {
-    if (driver) { setNome(driver.nome); setCpf(driver.cpf ?? ''); setTel(driver.telefone ?? ''); }
+    if (driver) {
+      setNome(driver.nome);
+      const dt = driver.docType ?? (onlyDigits(driver.cpf ?? '').length > 11 ? 'cnpj' : 'cpf');
+      setDocType(dt);
+      setDoc(dt === 'cpf' ? maskCPF(driver.cpf ?? '') : maskCNPJ(driver.cpf ?? ''));
+      setTel(maskPhone(driver.telefone ?? ''));
+    }
   }, [driver]);
+
   async function save() {
     if (!nome) return toast.error('Informe seu nome');
-    if (driver) await db.drivers.update(driver.id, { nome, cpf, telefone: tel });
-    else await db.drivers.add({ nome, cpf, telefone: tel });
+    if (doc && !isValidCpfCnpj(doc)) {
+      return toast.error(docType === 'cpf' ? 'CPF inválido' : 'CNPJ inválido');
+    }
+    const payload = { nome, docType, cpf: doc, telefone: tel };
+    if (driver) await db.drivers.update(driver.id, payload);
+    else await db.drivers.add(payload);
     toast.success('Dados salvos');
   }
+
+  function onDocChange(v: string) {
+    setDoc(docType === 'cpf' ? maskCPF(v) : maskCNPJ(v));
+  }
+  function switchDocType(t: 'cpf' | 'cnpj') {
+    setDocType(t);
+    setDoc(t === 'cpf' ? maskCPF(doc) : maskCNPJ(doc));
+  }
+
   return (
     <Section title="Seus dados" icon={User}>
       <div className="space-y-2 mt-2">
         <input className={inputCls} placeholder="Nome completo" value={nome} onChange={e => setNome(e.target.value)} />
-        <div className="grid grid-cols-2 gap-2">
-          <input className={inputCls} placeholder="CPF" value={cpf} onChange={e => setCpf(e.target.value)} />
-          <input className={inputCls} placeholder="Telefone" value={tel} onChange={e => setTel(e.target.value)} />
+
+        <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+          {(['cpf', 'cnpj'] as const).map(t => (
+            <button key={t} type="button" onClick={() => switchDocType(t)}
+              className={'rounded-md py-1.5 ' + (docType === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+              {t.toUpperCase()}
+            </button>
+          ))}
         </div>
+
+        <input
+          className={inputCls}
+          inputMode="numeric"
+          placeholder={docType === 'cpf' ? '999.999.999-99' : '99.999.999/9999-99'}
+          value={doc}
+          onChange={e => onDocChange(e.target.value)}
+          maxLength={docType === 'cpf' ? 14 : 18}
+        />
+        {doc && !isValidCpfCnpj(doc) && (
+          <p className="text-xs text-destructive">{docType === 'cpf' ? 'CPF inválido' : 'CNPJ inválido'}</p>
+        )}
+
+        <input
+          className={inputCls}
+          inputMode="tel"
+          placeholder="(99) 99999-9999"
+          value={tel}
+          onChange={e => setTel(maskPhone(e.target.value))}
+          maxLength={15}
+        />
         <button onClick={save} className="w-full rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">Salvar</button>
       </div>
     </Section>
@@ -96,6 +185,38 @@ function AddProducer() {
         setNome(''); toast.success('Produtor cadastrado');
       }} className="rounded-lg gradient-primary px-3 text-primary-foreground">
         <Plus className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+function AddHarvest() {
+  const [nome, setNome] = useState('');
+  const [tipo, setTipo] = useState('soja');
+  const [ano, setAno] = useState(new Date().getFullYear());
+
+  async function add() {
+    if (!nome) return toast.error('Informe o nome da safra');
+    await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
+    setNome('');
+    toast.success('Safra cadastrada');
+  }
+
+  return (
+    <div className="space-y-2">
+      <input className={inputCls} placeholder="Nome (ex: Safra 2026)" value={nome} onChange={e => setNome(e.target.value)} />
+      <div className="grid grid-cols-2 gap-2">
+        <select className={inputCls} value={tipo} onChange={e => setTipo(e.target.value)}>
+          <option value="soja">Soja</option>
+          <option value="milho">Milho</option>
+          <option value="trigo">Trigo</option>
+          <option value="algodao">Algodão</option>
+          <option value="outros">Outros</option>
+        </select>
+        <input type="number" className={inputCls} value={ano} onChange={e => setAno(Number(e.target.value))} />
+      </div>
+      <button onClick={add} className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">
+        <Plus className="h-4 w-4" /> Adicionar safra
       </button>
     </div>
   );
