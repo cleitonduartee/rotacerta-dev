@@ -271,6 +271,12 @@ function AddHarvest() {
 
   async function add() {
     if (!nome) return toast.error('Informe o nome da safra');
+    const existente = await db.harvests
+      .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
+      .first();
+    if (existente) {
+      return toast.error(`Já existe uma safra de ${tipo} para o ano ${ano} ("${existente.nome}")`);
+    }
     await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
     setNome('');
     toast.success('Safra cadastrada');
