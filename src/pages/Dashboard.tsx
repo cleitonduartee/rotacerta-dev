@@ -100,7 +100,7 @@ export default function Dashboard() {
       if (t.kind === 'safra' && t.contractId) {
         const c = contracts.find(cc => cc.id === t.contractId);
         const h = c ? harvests.find(hh => hh.id === c.harvestId) : null;
-        const nome = h?.nome ?? 'Safra ?';
+        const nome = `Lavoura — ${h?.nome ?? 'Safra ?'}`;
         map.set(nome, (map.get(nome) || 0) + (t.valorTotal || 0));
       } else {
         fretes += t.valorTotal || 0;
@@ -334,7 +334,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      {t.kind === 'safra' ? 'Safra' : 'Frete avulso'} • {t.data}
+                      {t.kind === 'safra' ? 'Lavoura' : 'Frete avulso'} • {t.data}
                     </p>
                     <p className="font-semibold">{t.origem} → {t.destino}</p>
                   </div>

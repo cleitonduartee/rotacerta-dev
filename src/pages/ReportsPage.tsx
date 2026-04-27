@@ -164,7 +164,7 @@ export default function ReportsPage() {
                 {tripsOrdenadas.map(t => (
                   <tr key={t.id} className="border-b border-border/50">
                     <td className="py-1.5 pr-2">{fmtDate(t.data)}</td>
-                    <td className="pr-2">{t.kind === 'safra' ? 'Safra' : 'Frete'}</td>
+                    <td className="pr-2">{t.kind === 'safra' ? 'Lavoura' : 'Frete'}</td>
                     <td className="pr-2">{placa(t.truckId)}</td>
                     <td className="pr-2">{t.origem} → {t.destino}</td>
                     <td className="pr-2">{t.notaProdutor || '—'}</td>
