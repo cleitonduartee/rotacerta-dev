@@ -161,7 +161,12 @@ function DriverSection({ driver }: { driver?: any }) {
     // entre o login e o restante do app. Sem isso, alterações aqui ficavam só
     // no IndexedDB local e o login continuava mostrando o nome antigo.
     if (user) {
-      const cloudPayload: Record<string, any> = {
+      const cloudPayload: {
+        nome: string | null;
+        telefone: string | null;
+        email: string | null;
+        cpf?: string;
+      } = {
         nome: nome.trim() || null,
         telefone: onlyDigits(tel) || null,
         email: email.trim() ? email.trim().toLowerCase() : null,
