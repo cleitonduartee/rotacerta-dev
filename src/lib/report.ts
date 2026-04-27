@@ -17,9 +17,15 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
 
+  // Quando é relatório de um único contrato, mostra o produtor no cabeçalho
+  const singleContract = input.contracts.length === 1 ? input.contracts[0] : null;
+  const singleProducer = singleContract
+    ? input.producers.find(pp => pp.id === singleContract.producerId)
+    : null;
+
   // Header colorido
   doc.setFillColor(249, 115, 22);
-  doc.rect(0, 0, W, 70, 'F');
+  doc.rect(0, 0, W, singleProducer ? 86 : 70, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
@@ -27,8 +33,12 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text(`${input.harvest.nome} • ${input.harvest.tipo} • ${input.harvest.ano}`, 40, 55);
+  if (singleProducer) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.text(`Produtor: ${singleProducer.nome}  •  R$ ${fmtNum(singleContract!.valorPorSaco)} / saco`, 40, 75);
+  }
 
-  y = 100;
+  y = singleProducer ? 116 : 100;
   doc.setTextColor(20, 20, 20);
 
   // Caminhoneiro
@@ -40,42 +50,75 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   if (input.driver?.cpf) { doc.text(`CPF: ${input.driver.cpf}`, 40, y); y += 14; }
   if (input.driver?.telefone) { doc.text(`Tel: ${input.driver.telefone}`, 40, y); y += 14; }
 
-  // Produtores
-  y += 8;
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-  doc.text('Produtores / Contratos', 40, y);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  y += 16;
-  for (const c of input.contracts) {
-    const p = input.producers.find(pp => pp.id === c.producerId);
-    doc.text(`• ${p?.nome ?? '?'} — R$ ${fmtNum(c.valorPorSaco)} / saco`, 40, y); y += 14;
+  // Se for relatório multi-contrato (safra inteira), lista todos
+  if (!singleProducer) {
+    y += 8;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.text('Produtores / Contratos', 40, y);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+    y += 16;
+    for (const c of input.contracts) {
+      const p = input.producers.find(pp => pp.id === c.producerId);
+      doc.text(`• ${p?.nome ?? '?'} — R$ ${fmtNum(c.valorPorSaco)} / saco`, 40, y); y += 14;
+    }
   }
 
-  // TOTAIS
-  y += 10;
-  doc.setFillColor(245, 245, 245);
-  doc.rect(30, y, W - 60, 110, 'F');
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+  // TOTAIS GERAIS — card moderno
+  y += 14;
+  const cardX = 30;
+  const cardW = W - 60;
+  const cardH = 150;
+
+  // Sombra sutil + fundo branco com borda laranja
+  doc.setFillColor(255, 247, 237); // laranja muito claro
+  doc.roundedRect(cardX, y, cardW, cardH, 10, 10, 'F');
+  doc.setDrawColor(249, 115, 22);
+  doc.setLineWidth(1.2);
+  doc.roundedRect(cardX, y, cardW, cardH, 10, 10, 'S');
+
+  // Título
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
   doc.setTextColor(249, 115, 22);
-  doc.text('TOTAIS GERAIS', 40, y + 22);
-  doc.setTextColor(20, 20, 20);
-  doc.setFontSize(11); doc.setFont('helvetica', 'normal');
-  const lines: [string, string][] = [
+  doc.text('TOTAIS GERAIS', cardX + 16, y + 24);
+
+  // Linha divisória
+  doc.setDrawColor(249, 115, 22);
+  doc.setLineWidth(0.4);
+  doc.line(cardX + 16, y + 32, cardX + cardW - 16, y + 32);
+
+  // Linhas de totais (sem viagens / sem toneladas)
+  doc.setTextColor(60, 60, 60);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
+  const linhas: [string, string][] = [
     ['Total de sacos (60kg)', fmtNum(input.totals.totalSacos, 2)],
-    ['Total em toneladas', fmtNum(input.totals.totalToneladas, 2)],
-    ['Total de viagens', String(input.trips.length)],
     ['Receita bruta', fmtBRL(input.totals.receita)],
-    ['Despesas', fmtBRL(input.totals.despesas)],
-    ['Valor LÍQUIDO', fmtBRL(input.totals.liquido)],
+    ['Despesas', `− ${fmtBRL(input.totals.despesas)}`],
   ];
-  let ly = y + 40;
-  lines.forEach(([k, v], i) => {
-    if (i === lines.length - 1) doc.setFont('helvetica', 'bold');
-    doc.text(k, 50, ly);
-    doc.text(v, W - 50, ly, { align: 'right' });
-    ly += 14;
+  let ly = y + 52;
+  linhas.forEach(([k, v]) => {
+    doc.setTextColor(80, 80, 80);
+    doc.text(k, cardX + 20, ly);
+    doc.setTextColor(20, 20, 20);
+    doc.text(v, cardX + cardW - 20, ly, { align: 'right' });
+    ly += 16;
   });
-  y = ly + 10;
+
+  // Linha divisória antes do líquido
+  ly += 2;
+  doc.setDrawColor(220, 220, 220);
+  doc.line(cardX + 16, ly, cardX + cardW - 16, ly);
+  ly += 18;
+
+  // Valor líquido — destaque
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+  doc.setTextColor(20, 20, 20);
+  doc.text('VALOR LÍQUIDO', cardX + 20, ly);
+  doc.setTextColor(249, 115, 22);
+  doc.setFontSize(16);
+  doc.text(fmtBRL(input.totals.liquido), cardX + cardW - 20, ly, { align: 'right' });
+
+  doc.setTextColor(20, 20, 20);
+  y = y + cardH + 14;
 
   // Por caminhão
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
