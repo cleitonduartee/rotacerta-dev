@@ -47,6 +47,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 gap-3">
         <QuickLink to="/viagens/nova" label="Nova viagem" icon={Truck} primary />
         <QuickLink to="/despesas/nova" label="Nova despesa" icon={Receipt} />
+        <QuickLink to="/relatorios" label="Relatórios" icon={FileBarChart} />
+        <QuickLink to="/contratos" label="Contratos" icon={Wheat} />
       </div>
 
       {/* Últimas viagens */}
