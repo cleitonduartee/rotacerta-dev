@@ -14,7 +14,346 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      contracts: {
+        Row: {
+          created_at: string
+          fechado: boolean
+          fechado_em: string | null
+          harvest_id: string
+          id: string
+          producer_id: string
+          updated_at: string
+          user_id: string
+          valor_por_saco: number
+        }
+        Insert: {
+          created_at?: string
+          fechado?: boolean
+          fechado_em?: string | null
+          harvest_id: string
+          id?: string
+          producer_id: string
+          updated_at?: string
+          user_id: string
+          valor_por_saco: number
+        }
+        Update: {
+          created_at?: string
+          fechado?: boolean
+          fechado_em?: string | null
+          harvest_id?: string
+          id?: string
+          producer_id?: string
+          updated_at?: string
+          user_id?: string
+          valor_por_saco?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_harvest_id_fkey"
+            columns: ["harvest_id"]
+            isOneToOne: false
+            referencedRelation: "harvests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_producer_id_fkey"
+            columns: ["producer_id"]
+            isOneToOne: false
+            referencedRelation: "producers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          data: string
+          descricao: string | null
+          harvest_id: string | null
+          id: string
+          tipo: string
+          trip_id: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          data: string
+          descricao?: string | null
+          harvest_id?: string | null
+          id?: string
+          tipo: string
+          trip_id?: string | null
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          data?: string
+          descricao?: string | null
+          harvest_id?: string | null
+          id?: string
+          tipo?: string
+          trip_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_harvest_id_fkey"
+            columns: ["harvest_id"]
+            isOneToOne: false
+            referencedRelation: "harvests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expenses_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      harvests: {
+        Row: {
+          ano: number
+          created_at: string
+          fechada: boolean
+          fechada_em: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          fechada?: boolean
+          fechada_em?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          fechada?: boolean
+          fechada_em?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      phone_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          consumed: boolean
+          created_at: string
+          expires_at: string
+          id: string
+          telefone: string
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          consumed?: boolean
+          created_at?: string
+          expires_at: string
+          id?: string
+          telefone: string
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          consumed?: boolean
+          created_at?: string
+          expires_at?: string
+          id?: string
+          telefone?: string
+        }
+        Relationships: []
+      }
+      producers: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          cpf: string | null
+          created_at: string
+          id: string
+          nome: string | null
+          telefone: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          nome?: string | null
+          telefone: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cpf?: string | null
+          created_at?: string
+          id?: string
+          nome?: string | null
+          telefone?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      trips: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          data: string
+          destino: string | null
+          id: string
+          kind: string
+          observacao: string | null
+          origem: string | null
+          peso_kg: number | null
+          peso_toneladas: number | null
+          sacos: number | null
+          transportadora: string | null
+          truck_id: string | null
+          updated_at: string
+          user_id: string
+          valor_por_saco_override: number | null
+          valor_por_tonelada: number | null
+          valor_total: number
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          data: string
+          destino?: string | null
+          id?: string
+          kind: string
+          observacao?: string | null
+          origem?: string | null
+          peso_kg?: number | null
+          peso_toneladas?: number | null
+          sacos?: number | null
+          transportadora?: string | null
+          truck_id?: string | null
+          updated_at?: string
+          user_id: string
+          valor_por_saco_override?: number | null
+          valor_por_tonelada?: number | null
+          valor_total?: number
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          data?: string
+          destino?: string | null
+          id?: string
+          kind?: string
+          observacao?: string | null
+          origem?: string | null
+          peso_kg?: number | null
+          peso_toneladas?: number | null
+          sacos?: number | null
+          transportadora?: string | null
+          truck_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valor_por_saco_override?: number | null
+          valor_por_tonelada?: number | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trips_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "trips_truck_id_fkey"
+            columns: ["truck_id"]
+            isOneToOne: false
+            referencedRelation: "trucks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trucks: {
+        Row: {
+          created_at: string
+          id: string
+          modelo: string | null
+          placa: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modelo?: string | null
+          placa: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modelo?: string | null
+          placa?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
