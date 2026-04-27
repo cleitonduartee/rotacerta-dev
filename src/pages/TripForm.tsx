@@ -22,12 +22,14 @@ export default function TripForm() {
   const [truckId, setTruckId] = useState<number | ''>('');
   const [origem, setOrigem] = useState('');
   const [destino, setDestino] = useState('');
+  const [origemTouched, setOrigemTouched] = useState(false);
+  const [destinoTouched, setDestinoTouched] = useState(false);
 
   // safra
   const [producerId, setProducerId] = useState<number | ''>('');
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [pesoKg, setPesoKg] = useState<string>('');
-  const [unidadePeso, setUnidadePeso] = useState<'kg' | 't'>('kg');
+  const [unidadePeso, setUnidadePeso] = useState<'kg' | 't'>('t');
   const [valorPorSacoOverride, setValorPorSacoOverride] = useState<string>('');
 
   // frete
@@ -45,6 +47,7 @@ export default function TripForm() {
       if (!t) return;
       setKind(t.kind); setData(t.data); setTruckId(t.truckId);
       setOrigem(t.origem); setDestino(t.destino);
+      setOrigemTouched(true); setDestinoTouched(true);
       if (t.kind === 'safra') {
         const c = t.contractId ? contracts.find(c => c.id === t.contractId) : undefined;
         if (c) { setProducerId(c.producerId); setHarvestId(c.harvestId); }
@@ -94,6 +97,20 @@ export default function TripForm() {
     if (kind !== 'safra' || producerId === '' || harvestId === '') return undefined;
     return contracts.find(c => c.producerId === producerId && c.harvestId === harvestId);
   }, [kind, producerId, harvestId, contracts]);
+
+  // Auto-preencher origem/destino com base na última viagem deste contrato
+  useEffect(() => {
+    if (editingId || kind !== 'safra' || !contract?.id) return;
+    db.trips
+      .where('contractId').equals(contract.id)
+      .reverse().sortBy('data')
+      .then(list => {
+        const last = list[0];
+        if (!last) return;
+        if (!origemTouched && !origem) setOrigem(last.origem || '');
+        if (!destinoTouched && !destino) setDestino(last.destino || '');
+      });
+  }, [contract?.id, editingId, kind]);
 
   const pesoKgNum = useMemo(() => {
     const v = parseFloat(pesoKg.replace(',', '.')) || 0;
@@ -190,9 +207,14 @@ export default function TripForm() {
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Origem"><input value={origem} onChange={e => setOrigem(e.target.value)} className={inputCls} placeholder="Cidade/fazenda" /></Field>
-          <Field label="Destino"><input value={destino} onChange={e => setDestino(e.target.value)} className={inputCls} placeholder="Cidade/armazém" /></Field>
+          <Field label="Origem"><input value={origem} onChange={e => { setOrigem(e.target.value); setOrigemTouched(true); }} className={inputCls} placeholder="Cidade/fazenda" /></Field>
+          <Field label="Destino"><input value={destino} onChange={e => { setDestino(e.target.value); setDestinoTouched(true); }} className={inputCls} placeholder="Cidade/armazém" /></Field>
         </div>
+        {kind === 'safra' && contract && (origem || destino) && !editingId && (
+          <p className="-mt-2 text-xs text-muted-foreground">
+            ✓ Origem/destino sugeridos da última viagem deste contrato. Edite se precisar.
+          </p>
+        )}
 
         {kind === 'safra' ? (
           <>

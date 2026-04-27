@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
@@ -12,6 +12,7 @@ export default function ReportsPage() {
   const hoje = new Date();
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
   const [harvestId, setHarvestId] = useState<number | ''>('');
+  const [harvestTouched, setHarvestTouched] = useState(false);
 
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
@@ -20,6 +21,17 @@ export default function ReportsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const drivers = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
+
+  // Sugestão: safra com algum contrato em aberto (preferir mais recente)
+  useEffect(() => {
+    if (harvestTouched || harvestId !== '') return;
+    if (harvests.length === 0 || contracts.length === 0) return;
+    const abertas = harvests
+      .filter(h => contracts.some(c => c.harvestId === h.id && !c.fechado))
+      .sort((a, b) => (b.ano - a.ano) || ((b.id ?? 0) - (a.id ?? 0)));
+    const sugerida = abertas[0] ?? [...harvests].sort((a, b) => (b.ano - a.ano))[0];
+    if (sugerida?.id) setHarvestId(sugerida.id);
+  }, [harvests, contracts, harvestTouched, harvestId]);
 
   const { tripsFiltradas, despesasFiltradas, titulo } = useMemo(() => {
     if (modo === 'mes') {
@@ -79,7 +91,7 @@ export default function ReportsPage() {
         {modo === 'mes' ? (
           <input type="month" value={mes} onChange={e => setMes(e.target.value)} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base" />
         ) : (
-          <select value={harvestId} onChange={e => setHarvestId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
+          <select value={harvestId} onChange={e => { setHarvestTouched(true); setHarvestId(e.target.value === '' ? '' : Number(e.target.value)); }} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
             <option value="">Selecione uma safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} — {h.tipo} {h.ano}</option>)}
           </select>
