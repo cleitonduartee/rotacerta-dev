@@ -38,6 +38,7 @@ export default function TripForm() {
   const [valorPorTonelada, setValorPorTonelada] = useState<string>('');
 
   const [observacao, setObservacao] = useState('');
+  const [notaProdutor, setNotaProdutor] = useState('');
   const [loaded, setLoaded] = useState(!editingId);
 
   // Carregar para edição
@@ -59,6 +60,7 @@ export default function TripForm() {
         setValorPorTonelada(t.valorPorTonelada?.toString() ?? '');
       }
       setObservacao(t.observacao ?? '');
+      setNotaProdutor(t.notaProdutor ?? '');
       setLoaded(true);
     });
   }, [editingId, contracts]);
@@ -155,6 +157,7 @@ export default function TripForm() {
       valorPorTonelada: kind === 'frete' ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
       valorTotal: calc.valorTotal,
       observacao,
+      notaProdutor: notaProdutor.trim() || undefined,
       ...stamp(),
     };
 
@@ -313,6 +316,10 @@ export default function TripForm() {
             <Summary rows={[['Valor total', fmtBRL(calc.valorTotal)]]} />
           </>
         )}
+
+        <Field label="Nº da nota do produtor (opcional)">
+          <input value={notaProdutor} onChange={e => setNotaProdutor(e.target.value)} className={inputCls} placeholder="Ex: 12345" />
+        </Field>
 
         <Field label="Observação">
           <textarea value={observacao} onChange={e => setObservacao(e.target.value)} className={inputCls + ' min-h-[80px]'} />

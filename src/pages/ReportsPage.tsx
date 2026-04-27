@@ -3,9 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
-import { Printer, Calendar, Wheat } from 'lucide-react';
+import { Printer, Calendar, Wheat, FileText } from 'lucide-react';
 
-type Modo = 'mes' | 'safra';
+type Modo = 'mes' | 'safra' | 'contrato';
 
 export default function ReportsPage() {
   const [modo, setModo] = useState<Modo>('mes');
@@ -13,6 +13,7 @@ export default function ReportsPage() {
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [harvestTouched, setHarvestTouched] = useState(false);
+  const [contratoId, setContratoId] = useState<number | ''>('');
 
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
@@ -39,15 +40,28 @@ export default function ReportsPage() {
       const e = expenses.filter(x => x.data?.startsWith(mes));
       const [y, m] = mes.split('-');
       return { tripsFiltradas: t, despesasFiltradas: e, titulo: `Mês ${m}/${y}` };
-    } else {
+    } else if (modo === 'safra') {
       if (!harvestId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma safra' };
       const cIds = new Set(contracts.filter(c => c.harvestId === Number(harvestId)).map(c => c.id));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId && cIds.has(x.contractId));
       const e = expenses.filter(x => (x.contractId && cIds.has(x.contractId)) || x.harvestId === Number(harvestId));
       const h = harvests.find(hh => hh.id === Number(harvestId));
       return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra' };
+    } else {
+      // contrato
+      if (!contratoId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione um contrato' };
+      const c = contracts.find(cc => cc.id === Number(contratoId));
+      const t = trips.filter(x => x.kind === 'safra' && x.contractId === Number(contratoId));
+      const tripIds = new Set(t.map(tt => tt.id));
+      const e = expenses.filter(x =>
+        x.contractId === Number(contratoId) ||
+        (x.tripId && tripIds.has(x.tripId))
+      );
+      const p = c ? producers.find(pp => pp.id === c.producerId) : undefined;
+      const h = c ? harvests.find(hh => hh.id === c.harvestId) : undefined;
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: c ? `Contrato — ${p?.nome ?? '?'} / ${h?.nome ?? '?'}` : 'Contrato' };
     }
-  }, [modo, mes, harvestId, trips, expenses, contracts, harvests]);
+  }, [modo, mes, harvestId, contratoId, trips, expenses, contracts, harvests, producers]);
 
   const receita = tripsFiltradas.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = despesasFiltradas.reduce((s, e) => s + e.valor, 0);
@@ -79,21 +93,33 @@ export default function ReportsPage() {
     <div className="animate-fade-in">
       <PageHeader title="Relatórios" subtitle="Extrato detalhado para impressão" />
       <div className="space-y-4 px-4 pb-6 print:hidden">
-        <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+        <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
           <button onClick={() => setModo('mes')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'mes' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
             <Calendar className="h-4 w-4" /> Mensal
           </button>
           <button onClick={() => setModo('safra')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'safra' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
-            <Wheat className="h-4 w-4" /> Por safra
+            <Wheat className="h-4 w-4" /> Safra
+          </button>
+          <button onClick={() => setModo('contrato')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'contrato' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+            <FileText className="h-4 w-4" /> Contrato
           </button>
         </div>
 
         {modo === 'mes' ? (
           <input type="month" value={mes} onChange={e => setMes(e.target.value)} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base" />
-        ) : (
+        ) : modo === 'safra' ? (
           <select value={harvestId} onChange={e => { setHarvestTouched(true); setHarvestId(e.target.value === '' ? '' : Number(e.target.value)); }} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
             <option value="">Selecione uma safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} — {h.tipo} {h.ano}</option>)}
+          </select>
+        ) : (
+          <select value={contratoId} onChange={e => setContratoId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
+            <option value="">Selecione um contrato…</option>
+            {contracts.map(c => {
+              const p = producers.find(pp => pp.id === c.producerId);
+              const h = harvests.find(hh => hh.id === c.harvestId);
+              return <option key={c.id} value={c.id}>{p?.nome ?? '?'} / {h?.nome ?? '?'}{c.fechado ? ' — fechado' : ''}</option>;
+            })}
           </select>
         )}
 
@@ -129,6 +155,7 @@ export default function ReportsPage() {
                   <th className="pr-2">Tipo</th>
                   <th className="pr-2">Caminhão</th>
                   <th className="pr-2">Origem → Destino</th>
+                  <th className="pr-2">Nota</th>
                   <th className="pr-2 text-right">Sacos</th>
                   <th className="pr-2 text-right">Valor</th>
                 </tr>
@@ -140,6 +167,7 @@ export default function ReportsPage() {
                     <td className="pr-2">{t.kind === 'safra' ? 'Safra' : 'Frete'}</td>
                     <td className="pr-2">{placa(t.truckId)}</td>
                     <td className="pr-2">{t.origem} → {t.destino}</td>
+                    <td className="pr-2">{t.notaProdutor || '—'}</td>
                     <td className="pr-2 text-right">{t.sacos ? fmtNum(t.sacos, 1) : '—'}</td>
                     <td className="pr-2 text-right font-semibold">{fmtBRL(t.valorTotal)}</td>
                   </tr>
@@ -147,7 +175,7 @@ export default function ReportsPage() {
               </tbody>
               <tfoot>
                 <tr className="font-bold">
-                  <td colSpan={5} className="pt-2 text-right pr-2">Total receita</td>
+                  <td colSpan={6} className="pt-2 text-right pr-2">Total receita</td>
                   <td className="pt-2 text-right pr-2 text-primary">{fmtBRL(receita)}</td>
                 </tr>
               </tfoot>

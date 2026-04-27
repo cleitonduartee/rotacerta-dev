@@ -91,25 +91,75 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   }
 
   // Lista de viagens
-  if (y > 700) { doc.addPage(); y = 40; }
+  if (y > 680) { doc.addPage(); y = 40; }
   y += 10;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
   doc.text('Viagens', 40, y); y += 16;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
-  doc.text('Data', 40, y); doc.text('Caminhão', 100, y); doc.text('Origem → Destino', 170, y); doc.text('Sacos', 400, y); doc.text('Valor', W - 50, y, { align: 'right' });
+  doc.text('Data', 40, y);
+  doc.text('Caminhão', 95, y);
+  doc.text('Origem → Destino', 165, y);
+  doc.text('Nota', 340, y);
+  doc.text('Sacos', 410, y, { align: 'right' });
+  doc.text('Valor', W - 50, y, { align: 'right' });
   y += 4; doc.line(40, y, W - 40, y); y += 12;
 
   for (const t of input.trips) {
     if (y > 800) { doc.addPage(); y = 40; }
     const tr = input.trucks.find(x => x.id === t.truckId);
     doc.text(fmtDate(t.data), 40, y);
-    doc.text(tr?.placa ?? '—', 100, y);
+    doc.text((tr?.placa ?? '—').slice(0, 12), 95, y);
     const od = `${t.origem} → ${t.destino}`;
-    doc.text(od.length > 38 ? od.slice(0, 36) + '…' : od, 170, y);
-    doc.text(fmtNum(t.sacos ?? 0, 1), 400, y);
+    doc.text(od.length > 32 ? od.slice(0, 30) + '…' : od, 165, y);
+    doc.text((t.notaProdutor ?? '—').toString().slice(0, 12), 340, y);
+    doc.text(fmtNum(t.sacos ?? 0, 1), 410, y, { align: 'right' });
     doc.text(fmtBRL(t.valorTotal), W - 50, y, { align: 'right' });
     y += 14;
   }
+
+  // Despesas por tipo
+  if (input.expenses && input.expenses.length > 0) {
+    if (y > 700) { doc.addPage(); y = 40; }
+    y += 14;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    doc.text('Despesas por tipo', 40, y); y += 16;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+
+    const porTipo = new Map<string, number>();
+    for (const e of input.expenses) {
+      porTipo.set(e.tipo || 'Outros', (porTipo.get(e.tipo || 'Outros') ?? 0) + (e.valor || 0));
+    }
+    const tipos = [...porTipo.entries()].sort((a, b) => b[1] - a[1]);
+    for (const [tipo, valor] of tipos) {
+      if (y > 800) { doc.addPage(); y = 40; }
+      doc.text(`• ${tipo}`, 50, y);
+      doc.text(fmtBRL(valor), W - 50, y, { align: 'right' });
+      y += 14;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total despesas', 50, y);
+    doc.text(fmtBRL(input.totals.despesas), W - 50, y, { align: 'right' });
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+
+    // Detalhamento das despesas
+    if (y > 720) { doc.addPage(); y = 40; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.text('Despesas detalhadas', 40, y); y += 14;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Data', 40, y); doc.text('Tipo', 100, y); doc.text('Descrição', 200, y); doc.text('Valor', W - 50, y, { align: 'right' });
+    y += 4; doc.line(40, y, W - 40, y); y += 12;
+    const exps = [...input.expenses].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    for (const e of exps) {
+      if (y > 800) { doc.addPage(); y = 40; }
+      doc.text(fmtDate(e.data), 40, y);
+      doc.text((e.tipo || '—').slice(0, 18), 100, y);
+      doc.text((e.descricao || '—').slice(0, 50), 200, y);
+      doc.text(fmtBRL(e.valor), W - 50, y, { align: 'right' });
+      y += 13;
+    }
+  }
+
 
   doc.setFontSize(8); doc.setTextColor(140, 140, 140);
   doc.text(`Gerado em ${new Date().toLocaleString('pt-BR')} • RotaCerta`, 40, 820);

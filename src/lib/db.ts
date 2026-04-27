@@ -69,6 +69,7 @@ export interface Trip {
   pesoToneladas?: number;
   valorPorTonelada?: number;
 
+  notaProdutor?: string;   // número da nota do produtor (opcional)
   valorTotal: number;
   observacao?: string;
   syncStatus: SyncStatus;
