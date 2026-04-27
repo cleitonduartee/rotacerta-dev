@@ -1,70 +1,86 @@
-## Melhoria do Dashboard inicial
+## Sincronização offline-first IndexedDB ↔ Supabase
 
-A tela inicial ganhará uma visão analítica completa, com gráficos interativos e filtros, mantendo o estilo visual atual (cards arredondados, gradiente laranja, tipografia display).
+Hoje os dados ficam **só** no IndexedDB do navegador — `src/lib/sync.ts` é um stub que apenas marca como "sincronizado". Vou substituí-lo por sincronização real bidirecional com o Lovable Cloud, isolada por `user_id`.
 
-### Nova estrutura da tela `/` (Dashboard)
+### Modelo de dados — chave dupla local/servidor
 
-```text
-┌─────────────────────────────────────────┐
-│  HERO  •  Líquido total                  │
-│  Receita | Despesas | Sacos              │
-└─────────────────────────────────────────┘
-[ Filtro de período: Mês ▾  |  Ano ▾  |  Tudo ]
+Servidor usa `uuid` (string). IndexedDB usa `id` numérico auto-incremento. Solução: cada tabela local ganha uma coluna `remoteId?: string` (uuid do servidor) e mantém o `id` numérico local. A versão do Dexie sobe para `3`, com índices em `remoteId` e `syncStatus`.
 
-┌──────── Cards rápidos (3 col) ────────┐
-│ Viagens | Sacos | Safras abertas      │
-└────────────────────────────────────────┘
+Tabelas afetadas no IndexedDB: `trucks`, `producers`, `harvests`, `contracts`, `trips`, `expenses` (drivers continua só local — não tem tabela no servidor).
 
-┌── Gráfico 1: Receita x Despesa (Barras) ──┐
-│  Últimos 6 meses, lado a lado             │
-└────────────────────────────────────────────┘
+Campos `*Id` numéricos que apontam para outra tabela local (ex.: `Trip.contractId`, `Trip.truckId`, `Contract.producerId`, `Contract.harvestId`, `Expense.contractId/harvestId/tripId`) **continuam locais**. Na hora de subir/baixar, são traduzidos para `remoteId` correspondente via mapas `localId ↔ remoteId`.
 
-┌── Gráfico 2: Receita por Safra (Pizza) ──┐
-│  Fatia por safra com legenda + %          │
-└────────────────────────────────────────────┘
+### Fluxo no login (PULL inicial)
 
-┌── Gráfico 3: Receita por Mês (Linha) ────┐
-│  Evolução mensal do ano selecionado       │
-└────────────────────────────────────────────┘
+Quando `auth` confirma um usuário e o `UserDataGate` termina:
 
-┌── Gráfico 4: Despesas por Tipo (Pizza) ──┐
-│  Combustível, Pedágio, Manutenção, etc.   │
-└────────────────────────────────────────────┘
+1. Se online, dispara `pullAll(userId)`:
+   - Para cada tabela, faz `select('*').eq('user_id', uid)` no Supabase.
+   - **Estratégia "last-write-wins"** por `updated_at`:
+     - Se o registro local com mesmo `remoteId` é mais novo → mantém local (será reenviado no push).
+     - Caso contrário → grava localmente como `synced` com `remoteId` preenchido.
+   - Constrói os mapas `remoteId → localId` por tabela e converte FKs antes de gravar (ex.: o `contract_id` uuid vira `contractId` numérico local).
+2. Em seguida, `pushAll(userId)` envia tudo que ficou `pending` (registros criados/editados offline antes de logar).
 
-[ Atalhos rápidos ]   [ Últimas viagens ]
-```
+### Fluxo contínuo (PUSH)
 
-### Gráficos planejados (recharts já instalado)
+Sempre que o app fica online ou o contador de pendentes muda (já existe `SyncIndicator`), chama `pushAll(userId)`:
 
-1. **Pizza — Receita por Safra**: agrupa `trips` (kind=safra) por `contract.harvestId` e soma `valorTotal`. Inclui fatia "Fretes avulsos" para viagens não-safra.
-2. **Pizza — Despesas por Tipo**: agrupa `expenses` por `tipo`.
-3. **Barras — Receita vs Despesa (últimos 6 meses)**: 2 barras por mês.
-4. **Linha — Receita mensal do ano**: 12 pontos do ano selecionado.
+- Para cada registro `pending`, em ordem de dependência (`trucks`, `producers`, `harvests` → `contracts` → `trips` → `expenses`):
+  - Converte campos locais para o payload do servidor (snake_case + tradução de FKs locais para `remoteId`).
+  - Se não tem `remoteId` → `insert(...).select().single()` e grava o `id` retornado em `remoteId`.
+  - Se tem `remoteId` → `upsert` com o mesmo `id`.
+  - Em sucesso, marca como `synced`.
+- DELETE: adiciona uma nova tabela local `tombstones { id, table, remoteId, createdAt }`. Sempre que algo é apagado localmente que tinha `remoteId`, grava um tombstone; o push chama `delete().eq('id', remoteId)` e remove o tombstone.
 
-Todos os gráficos respeitam o filtro de período no topo (Mês / Ano / Tudo). Quando o usuário escolher "Mês", os gráficos de evolução mostram o contexto do ano daquele mês.
+### Realtime (opcional, leve)
 
-### Filtros
+Assina canal `postgres_changes` no schema `public` filtrado por `user_id` para refletir alterações feitas em outro dispositivo enquanto o app está aberto. Aplica o mesmo merge "last-write-wins" do pull.
 
-- Seletor compacto no topo: **Mês** (input month), **Ano** (select), **Tudo**.
-- Os 3 cards do hero (Receita/Despesas/Líquido) e os cards rápidos passam a refletir o filtro selecionado.
-- Estado local com `useState`, sem persistência.
+### Mudanças no `UserDataGate`
 
-### Estado vazio
+Hoje ele **apaga o IndexedDB** quando o `user.id` muda. Vamos ajustar:
+- Continua isolando por usuário (apaga ao trocar de conta).
+- **Para o mesmo usuário, NÃO apaga mais** se já houver `remoteId` nos dados (significa que estão sincronizados). Caso contrário, mantém comportamento atual.
+- Após preparar dados, dispara o `pullAll` antes de liberar o `Outlet`, mostrando "Carregando seus dados…".
 
-- Quando não houver dados suficientes para um gráfico, mostrar um placeholder discreto ("Sem dados no período") em vez de gráfico vazio, mantendo o card visível.
+### Conversões cliente → servidor (exemplo `trips`)
 
-### Detalhes técnicos
+| Local                 | Servidor               |
+|-----------------------|------------------------|
+| `data` (ISO date)     | `data`                 |
+| `kind`                | `kind`                 |
+| `truckId` (number)    | `truck_id` (uuid via mapa)  |
+| `contractId` (number) | `contract_id` (uuid via mapa) |
+| `pesoKg`              | `peso_kg`              |
+| `sacos`               | `sacos`                |
+| `valorPorSacoOverride`| `valor_por_saco_override` |
+| `transportadora`      | `transportadora`       |
+| `pesoToneladas`       | `peso_toneladas`       |
+| `valorPorTonelada`    | `valor_por_tonelada`   |
+| `origem`/`destino`    | `origem`/`destino`     |
+| `valorTotal`          | `valor_total`          |
+| `observacao`          | `observacao`           |
+| `updatedAt` (ms epoch)| `updated_at` (ISO)     |
 
-- Arquivo alterado: `src/pages/Dashboard.tsx` (refatoração).
-- Uso dos componentes: `PieChart`, `Pie`, `Cell`, `BarChart`, `Bar`, `LineChart`, `Line`, `XAxis`, `YAxis`, `Tooltip`, `Legend`, `ResponsiveContainer` do `recharts`, envolvidos no `ChartContainer` de `src/components/ui/chart.tsx` para herdar o tema.
-- Paleta usando tokens já existentes (`hsl(var(--primary))`, variações) — sem cores hard-coded fora do design system. Para múltiplas fatias da pizza, gerar variações de matiz a partir do primary (laranja → âmbar → terracota → marrom).
-- Agregações em `useMemo` para performance, alimentadas por `useLiveQuery` em `db.trips`, `db.expenses`, `db.harvests`, `db.contracts`.
-- Formatação monetária com `fmtBRL` em tooltips e labels.
-- Sem alterações em banco, rotas, autenticação ou outras páginas.
-- Layout responsivo mobile-first (viewport atual 647px): gráficos em coluna única, altura ~220px cada; em telas maiores (`md:`), pizzas lado a lado em 2 colunas.
+Mesma lógica para as outras tabelas. `notaProdutor` fica local (não existe coluna no servidor — pode virar um próximo passo).
+
+### Arquivos a alterar/criar
+
+- `src/lib/db.ts` — sobe versão para `3`, adiciona `remoteId` em todas as tabelas sincronizáveis e nova tabela `tombstones`. Migração v2→v3 mantém os dados existentes.
+- `src/lib/sync.ts` — reescrita completa: `pullAll`, `pushAll`, `syncAll`, `deleteWithTombstone`, mapeadores por tabela.
+- `src/components/UserDataGate.tsx` — chama `pullAll` no login; só apaga IndexedDB ao trocar de conta.
+- `src/components/SyncIndicator.tsx` — passa a chamar `syncAll(userId)` em vez de `syncPending`; adiciona toast no sucesso/erro.
+- Páginas que fazem `db.<tabela>.delete(id)` (ex.: `TripsList`, `Expenses`, `CadastrosPage`, `ContractsPage`) — trocar para um helper `deleteWithTombstone('trips', id)` para que o servidor também apague.
+
+### Estado vazio e UX
+
+- Loader "Sincronizando seus dados…" no primeiro pull.
+- `SyncIndicator` continua mostrando offline / pendentes / sincronizado, agora refletindo o servidor de verdade.
+- Em caso de erro de rede, log no console e o app continua usando o IndexedDB normalmente; nova tentativa quando voltar a ficar online.
 
 ### Fora de escopo
 
-- Não altera o `ReportsPage` (relatórios para impressão continuam como estão).
-- Não cria novas tabelas nem edge functions.
-- Não mexe no menu/rodapé/marca d'água.
+- Não adicionar `nota_produtor`, `drivers` ou outras colunas ainda inexistentes no servidor (pode virar tarefa separada).
+- Não criar tabelas, índices ou triggers no Supabase — o esquema atual já cobre tudo que o app usa.
+- Não migrar dados antigos de outros aparelhos (é impossível: nunca foram enviados).

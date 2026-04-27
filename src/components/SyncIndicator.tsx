@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
-import { countPending, syncPending } from '@/lib/sync';
+import { countPending, syncAll } from '@/lib/sync';
 import { Wifi, WifiOff, RefreshCw } from 'lucide-react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/lib/auth';
 
 export function SyncIndicator() {
   const online = useOnlineStatus();
+  const { user } = useAuth();
   const [syncing, setSyncing] = useState(false);
-  // recompute pending on any data change
   const pending = useLiveQuery(async () => countPending(), [], 0);
 
   useEffect(() => {
-    if (online && (pending ?? 0) > 0 && !syncing) {
+    if (online && user && (pending ?? 0) > 0 && !syncing) {
       setSyncing(true);
-      syncPending().finally(() => setSyncing(false));
+      syncAll(user.id).finally(() => setSyncing(false));
     }
-  }, [online, pending]);
+  }, [online, pending, user?.id]);
 
   // touch db to keep liveQuery active
   useLiveQuery(() => db.trips.count(), []);

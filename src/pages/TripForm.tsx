@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp, calcSafra, calcFrete, type Trip, type TripKind } from '@/lib/db';
+import { db, stamp, calcSafra, calcFrete, deleteWithTombstone, type Trip, type TripKind } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { todayISO, fmtBRL } from '@/lib/format';
 import { Trash2, Save } from 'lucide-react';
@@ -172,7 +172,7 @@ export default function TripForm() {
   async function remove() {
     if (!editingId) return;
     if (!confirm('Excluir esta viagem?')) return;
-    await db.trips.delete(editingId);
+    await deleteWithTombstone('trips', editingId);
     toast.success('Viagem excluída');
     navigate('/viagens');
   }

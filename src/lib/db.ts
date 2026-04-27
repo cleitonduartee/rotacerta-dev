@@ -1,6 +1,7 @@
 import Dexie, { type Table } from 'dexie';
 
 export type SyncStatus = 'pending' | 'synced';
+export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses';
 
 export interface Driver {
   id?: number;
@@ -13,6 +14,7 @@ export interface Driver {
 
 export interface Truck {
   id?: number;
+  remoteId?: string;
   placa: string;
   modelo?: string;
   syncStatus: SyncStatus;
@@ -21,6 +23,7 @@ export interface Truck {
 
 export interface Producer {
   id?: number;
+  remoteId?: string;
   nome: string;
   syncStatus: SyncStatus;
   updatedAt: number;
@@ -28,6 +31,7 @@ export interface Producer {
 
 export interface Harvest {
   id?: number;
+  remoteId?: string;
   nome: string;        // ex Safra 2026
   tipo: string;        // soja, milho...
   ano: number;
@@ -39,6 +43,7 @@ export interface Harvest {
 
 export interface HarvestContract {
   id?: number;
+  remoteId?: string;
   producerId: number;
   harvestId: number;
   valorPorSaco: number;  // R$ por saco de 60kg
@@ -52,6 +57,7 @@ export type TripKind = 'safra' | 'frete';
 
 export interface Trip {
   id?: number;
+  remoteId?: string;
   kind: TripKind;
   data: string;            // ISO date
   truckId: number;
@@ -78,6 +84,7 @@ export interface Trip {
 
 export interface Expense {
   id?: number;
+  remoteId?: string;
   data: string;
   tipo: string;            // categoria (Combustível, Pedágio, ... ou texto livre se "Outros")
   valor: number;
@@ -94,6 +101,13 @@ export interface Setting {
   value: string;
 }
 
+export interface Tombstone {
+  id?: number;
+  table: SyncTable;
+  remoteId: string;
+  createdAt: number;
+}
+
 class TruckTripDB extends Dexie {
   drivers!: Table<Driver, number>;
   trucks!: Table<Truck, number>;
@@ -103,6 +117,7 @@ class TruckTripDB extends Dexie {
   trips!: Table<Trip, number>;
   expenses!: Table<Expense, number>;
   settings!: Table<Setting, string>;
+  tombstones!: Table<Tombstone, number>;
 
   constructor() {
     super('trucktrip');
@@ -119,6 +134,16 @@ class TruckTripDB extends Dexie {
     this.version(2).stores({
       expenses: '++id, data, harvestId, tripId, contractId, syncStatus',
     });
+    // v3: adiciona remoteId em todas as tabelas sincronizáveis + tombstones
+    this.version(3).stores({
+      trucks: '++id, remoteId, placa, syncStatus',
+      producers: '++id, remoteId, nome, syncStatus',
+      harvests: '++id, remoteId, ano, fechada, syncStatus',
+      contracts: '++id, remoteId, producerId, harvestId, syncStatus',
+      trips: '++id, remoteId, data, kind, truckId, contractId, syncStatus',
+      expenses: '++id, remoteId, data, harvestId, tripId, contractId, syncStatus',
+      tombstones: '++id, table, remoteId',
+    });
   }
 }
 
@@ -134,4 +159,18 @@ export function calcSafra(pesoKg: number, valorPorSaco: number) {
 
 export function calcFrete(pesoToneladas: number, valorPorTonelada: number) {
   return pesoToneladas * valorPorTonelada;
+}
+
+/**
+ * Apaga um registro local e, se ele já existia no servidor,
+ * registra um tombstone para que o próximo push remova-o no Cloud também.
+ */
+export async function deleteWithTombstone(table: SyncTable, localId: number) {
+  const t = (db as any)[table] as Table<any, number>;
+  const row = await t.get(localId);
+  if (!row) return;
+  if (row.remoteId) {
+    await db.tombstones.add({ table, remoteId: row.remoteId, createdAt: Date.now() });
+  }
+  await t.delete(localId);
 }

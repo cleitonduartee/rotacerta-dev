@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp } from '@/lib/db';
+import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum, fmtDate } from '@/lib/format';
 import { Plus, Trash2, Lock, Unlock, FileDown, Share2 } from 'lucide-react';
@@ -40,7 +40,7 @@ export default function ContractsPage() {
 
   async function remove(id: number) {
     if (!confirm('Excluir contrato?')) return;
-    await db.contracts.delete(id);
+    await deleteWithTombstone('contracts', id);
   }
 
   async function fechar(id: number) {

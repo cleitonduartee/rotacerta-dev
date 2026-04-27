@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp } from '@/lib/db';
+import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock, Pencil, Info } from 'lucide-react';
@@ -32,7 +32,7 @@ export default function CadastrosPage() {
           <AddTruck />
           <ul className="space-y-2 mt-3">
             {trucks.map(t => (
-              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={async () => { if (confirm('Excluir?')) await db.trucks.delete(t.id!); }} />
+              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={async () => { if (confirm('Excluir?')) await deleteWithTombstone('trucks', t.id!); }} />
             ))}
             {trucks.length === 0 && <Empty>Cadastre seu primeiro caminhão.</Empty>}
           </ul>
@@ -42,7 +42,7 @@ export default function CadastrosPage() {
           <AddProducer />
           <ul className="space-y-2 mt-3">
             {producers.map(p => (
-              <Row key={p.id} title={p.nome} onDel={async () => { if (confirm('Excluir?')) await db.producers.delete(p.id!); }} />
+              <Row key={p.id} title={p.nome} onDel={async () => { if (confirm('Excluir?')) await deleteWithTombstone('producers', p.id!); }} />
             ))}
             {producers.length === 0 && <Empty>Cadastre o primeiro produtor.</Empty>}
           </ul>
@@ -67,7 +67,7 @@ export default function CadastrosPage() {
                     {h.fechada ? 'Fechada' : 'Aberta'}
                   </span>
                   <button
-                    onClick={async () => { if (confirm('Excluir safra?')) await db.harvests.delete(h.id!); }}
+                    onClick={async () => { if (confirm('Excluir safra?')) await deleteWithTombstone('harvests', h.id!); }}
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />

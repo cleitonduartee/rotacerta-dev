@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp } from '@/lib/db';
+import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, todayISO } from '@/lib/format';
 import { Plus, Trash2 } from 'lucide-react';
@@ -40,7 +40,7 @@ export function ExpensesList() {
               <div className="flex items-center gap-1 shrink-0">
                 <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
                 <button
-                  onClick={async () => { if (confirm('Excluir?')) { await db.expenses.delete(e.id!); toast.success('Excluído'); } }}
+                  onClick={async () => { if (confirm('Excluir?')) { await deleteWithTombstone('expenses', e.id!); toast.success('Excluído'); } }}
                   className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                 >
                   <Trash2 className="h-4 w-4" />
