@@ -201,9 +201,16 @@ export default function Dashboard() {
         <Stat icon={Wheat} value={safrasAbertas} label="Safras abertas" />
       </div>
 
+      {/* Empty state consolidado */}
+      {!barsData.some(b => b.receita || b.despesa) && pizzaSafra.length === 0 && !linhaAno.data.some(d => d.valor > 0) && pizzaDespesas.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border bg-card/50 p-5 text-center text-sm text-muted-foreground">
+          Sem dados no período selecionado. Registre uma viagem ou despesa para ver os gráficos.
+        </div>
+      )}
+
       {/* Gráfico — Receita vs Despesa */}
+      {barsData.some(b => b.receita || b.despesa) && (
       <ChartCard title="Receita × Despesa" subtitle="Últimos 6 meses">
-        {barsData.some(b => b.receita || b.despesa) ? (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barsData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
