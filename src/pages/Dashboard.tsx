@@ -1,7 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Truck, Wheat, Package, Receipt } from 'lucide-react';
+import { Truck, Wheat, Package, Receipt, FileBarChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
