@@ -40,15 +40,28 @@ export default function ReportsPage() {
       const e = expenses.filter(x => x.data?.startsWith(mes));
       const [y, m] = mes.split('-');
       return { tripsFiltradas: t, despesasFiltradas: e, titulo: `Mês ${m}/${y}` };
-    } else {
+    } else if (modo === 'safra') {
       if (!harvestId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma safra' };
       const cIds = new Set(contracts.filter(c => c.harvestId === Number(harvestId)).map(c => c.id));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId && cIds.has(x.contractId));
       const e = expenses.filter(x => (x.contractId && cIds.has(x.contractId)) || x.harvestId === Number(harvestId));
       const h = harvests.find(hh => hh.id === Number(harvestId));
       return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra' };
+    } else {
+      // contrato
+      if (!contratoId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione um contrato' };
+      const c = contracts.find(cc => cc.id === Number(contratoId));
+      const t = trips.filter(x => x.kind === 'safra' && x.contractId === Number(contratoId));
+      const tripIds = new Set(t.map(tt => tt.id));
+      const e = expenses.filter(x =>
+        x.contractId === Number(contratoId) ||
+        (x.tripId && tripIds.has(x.tripId))
+      );
+      const p = c ? producers.find(pp => pp.id === c.producerId) : undefined;
+      const h = c ? harvests.find(hh => hh.id === c.harvestId) : undefined;
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: c ? `Contrato — ${p?.nome ?? '?'} / ${h?.nome ?? '?'}` : 'Contrato' };
     }
-  }, [modo, mes, harvestId, trips, expenses, contracts, harvests]);
+  }, [modo, mes, harvestId, contratoId, trips, expenses, contracts, harvests, producers]);
 
   const receita = tripsFiltradas.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = despesasFiltradas.reduce((s, e) => s + e.valor, 0);
