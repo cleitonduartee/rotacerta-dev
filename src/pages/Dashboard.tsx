@@ -210,7 +210,9 @@ export default function Dashboard() {
               <XAxis dataKey="mes" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
               <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--popover-foreground))' }}
+                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
                 formatter={(v: number) => fmtBRL(v)}
                 cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
               />
@@ -240,7 +242,9 @@ export default function Dashboard() {
                 {pizzaSafra.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--popover-foreground))' }}
+                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
                 formatter={(v: number) => fmtBRL(v)}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
@@ -258,7 +262,9 @@ export default function Dashboard() {
               <XAxis dataKey="mes" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
               <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--popover-foreground))' }}
+                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
                 formatter={(v: number) => fmtBRL(v)}
               />
               <Line type="monotone" dataKey="valor" name="Receita" stroke="hsl(22 95% 55%)" strokeWidth={3} dot={{ fill: 'hsl(22 95% 55%)', r: 4 }} activeDot={{ r: 6 }} />
@@ -285,7 +291,9 @@ export default function Dashboard() {
                 {pizzaDespesas.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
               </Pie>
               <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--popover-foreground))' }}
+                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
+                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
                 formatter={(v: number) => fmtBRL(v)}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
