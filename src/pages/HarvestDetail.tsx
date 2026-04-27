@@ -1,9 +1,9 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Lock, FileDown, Share2 } from 'lucide-react';
+import { Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 
