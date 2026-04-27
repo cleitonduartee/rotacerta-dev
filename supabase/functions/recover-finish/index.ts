@@ -96,6 +96,23 @@ Deno.serve(async (req) => {
     // atualiza telefone do perfil + email/senha do usuário
     const newEmail = fakeEmailFor(newTel);
     const newPwd = await passwordFor(newTel);
+
+    // Limpa qualquer usuário órfão no auth com o mesmo email-alvo (evita conflito de unique key).
+    // Lista paginada e remove quem não for o próprio user.
+    try {
+      const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const orphans = (list?.users ?? []).filter(
+        (u) => u.email === newEmail && u.id !== profile.user_id,
+      );
+      for (const u of orphans) {
+        await admin.auth.admin.deleteUser(u.id);
+        // remove perfil residual desse user_id, se houver
+        await admin.from("profiles").delete().eq("user_id", u.id);
+      }
+    } catch (cleanupErr) {
+      console.warn("cleanup orphan auth user falhou", cleanupErr);
+    }
+
     const { error: updErr } = await admin.from("profiles")
       .update({ telefone: newTel }).eq("user_id", profile.user_id);
     if (updErr) return json({ error: updErr.message }, 500);
