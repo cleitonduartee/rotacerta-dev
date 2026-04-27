@@ -207,9 +207,14 @@ export default function TripForm() {
         </Field>
 
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Origem"><input value={origem} onChange={e => setOrigem(e.target.value)} className={inputCls} placeholder="Cidade/fazenda" /></Field>
-          <Field label="Destino"><input value={destino} onChange={e => setDestino(e.target.value)} className={inputCls} placeholder="Cidade/armazém" /></Field>
+          <Field label="Origem"><input value={origem} onChange={e => { setOrigem(e.target.value); setOrigemTouched(true); }} className={inputCls} placeholder="Cidade/fazenda" /></Field>
+          <Field label="Destino"><input value={destino} onChange={e => { setDestino(e.target.value); setDestinoTouched(true); }} className={inputCls} placeholder="Cidade/armazém" /></Field>
         </div>
+        {kind === 'safra' && contract && (origem || destino) && !editingId && (
+          <p className="-mt-2 text-xs text-muted-foreground">
+            ✓ Origem/destino sugeridos da última viagem deste contrato. Edite se precisar.
+          </p>
+        )}
 
         {kind === 'safra' ? (
           <>
