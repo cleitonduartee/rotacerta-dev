@@ -91,7 +91,7 @@ export default function ReportsPage() {
         {modo === 'mes' ? (
           <input type="month" value={mes} onChange={e => setMes(e.target.value)} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base" />
         ) : (
-          <select value={harvestId} onChange={e => setHarvestId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
+          <select value={harvestId} onChange={e => { setHarvestTouched(true); setHarvestId(e.target.value === '' ? '' : Number(e.target.value)); }} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
             <option value="">Selecione uma safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} — {h.tipo} {h.ano}</option>)}
           </select>
