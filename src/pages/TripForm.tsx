@@ -98,6 +98,20 @@ export default function TripForm() {
     return contracts.find(c => c.producerId === producerId && c.harvestId === harvestId);
   }, [kind, producerId, harvestId, contracts]);
 
+  // Auto-preencher origem/destino com base na última viagem deste contrato
+  useEffect(() => {
+    if (editingId || kind !== 'safra' || !contract?.id) return;
+    db.trips
+      .where('contractId').equals(contract.id)
+      .reverse().sortBy('data')
+      .then(list => {
+        const last = list[0];
+        if (!last) return;
+        if (!origemTouched && !origem) setOrigem(last.origem || '');
+        if (!destinoTouched && !destino) setDestino(last.destino || '');
+      });
+  }, [contract?.id, editingId, kind]);
+
   const pesoKgNum = useMemo(() => {
     const v = parseFloat(pesoKg.replace(',', '.')) || 0;
     return unidadePeso === 't' ? v * 1000 : v;
