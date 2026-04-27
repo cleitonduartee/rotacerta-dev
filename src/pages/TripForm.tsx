@@ -209,9 +209,33 @@ export default function TripForm() {
               </select>
             </Field>
 
-            {kind === 'safra' && producerId !== '' && harvestId !== '' && !contract && (
+            {producerId !== '' && harvestId !== '' && !contract && (
               <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
-                Sem contrato cadastrado para este produtor + safra. Vá em <strong>Safras → Contratos</strong>.
+                Sem contrato para este produtor nesta safra.
+                {(() => {
+                  const outros = contracts.filter(c => c.producerId === producerId && !c.fechado);
+                  if (outros.length === 0) return <> Cadastre em <strong>Safras → Contratos</strong>.</>;
+                  return (
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs">Contratos disponíveis para este produtor:</p>
+                      {outros.map(c => {
+                        const h = harvests.find(h => h.id === c.harvestId);
+                        return (
+                          <button key={c.id} type="button" onClick={() => setHarvestId(c.harvestId)}
+                            className="block w-full rounded-lg border border-warning/40 bg-card px-3 py-2 text-left text-sm text-foreground">
+                            Usar safra <strong>{h?.nome ?? '?'}</strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
+            {contratoFechado && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+                Contrato fechado — não é possível cadastrar viagens.
               </div>
             )}
 
