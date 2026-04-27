@@ -6,9 +6,9 @@ import { fmtBRL, fmtDate } from '@/lib/format';
 import { Plus, Truck as TruckIcon } from 'lucide-react';
 
 export default function TripsList() {
-  const trips = useLiveQuery(() => db.trips.orderBy('data').reverse().toArray(), [], []);
-  const trucks = useLiveQuery(() => db.trucks.toArray(), [], []);
-  const truckMap = new Map(trucks.map(t => [t.id, t]));
+  const trips = useLiveQuery(() => db.trips.orderBy('data').reverse().toArray(), []) ?? [];
+  const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
+  const truckMap = new Map(trucks.map(t => [t.id!, t] as const));
 
   return (
     <div className="animate-fade-in">

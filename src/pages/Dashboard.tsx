@@ -5,9 +5,9 @@ import { Truck, Wheat, Package, Receipt } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function Dashboard() {
-  const trips = useLiveQuery(() => db.trips.toArray(), [], []);
-  const expenses = useLiveQuery(() => db.expenses.toArray(), [], []);
-  const harvests = useLiveQuery(() => db.harvests.toArray(), [], []);
+  const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
+  const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
+  const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
 
   const totalReceita = trips.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = expenses.reduce((s, e) => s + e.valor, 0);
