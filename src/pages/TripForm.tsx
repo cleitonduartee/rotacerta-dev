@@ -47,6 +47,7 @@ export default function TripForm() {
       if (!t) return;
       setKind(t.kind); setData(t.data); setTruckId(t.truckId);
       setOrigem(t.origem); setDestino(t.destino);
+      setOrigemTouched(true); setDestinoTouched(true);
       if (t.kind === 'safra') {
         const c = t.contractId ? contracts.find(c => c.id === t.contractId) : undefined;
         if (c) { setProducerId(c.producerId); setHarvestId(c.harvestId); }
