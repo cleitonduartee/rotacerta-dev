@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
-import { fmtBRL, fmtNum } from '@/lib/format';
+import { fmtBRL, fmtNum, fmtDate } from '@/lib/format';
 import { Plus, Trash2, Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
