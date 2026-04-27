@@ -17,11 +17,21 @@ async function passwordFor(tel: string) {
   return await sha256(`${secret}:${tel}`);
 }
 
+// Gera recovery_code legível: 4 grupos de 4 (XXXX-XXXX-XXXX-XXXX)
+function genRecoveryCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem 0/O/1/I
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const chars = Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+  return `${chars.slice(0,4)}-${chars.slice(4,8)}-${chars.slice(8,12)}-${chars.slice(12,16)}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { telefone, code } = await req.json();
+    const body = await req.json();
+    const { telefone, code } = body;
     const tel = onlyDigits(telefone);
     const c = onlyDigits(code);
     if (!tel || c.length !== 6) return json({ error: "Dados inválidos" }, 400);
@@ -59,24 +69,28 @@ Deno.serve(async (req) => {
     const email = fakeEmailFor(tel);
     const password = await passwordFor(tel);
 
-    // garante usuário
-    const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
-    let user = list?.users?.find(u => u.email === email);
-    if (!user) {
+    // Já existe perfil para esse telefone?
+    const { data: existingProfile } = await admin
+      .from("profiles").select("user_id").eq("telefone", tel).maybeSingle();
+
+    let needs_signup = false;
+    let user_id: string | null = null;
+
+    if (existingProfile?.user_id) {
+      user_id = existingProfile.user_id;
+      // garante senha
+      await admin.auth.admin.updateUserById(user_id, { password });
+    } else {
+      // cria usuário Supabase mas SEM perfil ainda — UI fará cadastro
       const { data: created, error: cErr } = await admin.auth.admin.createUser({
         email, password, email_confirm: true, user_metadata: { telefone: tel },
       });
       if (cErr) return json({ error: cErr.message }, 500);
-      user = created.user!;
-      // cria profile
-      await admin.from("profiles").insert({ user_id: user.id, telefone: tel });
-    } else {
-      // garante senha (caso salt mude)
-      await admin.auth.admin.updateUserById(user.id, { password });
+      user_id = created.user!.id;
+      needs_signup = true;
     }
 
-    // retorna credenciais para o cliente fazer signInWithPassword e ter sessão persistente
-    return json({ ok: true, email, password });
+    return json({ ok: true, email, password, needs_signup, user_id });
   } catch (e) {
     return json({ error: String((e as Error).message ?? e) }, 500);
   }
