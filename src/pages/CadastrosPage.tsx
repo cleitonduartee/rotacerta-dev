@@ -84,7 +84,7 @@ export default function CadastrosPage() {
 }
 
 function DriverSection({ driver }: { driver?: any }) {
-  const { profile, user } = useAuth();
+  const { profile, user, refreshProfile } = useAuth();
   const [nome, setNome] = useState('');
   const [docType, setDocType] = useState<'cpf' | 'cnpj'>('cpf');
   const [doc, setDoc] = useState('');
