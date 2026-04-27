@@ -155,10 +155,7 @@ export default function HarvestDetail() {
     </div>
   );
 }
-      </div>
-    </div>
-  );
-}
+
 
 function Box({ label, v, highlight }: { label: string; v: any; highlight?: boolean }) {
   return (
