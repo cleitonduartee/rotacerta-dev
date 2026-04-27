@@ -22,12 +22,14 @@ export default function TripForm() {
   const [truckId, setTruckId] = useState<number | ''>('');
   const [origem, setOrigem] = useState('');
   const [destino, setDestino] = useState('');
+  const [origemTouched, setOrigemTouched] = useState(false);
+  const [destinoTouched, setDestinoTouched] = useState(false);
 
   // safra
   const [producerId, setProducerId] = useState<number | ''>('');
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [pesoKg, setPesoKg] = useState<string>('');
-  const [unidadePeso, setUnidadePeso] = useState<'kg' | 't'>('kg');
+  const [unidadePeso, setUnidadePeso] = useState<'kg' | 't'>('t');
   const [valorPorSacoOverride, setValorPorSacoOverride] = useState<string>('');
 
   // frete
