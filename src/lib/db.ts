@@ -40,6 +40,8 @@ export interface HarvestContract {
   producerId: number;
   harvestId: number;
   valorPorSaco: number;  // R$ por saco de 60kg
+  fechado?: boolean;
+  fechadoEm?: number;
   syncStatus: SyncStatus;
   updatedAt: number;
 }
@@ -99,7 +101,7 @@ class TruckTripDB extends Dexie {
   settings!: Table<Setting, string>;
 
   constructor() {
-    super('trucktrip');
+    super('rotacerta');
     this.version(1).stores({
       drivers: '++id, nome',
       trucks: '++id, placa, syncStatus',
