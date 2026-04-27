@@ -38,6 +38,7 @@ export default function TripForm() {
   const [valorPorTonelada, setValorPorTonelada] = useState<string>('');
 
   const [observacao, setObservacao] = useState('');
+  const [notaProdutor, setNotaProdutor] = useState('');
   const [loaded, setLoaded] = useState(!editingId);
 
   // Carregar para edição
