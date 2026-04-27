@@ -65,12 +65,6 @@ export default function TripForm() {
     if (editingId) return;
     if (truckId === '' && trucks[0]) setTruckId(trucks[0].id!);
     if (kind === 'safra') {
-      // safra atual = ano corrente, aberta
-      if (harvestId === '') {
-        const year = new Date(data).getFullYear();
-        const h = harvests.find(h => h.ano === year && !h.fechada) ?? harvests.find(h => !h.fechada);
-        if (h) setHarvestId(h.id!);
-      }
       // último produtor: ler do localStorage
       if (producerId === '') {
         const last = localStorage.getItem('lastProducerId');
@@ -78,6 +72,22 @@ export default function TripForm() {
       }
     }
   }, [trucks, harvests, producers, kind, data]);
+
+  // Quando o produtor mudar, auto-selecionar a safra do contrato vigente (não fechado)
+  useEffect(() => {
+    if (editingId || kind !== 'safra' || producerId === '') return;
+    const abertos = contracts.filter(c => c.producerId === producerId && !c.fechado);
+    // Se a safra atual não tem contrato com este produtor, escolher um contrato aberto
+    const jaTemContratoNaSafraAtual = harvestId !== '' &&
+      contracts.some(c => c.producerId === producerId && c.harvestId === harvestId);
+    if (jaTemContratoNaSafraAtual) return;
+    if (abertos.length >= 1) {
+      // Preferir safra do ano da viagem
+      const year = new Date(data).getFullYear();
+      const h = abertos.find(c => harvests.find(h => h.id === c.harvestId)?.ano === year) ?? abertos[0];
+      setHarvestId(h.harvestId);
+    }
+  }, [producerId, contracts, harvests, kind, data, editingId]);
 
   // Contrato vigente (produtor + safra)
   const contract = useMemo(() => {
