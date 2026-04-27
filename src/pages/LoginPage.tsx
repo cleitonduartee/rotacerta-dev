@@ -67,17 +67,30 @@ export default function LoginPage() {
       });
       if (error) throw error;
       const { email, password, needs_signup } = data;
-      const { error: sErr } = await supabase.auth.signInWithPassword({ email, password });
+      const { data: signRes, error: sErr } = await supabase.auth.signInWithPassword({ email, password });
       if (sErr) throw sErr;
       if (needs_signup) {
-        // Não navega — fica em /login para concluir cadastro (Nome, CPF, Email)
         setStep('signup');
         toast.success('Telefone confirmado. Complete seu cadastro.');
       } else {
-        toast.success('Bem-vindo de volta!');
-        // Atualiza profile em background; navega imediatamente
-        refreshProfile();
-        nav('/', { replace: true });
+        // Busca profile DIRETO antes de navegar para decidir se cadastro está completo
+        const uid = signRes.user?.id;
+        let complete = false;
+        if (uid) {
+          const { data: prof } = await supabase
+            .from('profiles')
+            .select('nome, cpf')
+            .eq('user_id', uid).maybeSingle();
+          complete = Boolean(prof?.nome && prof?.cpf);
+        }
+        if (complete) {
+          toast.success('Bem-vindo de volta!');
+          refreshProfile();
+          nav('/', { replace: true });
+        } else {
+          setStep('signup');
+          toast.success('Complete seu cadastro para continuar.');
+        }
       }
     } catch (e: any) { toast.error(e.message ?? 'Falha ao validar'); }
     finally { setLoading(false); }
