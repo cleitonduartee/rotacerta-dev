@@ -13,6 +13,7 @@ export default function ReportsPage() {
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [harvestTouched, setHarvestTouched] = useState(false);
+  const [contratoId, setContratoId] = useState<number | ''>('');
 
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
