@@ -157,6 +157,7 @@ export default function TripForm() {
       valorPorTonelada: kind === 'frete' ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
       valorTotal: calc.valorTotal,
       observacao,
+      notaProdutor: notaProdutor.trim() || undefined,
       ...stamp(),
     };
 
