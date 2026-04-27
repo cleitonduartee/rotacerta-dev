@@ -1,7 +1,8 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut } from 'lucide-react';
+import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut, WifiOff } from 'lucide-react';
 import { SyncIndicator } from './SyncIndicator';
 import { useAuth } from '@/lib/auth';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/lib/utils';
 
 const tabs = [
@@ -15,6 +16,7 @@ const tabs = [
 export function AppLayout() {
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const online = useOnlineStatus();
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur">
@@ -33,6 +35,13 @@ export function AppLayout() {
           </button>
         </div>
       </header>
+
+      {!online && (
+        <div className="flex items-center justify-center gap-2 border-b border-warning/30 bg-warning/10 px-4 py-2 text-xs font-semibold text-warning">
+          <WifiOff className="h-3.5 w-3.5" />
+          Modo offline — você pode continuar usando normalmente
+        </div>
+      )}
 
       <main className="flex-1 overflow-y-auto pb-32">
         <Outlet />
