@@ -18,20 +18,25 @@ export function UserDataGate() {
   useEffect(() => {
     (async () => {
       if (!user) { setReady(true); return; }
-      const last = localStorage.getItem(KEY);
-      const wiped = localStorage.getItem(WIPE_KEY);
-      if (last !== user.id || !wiped) {
-        await Promise.all([
-          db.trips.clear(),
-          db.expenses.clear(),
-          db.harvests.clear(),
-          db.contracts.clear(),
-          db.trucks.clear(),
-          db.producers.clear(),
-          db.drivers.clear(),
-        ]);
-        localStorage.setItem(KEY, user.id);
-        localStorage.setItem(WIPE_KEY, '1');
+      try {
+        const last = localStorage.getItem(KEY);
+        const wiped = localStorage.getItem(WIPE_KEY);
+        if (last !== user.id || !wiped) {
+          await Promise.all([
+            db.trips.clear(),
+            db.expenses.clear(),
+            db.harvests.clear(),
+            db.contracts.clear(),
+            db.trucks.clear(),
+            db.producers.clear(),
+            db.drivers.clear(),
+          ]);
+          localStorage.setItem(KEY, user.id);
+          localStorage.setItem(WIPE_KEY, '1');
+        }
+      } catch (e) {
+        // não bloqueia o app se Dexie falhar (ex: storage cheio / modo privado)
+        console.warn('UserDataGate wipe falhou', e);
       }
       setReady(true);
     })();
