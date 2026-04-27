@@ -11,6 +11,7 @@ import HarvestDetail from "./pages/HarvestDetail";
 import ContractsPage from "./pages/ContractsPage";
 import { ExpensesList, ExpenseForm } from "./pages/Expenses";
 import CadastrosPage from "./pages/CadastrosPage";
+import ReportsPage from "./pages/ReportsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
