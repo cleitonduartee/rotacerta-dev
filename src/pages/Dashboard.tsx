@@ -1,19 +1,140 @@
+import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { fmtBRL, fmtNum } from '@/lib/format';
 import { Truck, Wheat, Package, Receipt, FileBarChart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import {
+  PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
+} from 'recharts';
+
+type PeriodMode = 'mes' | 'ano' | 'tudo';
+
+// Paleta a partir do laranja primário (HSL → variações de matiz)
+const PIE_COLORS = [
+  'hsl(22 95% 55%)',   // primary
+  'hsl(30 100% 65%)',  // primary-glow
+  'hsl(42 100% 55%)',  // warning
+  'hsl(200 95% 45%)',  // accent
+  'hsl(142 70% 45%)',  // success
+  'hsl(350 80% 60%)',
+  'hsl(265 70% 60%)',
+  'hsl(15 70% 45%)',
+];
+
+const MES_LABEL = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
 export default function Dashboard() {
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
+  const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
 
-  const totalReceita = trips.reduce((s, t) => s + (t.valorTotal || 0), 0);
-  const totalDespesas = expenses.reduce((s, e) => s + e.valor, 0);
-  const totalSacos = trips.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
+  const hoje = new Date();
+  const [mode, setMode] = useState<PeriodMode>('tudo');
+  const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
+  const [ano, setAno] = useState<number>(hoje.getFullYear());
+
+  // Anos disponíveis a partir dos dados
+  const anosDisponiveis = useMemo(() => {
+    const anos = new Set<number>();
+    trips.forEach(t => t.data && anos.add(Number(t.data.slice(0, 4))));
+    expenses.forEach(e => e.data && anos.add(Number(e.data.slice(0, 4))));
+    anos.add(hoje.getFullYear());
+    return Array.from(anos).filter(Boolean).sort((a, b) => b - a);
+  }, [trips, expenses]);
+
+  // Filtragem por período
+  const { tripsF, expensesF, periodoLabel } = useMemo(() => {
+    if (mode === 'mes') {
+      return {
+        tripsF: trips.filter(t => t.data?.startsWith(mes)),
+        expensesF: expenses.filter(e => e.data?.startsWith(mes)),
+        periodoLabel: `${mes.slice(5)}/${mes.slice(0, 4)}`,
+      };
+    }
+    if (mode === 'ano') {
+      const p = String(ano);
+      return {
+        tripsF: trips.filter(t => t.data?.startsWith(p)),
+        expensesF: expenses.filter(e => e.data?.startsWith(p)),
+        periodoLabel: p,
+      };
+    }
+    return { tripsF: trips, expensesF: expenses, periodoLabel: 'Tudo' };
+  }, [mode, mes, ano, trips, expenses]);
+
+  const totalReceita = tripsF.reduce((s, t) => s + (t.valorTotal || 0), 0);
+  const totalDespesas = expensesF.reduce((s, e) => s + e.valor, 0);
   const liquido = totalReceita - totalDespesas;
+  const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
   const safrasAbertas = harvests.filter(h => !h.fechada).length;
+
+  // Gráfico 1 — Receita vs Despesa últimos 6 meses
+  const barsData = useMemo(() => {
+    const base: { mes: string; key: string; receita: number; despesa: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      base.push({ mes: `${MES_LABEL[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, key, receita: 0, despesa: 0 });
+    }
+    trips.forEach(t => {
+      const k = t.data?.slice(0, 7);
+      const row = base.find(b => b.key === k);
+      if (row) row.receita += t.valorTotal || 0;
+    });
+    expenses.forEach(e => {
+      const k = e.data?.slice(0, 7);
+      const row = base.find(b => b.key === k);
+      if (row) row.despesa += e.valor || 0;
+    });
+    return base;
+  }, [trips, expenses]);
+
+  // Gráfico 2 — Receita por Safra (pizza)
+  const pizzaSafra = useMemo(() => {
+    const map = new Map<string, number>();
+    let fretes = 0;
+    tripsF.forEach(t => {
+      if (t.kind === 'safra' && t.contractId) {
+        const c = contracts.find(cc => cc.id === t.contractId);
+        const h = c ? harvests.find(hh => hh.id === c.harvestId) : null;
+        const nome = h?.nome ?? 'Safra ?';
+        map.set(nome, (map.get(nome) || 0) + (t.valorTotal || 0));
+      } else {
+        fretes += t.valorTotal || 0;
+      }
+    });
+    const arr = Array.from(map.entries()).map(([name, value]) => ({ name, value }));
+    if (fretes > 0) arr.push({ name: 'Fretes avulsos', value: fretes });
+    return arr.sort((a, b) => b.value - a.value);
+  }, [tripsF, contracts, harvests]);
+
+  // Gráfico 3 — Receita mensal do ano (linha)
+  const linhaAno = useMemo(() => {
+    const anoRef = mode === 'mes' ? Number(mes.slice(0, 4)) : mode === 'ano' ? ano : hoje.getFullYear();
+    const arr = MES_LABEL.map((m, i) => ({ mes: m, valor: 0, key: `${anoRef}-${String(i + 1).padStart(2, '0')}` }));
+    trips.forEach(t => {
+      if (t.data?.startsWith(String(anoRef))) {
+        const idx = Number(t.data.slice(5, 7)) - 1;
+        if (arr[idx]) arr[idx].valor += t.valorTotal || 0;
+      }
+    });
+    return { data: arr, anoRef };
+  }, [trips, mode, mes, ano]);
+
+  // Gráfico 4 — Despesas por tipo (pizza)
+  const pizzaDespesas = useMemo(() => {
+    const map = new Map<string, number>();
+    expensesF.forEach(e => {
+      const k = e.tipo || 'Outros';
+      map.set(k, (map.get(k) || 0) + (e.valor || 0));
+    });
+    return Array.from(map.entries())
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [expensesF]);
 
   const last5 = [...trips].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
 
@@ -21,7 +142,9 @@ export default function Dashboard() {
     <div className="space-y-5 px-4 pt-3 pb-6 animate-fade-in">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl gradient-primary p-5 shadow-elevated">
-        <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/80">Líquido total</p>
+        <div className="flex items-baseline justify-between">
+          <p className="text-xs font-semibold uppercase tracking-widest text-primary-foreground/80">Líquido • {periodoLabel}</p>
+        </div>
         <p className="font-display text-5xl leading-none text-primary-foreground mt-1">{fmtBRL(liquido)}</p>
         <div className="mt-4 grid grid-cols-2 gap-3 text-primary-foreground">
           <div>
@@ -36,12 +159,140 @@ export default function Dashboard() {
         <Truck className="absolute -right-4 -bottom-3 h-28 w-28 text-primary-foreground/10" strokeWidth={1.5} />
       </div>
 
+      {/* Filtro de período */}
+      <div className="rounded-xl border border-border bg-card p-3 shadow-card">
+        <div className="flex gap-1.5 mb-2">
+          {(['mes', 'ano', 'tudo'] as PeriodMode[]).map(m => (
+            <button
+              key={m}
+              onClick={() => setMode(m)}
+              className={
+                'flex-1 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ' +
+                (mode === m ? 'bg-primary text-primary-foreground shadow-elevated' : 'bg-secondary text-muted-foreground')
+              }
+            >
+              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : 'Tudo'}
+            </button>
+          ))}
+        </div>
+        {mode === 'mes' && (
+          <input
+            type="month"
+            value={mes}
+            onChange={e => setMes(e.target.value)}
+            className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+          />
+        )}
+        {mode === 'ano' && (
+          <select
+            value={ano}
+            onChange={e => setAno(Number(e.target.value))}
+            className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+          >
+            {anosDisponiveis.map(a => <option key={a} value={a}>{a}</option>)}
+          </select>
+        )}
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <Stat icon={Truck} value={trips.length} label="Viagens" />
+        <Stat icon={Truck} value={tripsF.length} label="Viagens" />
         <Stat icon={Package} value={fmtNum(totalSacos, 0)} label="Sacos" />
         <Stat icon={Wheat} value={safrasAbertas} label="Safras abertas" />
       </div>
+
+      {/* Gráfico — Receita vs Despesa */}
+      <ChartCard title="Receita × Despesa" subtitle="Últimos 6 meses">
+        {barsData.some(b => b.receita || b.despesa) ? (
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={barsData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
+              <Tooltip
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                formatter={(v: number) => fmtBRL(v)}
+                cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Bar dataKey="receita" name="Receita" fill="hsl(22 95% 55%)" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="despesa" name="Despesa" fill="hsl(0 84% 60%)" radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : <Empty />}
+      </ChartCard>
+
+      {/* Gráfico — Receita por Safra */}
+      <ChartCard title="Receita por Safra" subtitle={periodoLabel}>
+        {pizzaSafra.length > 0 ? (
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie
+                data={pizzaSafra}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                innerRadius={40}
+                paddingAngle={2}
+              >
+                {pizzaSafra.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+              </Pie>
+              <Tooltip
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                formatter={(v: number) => fmtBRL(v)}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : <Empty />}
+      </ChartCard>
+
+      {/* Gráfico — Linha receita mensal do ano */}
+      <ChartCard title="Receita mensal" subtitle={String(linhaAno.anoRef)}>
+        {linhaAno.data.some(d => d.valor > 0) ? (
+          <ResponsiveContainer width="100%" height={220}>
+            <LineChart data={linhaAno.data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis dataKey="mes" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
+              <Tooltip
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                formatter={(v: number) => fmtBRL(v)}
+              />
+              <Line type="monotone" dataKey="valor" name="Receita" stroke="hsl(22 95% 55%)" strokeWidth={3} dot={{ fill: 'hsl(22 95% 55%)', r: 4 }} activeDot={{ r: 6 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : <Empty />}
+      </ChartCard>
+
+      {/* Gráfico — Despesas por tipo */}
+      <ChartCard title="Despesas por tipo" subtitle={periodoLabel}>
+        {pizzaDespesas.length > 0 ? (
+          <ResponsiveContainer width="100%" height={240}>
+            <PieChart>
+              <Pie
+                data={pizzaDespesas}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={80}
+                innerRadius={40}
+                paddingAngle={2}
+              >
+                {pizzaDespesas.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+              </Pie>
+              <Tooltip
+                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                formatter={(v: number) => fmtBRL(v)}
+              />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+            </PieChart>
+          </ResponsiveContainer>
+        ) : <Empty />}
+      </ChartCard>
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
@@ -79,6 +330,26 @@ export default function Dashboard() {
           </ul>
         )}
       </section>
+    </div>
+  );
+}
+
+function ChartCard({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-3 shadow-card">
+      <div className="mb-2 flex items-baseline justify-between">
+        <h3 className="font-display text-lg leading-none">{title}</h3>
+        {subtitle && <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{subtitle}</span>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Empty() {
+  return (
+    <div className="flex h-[180px] items-center justify-center rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+      Sem dados no período
     </div>
   );
 }
