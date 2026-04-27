@@ -201,9 +201,16 @@ export default function Dashboard() {
         <Stat icon={Wheat} value={safrasAbertas} label="Safras abertas" />
       </div>
 
+      {/* Empty state consolidado */}
+      {!barsData.some(b => b.receita || b.despesa) && pizzaSafra.length === 0 && !linhaAno.data.some(d => d.valor > 0) && pizzaDespesas.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border bg-card/50 p-5 text-center text-sm text-muted-foreground">
+          Sem dados no período selecionado. Registre uma viagem ou despesa para ver os gráficos.
+        </div>
+      )}
+
       {/* Gráfico — Receita vs Despesa */}
+      {barsData.some(b => b.receita || b.despesa) && (
       <ChartCard title="Receita × Despesa" subtitle="Últimos 6 meses">
-        {barsData.some(b => b.receita || b.despesa) ? (
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={barsData} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -221,12 +228,12 @@ export default function Dashboard() {
               <Bar dataKey="despesa" name="Despesa" fill="hsl(0 84% 60%)" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
-        ) : <Empty />}
       </ChartCard>
+      )}
 
       {/* Gráfico — Receita por Safra */}
+      {pizzaSafra.length > 0 && (
       <ChartCard title="Receita por Safra" subtitle={periodoLabel}>
-        {pizzaSafra.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -250,12 +257,12 @@ export default function Dashboard() {
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
-        ) : <Empty />}
       </ChartCard>
+      )}
 
       {/* Gráfico — Linha receita mensal do ano */}
+      {linhaAno.data.some(d => d.valor > 0) && (
       <ChartCard title="Receita mensal" subtitle={String(linhaAno.anoRef)}>
-        {linhaAno.data.some(d => d.valor > 0) ? (
           <ResponsiveContainer width="100%" height={220}>
             <LineChart data={linhaAno.data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -270,12 +277,12 @@ export default function Dashboard() {
               <Line type="monotone" dataKey="valor" name="Receita" stroke="hsl(22 95% 55%)" strokeWidth={3} dot={{ fill: 'hsl(22 95% 55%)', r: 4 }} activeDot={{ r: 6 }} />
             </LineChart>
           </ResponsiveContainer>
-        ) : <Empty />}
       </ChartCard>
+      )}
 
       {/* Gráfico — Despesas por tipo */}
+      {pizzaDespesas.length > 0 && (
       <ChartCard title="Despesas por tipo" subtitle={periodoLabel}>
-        {pizzaDespesas.length > 0 ? (
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie
@@ -299,8 +306,8 @@ export default function Dashboard() {
               <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
-        ) : <Empty />}
       </ChartCard>
+      )}
 
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
