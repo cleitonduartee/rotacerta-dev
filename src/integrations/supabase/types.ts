@@ -223,8 +223,10 @@ export type Database = {
         Row: {
           cpf: string | null
           created_at: string
+          email: string | null
           id: string
           nome: string | null
+          recovery_code: string | null
           telefone: string
           updated_at: string
           user_id: string
@@ -232,8 +234,10 @@ export type Database = {
         Insert: {
           cpf?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           nome?: string | null
+          recovery_code?: string | null
           telefone: string
           updated_at?: string
           user_id: string
@@ -241,11 +245,40 @@ export type Database = {
         Update: {
           cpf?: string | null
           created_at?: string
+          email?: string | null
           id?: string
           nome?: string | null
+          recovery_code?: string | null
           telefone?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      recovery_attempts: {
+        Row: {
+          cpf: string
+          created_at: string
+          id: string
+          ip: string | null
+          reason: string | null
+          success: boolean
+        }
+        Insert: {
+          cpf: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          success?: boolean
+        }
+        Update: {
+          cpf?: string
+          created_at?: string
+          id?: string
+          ip?: string | null
+          reason?: string | null
+          success?: boolean
         }
         Relationships: []
       }
