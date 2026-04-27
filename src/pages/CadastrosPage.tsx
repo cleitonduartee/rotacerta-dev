@@ -157,13 +157,33 @@ function DriverSection({ driver }: { driver?: any }) {
     if (driver) await db.drivers.update(driver.id, payload);
     else await db.drivers.add(payload);
 
-    // Sincroniza email com o profile (Cloud) — útil para recuperação se trocar de número
-    if (user && email.trim() && email.trim() !== (profile?.email ?? '')) {
+    // Sincroniza com o profile (Cloud) — mantém nome/cpf/telefone/email coerentes
+    // entre o login e o restante do app. Sem isso, alterações aqui ficavam só
+    // no IndexedDB local e o login continuava mostrando o nome antigo.
+    if (user) {
+      const cloudPayload: Record<string, any> = {
+        nome: nome.trim() || null,
+        telefone: onlyDigits(tel) || null,
+        email: email.trim() ? email.trim().toLowerCase() : null,
+      };
+      // Só envia CPF (não CNPJ) ao profile do Cloud — schema só guarda CPF
+      if (docType === 'cpf' && doc) cloudPayload.cpf = onlyDigits(doc);
+
       try {
-        await supabase.from('profiles')
-          .update({ email: email.trim().toLowerCase() })
+        const { error: upErr } = await supabase
+          .from('profiles')
+          .update(cloudPayload)
           .eq('user_id', user.id);
-      } catch (e) { /* offline → tudo bem, fica só no local */ }
+        if (upErr) {
+          // erro típico: CPF duplicado em outra conta (constraint unique)
+          const msg = /duplicate|unique/i.test(upErr.message)
+            ? 'Este CPF já está vinculado a outra conta'
+            : 'Salvo localmente, mas houve erro ao sincronizar com a nuvem';
+          toast.warning(msg);
+        } else {
+          await refreshProfile();
+        }
+      } catch (e) { /* offline → mantém local; sincroniza depois */ }
     }
 
     setEditing(false);
