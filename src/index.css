@@ -103,3 +103,13 @@
     padding-top: max(1rem, env(safe-area-inset-top));
   }
 }
+
+@media print {
+  body { background: white !important; color: black !important; }
+  header, nav, .print\:hidden { display: none !important; }
+  main { overflow: visible !important; padding: 0 !important; }
+  #print-area, #print-area * { color: black !important; }
+  #print-area { padding: 12px !important; max-width: 100% !important; }
+  table { page-break-inside: auto; }
+  tr { page-break-inside: avoid; page-break-after: auto; }
+}
