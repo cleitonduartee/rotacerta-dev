@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, FileSignature, Receipt, FileText, Plus } from 'lucide-react';
+import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut } from 'lucide-react';
 import { SyncIndicator } from './SyncIndicator';
+import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
 const tabs = [
