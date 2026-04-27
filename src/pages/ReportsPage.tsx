@@ -22,6 +22,17 @@ export default function ReportsPage() {
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const drivers = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
 
+  // Sugestão: safra com algum contrato em aberto (preferir mais recente)
+  useEffect(() => {
+    if (harvestTouched || harvestId !== '') return;
+    if (harvests.length === 0 || contracts.length === 0) return;
+    const abertas = harvests
+      .filter(h => contracts.some(c => c.harvestId === h.id && !c.fechado))
+      .sort((a, b) => (b.ano - a.ano) || ((b.id ?? 0) - (a.id ?? 0)));
+    const sugerida = abertas[0] ?? [...harvests].sort((a, b) => (b.ano - a.ano))[0];
+    if (sugerida?.id) setHarvestId(sugerida.id);
+  }, [harvests, contracts, harvestTouched, harvestId]);
+
   const { tripsFiltradas, despesasFiltradas, titulo } = useMemo(() => {
     if (modo === 'mes') {
       const t = trips.filter(x => x.data?.startsWith(mes));
