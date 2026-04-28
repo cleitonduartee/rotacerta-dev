@@ -275,6 +275,31 @@ export default function LoginPage() {
           <RecoverFlow onBack={() => setStep('phone')} onDone={() => { setStep('phone'); }} />
         )}
       </div>
+
+      <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deseja sair?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao voltar, esta sessão será encerrada e você precisará receber um novo código para entrar. Os dados preenchidos serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Não</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowBackConfirm(false);
+                await supabase.auth.signOut();
+                setStep('phone');
+                setCode(''); setDevCode(null);
+                setNome(''); setCpf(''); setEmail('');
+              }}
+            >
+              Sim, sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
