@@ -46,9 +46,12 @@ export default function LoginPage() {
   useEffect(() => {
     if (!session || !profileLoaded) return;
     if (recoveryCode) return;
+    // Evita decidir com profile "stale" de outro usuário (race ao trocar de sessão).
+    if (profile && profile.user_id !== session.user.id) return;
     if (profile?.cpf && profile?.nome) {
       nav('/', { replace: true });
-    } else if (step === 'phone') {
+    } else if (step === 'phone' && profile && profile.user_id === session.user.id) {
+      // Só vai para signup se confirmadamente o profile do usuário atual está incompleto.
       setStep('signup');
     }
   }, [session, profile, profileLoaded, step, nav, recoveryCode]);
