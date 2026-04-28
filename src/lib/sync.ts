@@ -236,10 +236,12 @@ async function pushTable<T extends { id?: number; remoteId?: string; syncStatus:
     if (!payload) continue; // dependência ainda não tem remoteId — tenta na próxima rodada
     if (row.remoteId) {
       const { error } = await (supabase.from(table) as any).update(payload).eq('id', row.remoteId);
-      if (!error) await (t as any).update(row.id!, { syncStatus: 'synced' });
+      if (error) console.warn(`[sync] update ${table} falhou`, { error, payload, localId: row.id });
+      else await (t as any).update(row.id!, { syncStatus: 'synced' });
     } else {
       const { data, error } = await (supabase.from(table) as any).insert(payload).select('id').single();
-      if (!error && data) await (t as any).update(row.id!, { remoteId: data.id, syncStatus: 'synced' });
+      if (error) console.warn(`[sync] insert ${table} falhou`, { error, payload, localId: row.id });
+      else if (data) await (t as any).update(row.id!, { remoteId: data.id, syncStatus: 'synced' });
     }
   }
 }
