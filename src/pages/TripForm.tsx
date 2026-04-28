@@ -416,6 +416,20 @@ export default function TripForm() {
           />
         </QuickModal>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmDel}
+        onOpenChange={setConfirmDel}
+        description={<>Tem certeza que deseja excluir esta viagem? Essa ação não pode ser desfeita.</>}
+        onConfirm={confirmRemove}
+      />
+
+      <BlockedDeleteDialog
+        open={blockedDel !== null}
+        onOpenChange={(o) => !o && setBlockedDel(null)}
+        title="Não é possível excluir a viagem"
+        description={blockedDel}
+      />
     </div>
   );
 }
