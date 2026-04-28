@@ -18,6 +18,14 @@ type IdMap = Map<string, number>; // remoteId -> localId
 const ORDER: SyncTable[] = ['trucks', 'producers', 'harvests', 'contracts', 'trips', 'expenses'];
 
 let syncing = false;
+const syncErrors: string[] = [];
+function recordError(table: string, op: 'insert' | 'update' | 'delete', err: any, payload?: any, localId?: number) {
+  const msg = err?.message || err?.error_description || JSON.stringify(err);
+  const detail = `[${table} ${op}] ${msg}`;
+  console.warn('[sync]', detail, { payload, localId, err });
+  syncErrors.push(detail);
+}
+export function getLastSyncErrors() { return [...syncErrors]; }
 
 // ---------- helpers ----------
 
