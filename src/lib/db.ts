@@ -174,3 +174,21 @@ export async function deleteWithTombstone(table: SyncTable, localId: number) {
   }
   await t.delete(localId);
 }
+
+/**
+ * Limpa TODOS os dados locais de negócio (não apaga login/sessão).
+ * Útil para reiniciar testes garantindo paridade com o servidor.
+ */
+export async function wipeLocalData() {
+  await Promise.all([
+    db.trucks.clear(),
+    db.producers.clear(),
+    db.harvests.clear(),
+    db.contracts.clear(),
+    db.trips.clear(),
+    db.expenses.clear(),
+    db.tombstones.clear(),
+    db.drivers.clear(),
+  ]);
+}
+
