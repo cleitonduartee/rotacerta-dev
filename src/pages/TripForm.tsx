@@ -357,6 +357,33 @@ export default function TripForm() {
           </button>
         )}
       </div>
+
+      <QuickModal open={openTruckModal} onClose={() => setOpenTruckModal(false)} title="Novo caminhão">
+        <QuickTruckForm
+          onCancel={() => setOpenTruckModal(false)}
+          onSaved={(id) => { setTruckId(id); setOpenTruckModal(false); }}
+        />
+      </QuickModal>
+
+      <QuickModal open={openProducerModal} onClose={() => setOpenProducerModal(false)} title="Novo produtor">
+        <QuickProducerForm
+          onCancel={() => setOpenProducerModal(false)}
+          onSaved={(id) => { setProducerId(id); setOpenProducerModal(false); }}
+        />
+      </QuickModal>
+
+      {producerId !== '' && harvestId !== '' && (
+        <QuickModal open={openContractModal} onClose={() => setOpenContractModal(false)} title="Novo contrato">
+          <QuickContractForm
+            producerId={Number(producerId)}
+            harvestId={Number(harvestId)}
+            producerName={producers.find(p => p.id === producerId)?.nome}
+            harvestName={harvests.find(h => h.id === harvestId)?.nome}
+            onCancel={() => setOpenContractModal(false)}
+            onSaved={() => setOpenContractModal(false)}
+          />
+        </QuickModal>
+      )}
     </div>
   );
 }
