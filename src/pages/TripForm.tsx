@@ -376,6 +376,13 @@ export default function TripForm() {
         />
       </QuickModal>
 
+      <QuickModal open={openHarvestModal} onClose={() => setOpenHarvestModal(false)} title="Nova safra">
+        <QuickHarvestForm
+          onCancel={() => setOpenHarvestModal(false)}
+          onSaved={(id) => { setHarvestId(id); setOpenHarvestModal(false); }}
+        />
+      </QuickModal>
+
       {producerId !== '' && harvestId !== '' && (
         <QuickModal open={openContractModal} onClose={() => setOpenContractModal(false)} title="Novo contrato">
           <QuickContractForm
