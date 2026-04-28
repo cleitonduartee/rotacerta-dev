@@ -154,37 +154,7 @@ export default function ContractsPage() {
     URL.revokeObjectURL(url);
   }
 
-  async function shareContractPdf(c: any) {
-    const out = await buildContractPdf(c);
-    if (!out) return;
-    const harvest = harvests.find(h => h.id === c.harvestId);
-    const p = producers.find(p => p.id === c.producerId);
-    const file = new File([out.blob], out.filename, { type: 'application/pdf' });
-    const title = `Fechamento — ${p?.nome ?? ''} (${harvest?.nome ?? ''})`;
-    const text = `Relatório de fechamento do contrato — ${p?.nome ?? ''} • ${harvest?.nome ?? ''}`;
-    // Web Share API com arquivo: abre seletor nativo (WhatsApp, etc.) em mobile
-    const nav: any = navigator;
-    if (nav.canShare && nav.canShare({ files: [file] })) {
-      try {
-        await nav.share({ files: [file], title, text });
-        return;
-      } catch (e: any) {
-        if (e?.name === 'AbortError') return;
-        console.warn('[share] falhou, usando fallback', e);
-      }
-    }
-    // Fallback: baixa o PDF e abre WhatsApp Web com mensagem (anexar manual)
-    const url = URL.createObjectURL(out.blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = out.filename;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.info('PDF baixado. Anexe manualmente no WhatsApp.');
-    shareWhatsApp(`${title}\n${text}`);
-  }
-
-  function whatsappContrato(c: any) {
+  function buildResumoMensagem(c: any) {
     const harvest = harvests.find(h => h.id === c.harvestId);
     const p = producers.find(p => p.id === c.producerId);
     const r = calcContrato(c.id);
@@ -211,7 +181,7 @@ export default function ContractsPage() {
       .map(([tipo, v]) => `  - ${tipo}: ${fmtBRL(v)}`)
       .join('\n');
 
-    const msg =
+    return (
       `*Fechamento de contrato*\n` +
       `Produtor: ${p?.nome}\n` +
       `Safra: ${harvest?.nome} (${harvest?.tipo})\n` +
@@ -222,9 +192,45 @@ export default function ContractsPage() {
       (exps.length > 0
         ? `\n*Despesas: ${fmtBRL(despesas)}*\n${linhasDesp}\n`
         : '') +
-      `\n*LÍQUIDO: ${fmtBRL(liquido)}*`;
-    shareWhatsApp(msg);
+      `\n*LÍQUIDO: ${fmtBRL(liquido)}*`
+    );
   }
+
+  async function shareContractPdf(c: any) {
+    const out = await buildContractPdf(c);
+    if (!out) return;
+    const harvest = harvests.find(h => h.id === c.harvestId);
+    const p = producers.find(p => p.id === c.producerId);
+    const file = new File([out.blob], out.filename, { type: 'application/pdf' });
+    const title = `Fechamento — ${p?.nome ?? ''} (${harvest?.nome ?? ''})`;
+    const resumo = buildResumoMensagem(c);
+
+    // Web Share API com arquivo: abre seletor nativo (WhatsApp, etc.) em mobile
+    const nav: any = navigator;
+    if (nav.canShare && nav.canShare({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], title, text: resumo });
+        return;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return;
+        console.warn('[share] falhou, usando fallback', e);
+      }
+    }
+
+    // Fallback (desktop / WhatsApp Web não aceita anexo via link):
+    // baixa o PDF e abre o WhatsApp com a mensagem; usuário anexa o arquivo já baixado.
+    const url = URL.createObjectURL(out.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = out.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.info('PDF baixado. No WhatsApp Web, clique no clipe 📎 e anexe o arquivo.', { duration: 6000 });
+    shareWhatsApp(resumo);
+  }
+
+  // Botão WhatsApp da listagem: mesmo comportamento — tenta anexar PDF, senão fallback.
+  const whatsappContrato = shareContractPdf;
 
   return (
     <div className="animate-fade-in">
