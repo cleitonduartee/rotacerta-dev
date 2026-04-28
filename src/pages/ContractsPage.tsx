@@ -317,6 +317,13 @@ export default function ContractsPage() {
         confirmLabel="Sim, fechar"
         onConfirm={confirmFechar}
       />
+
+      <BlockedDeleteDialog
+        open={!!blocked}
+        onOpenChange={(open) => !open && setBlocked(null)}
+        title={blocked?.title}
+        description={blocked?.message}
+      />
     </div>
   );
 }
