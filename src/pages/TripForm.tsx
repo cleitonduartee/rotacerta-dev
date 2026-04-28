@@ -185,10 +185,22 @@ export default function TripForm() {
     }
   }
 
-  async function remove() {
+  async function askRemove() {
     if (!editingId) return;
-    if (!confirm('Excluir esta viagem?')) return;
+    const n = await db.expenses.where('tripId').equals(editingId).count();
+    if (n > 0) {
+      setBlockedDel(
+        <>Esta viagem possui <strong>{n}</strong> despesa{n !== 1 ? 's' : ''} vinculada{n !== 1 ? 's' : ''}. Exclua ou desvincule a{n !== 1 ? 's' : ''} despesa{n !== 1 ? 's' : ''} antes de remover a viagem.</>
+      );
+      return;
+    }
+    setConfirmDel(true);
+  }
+
+  async function confirmRemove() {
+    if (!editingId) return;
     await deleteWithTombstone('trips', editingId);
+    setConfirmDel(false);
     toast.success('Viagem excluída');
     navigate('/viagens');
   }
