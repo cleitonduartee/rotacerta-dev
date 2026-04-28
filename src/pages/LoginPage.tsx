@@ -322,10 +322,27 @@ function Field({ icon, label, children }: { icon: React.ReactNode; label: string
 }
 
 function DevCodeBox({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false);
+  function copy() {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    toast.success('Código copiado');
+    setTimeout(() => setCopied(false), 2000);
+  }
   return (
-    <div className="mb-4 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
-      <p className="text-xs uppercase tracking-wider text-muted-foreground">Modo teste — código:</p>
-      <p className="font-mono text-lg font-bold tracking-widest text-primary">{code}</p>
+    <div className="mb-4 flex items-center justify-between gap-3 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+      <div className="min-w-0">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground">Modo teste — código:</p>
+        <p className="font-mono text-lg font-bold tracking-widest text-primary">{code}</p>
+      </div>
+      <button
+        type="button"
+        onClick={copy}
+        aria-label="Copiar código"
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-primary/40 bg-primary/10 text-primary transition-colors hover:bg-primary/20 active:scale-95"
+      >
+        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+      </button>
     </div>
   );
 }
