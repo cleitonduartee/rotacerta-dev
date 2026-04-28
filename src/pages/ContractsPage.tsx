@@ -22,6 +22,7 @@ export default function ContractsPage() {
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [valor, setValor] = useState('');
   const [toDelete, setToDelete] = useState<{ id: number; produtor: string; safra: string } | null>(null);
+  const [toClose, setToClose] = useState<{ id: number; produtor: string; safra: string } | null>(null);
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
@@ -57,10 +58,16 @@ export default function ContractsPage() {
     setToDelete(null);
   }
 
-  async function fechar(id: number) {
-    if (!confirm('Fechar contrato bloqueia novas viagens. Confirma?')) return;
-    await db.contracts.update(id, { fechado: true, fechadoEm: Date.now(), ...stamp() });
+  function askFechar(c: any) {
+    const p = producers.find(pp => pp.id === c.producerId);
+    const h = harvests.find(hh => hh.id === c.harvestId);
+    setToClose({ id: c.id, produtor: p?.nome ?? '?', safra: h?.nome ?? '?' });
+  }
+  async function confirmFechar() {
+    if (!toClose) return;
+    await db.contracts.update(toClose.id, { fechado: true, fechadoEm: Date.now(), ...stamp() });
     toast.success('Contrato fechado');
+    setToClose(null);
   }
 
   async function reabrir(id: number) {
@@ -244,7 +251,7 @@ export default function ContractsPage() {
                     <Unlock className="h-3.5 w-3.5" /> Reabrir contrato
                   </button>
                 ) : (
-                  <button onClick={() => fechar(c.id!)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-warning/40 bg-warning/10 py-2 text-xs font-bold text-warning">
+                  <button onClick={() => askFechar(c)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-warning/40 bg-warning/10 py-2 text-xs font-bold text-warning">
                     <Lock className="h-3.5 w-3.5" /> Fechar contrato
                   </button>
                 )}
@@ -269,6 +276,23 @@ export default function ContractsPage() {
           )
         }
         onConfirm={confirmRemove}
+      />
+
+      <ConfirmDeleteDialog
+        open={!!toClose}
+        onOpenChange={(open) => !open && setToClose(null)}
+        title="Fechar contrato?"
+        description={
+          toClose && (
+            <>
+              Ao fechar, novas viagens ficam bloqueadas para o contrato de{' '}
+              <strong>{toClose.produtor}</strong> na safra{' '}
+              <strong>{toClose.safra}</strong>. Você poderá reabrir depois.
+            </>
+          )
+        }
+        confirmLabel="Sim, fechar"
+        onConfirm={confirmFechar}
       />
     </div>
   );
