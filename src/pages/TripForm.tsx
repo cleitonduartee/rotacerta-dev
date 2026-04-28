@@ -4,8 +4,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, calcSafra, calcFrete, deleteWithTombstone, type Trip, type TripKind } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { todayISO, fmtBRL } from '@/lib/format';
-import { Trash2, Save, Plus } from 'lucide-react';
+import { Trash2, Save, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { maskMoneyInput, parseMoney } from '@/lib/masks';
 
 export default function TripForm() {
   const { id } = useParams();
