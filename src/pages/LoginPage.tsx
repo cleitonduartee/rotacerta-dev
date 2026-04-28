@@ -162,7 +162,13 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background px-6 py-10">
-      <div className="mb-8 text-center">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <img
+          src="/logo-mark.png"
+          alt="RotaCerta"
+          className="mb-3 h-20 w-auto sm:h-24"
+          draggable={false}
+        />
         <p className="font-display text-4xl text-primary">ROTACERTA</p>
         <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">Estrada na palma da mão</p>
       </div>
