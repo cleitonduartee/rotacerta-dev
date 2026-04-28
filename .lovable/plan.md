@@ -1,42 +1,34 @@
-## Contexto
+## Problema
 
-No domínio do negócio:
-- **Safra** = período/cultura macro (ex.: Safra 2026 — Soja). É um cadastro com nome, ano e tipo. **Permanece como está** em "Cadastros" e em "Contratos de safra".
-- **Lavoura** = o frete vinculado a um contrato de produtor dentro daquela safra. Hoje no sistema isso é o **tipo de viagem "Safra"** — esse rótulo passa a ser **"Lavoura"**.
+O badge mostra "3 pendentes" e nunca sincroniza, mesmo online. Investigação:
 
-Apenas rótulos visuais mudam. O campo interno `kind: 'safra' | 'frete'` no banco/Dexie permanece igual para não quebrar dados existentes nem exigir migração.
+1. **Bug no push de safras (`src/lib/sync.ts`)**: o payload envia `fechado_em`, mas a coluna real na tabela `harvests` é `fechada_em`. O Supabase rejeita com `PGRST204 "Could not find the 'fechado_em' column"`. Resultado: as 3 safras locais ficam para sempre com `syncStatus = 'pending'` e o sistema retenta a cada ciclo, sempre falhando. Confirmado nos network logs (3 POSTs `/harvests` com 400) e no schema do banco.
+2. **Indicador opaco**: `SyncIndicator` mostra apenas o número total. O usuário não sabe se são viagens, safras, despesas, etc., nem por que não sincronizou.
 
-## Mudanças por tela
+## O que será feito
 
-### 1. Lançamento de viagem (`src/pages/TripForm.tsx`)
-- Botão de tipo: `"Safra"` → **`"Lavoura"`** (o outro continua "Frete avulso").
-- Mensagens de validação:
-  - `"Cadastre um contrato para este produtor + safra"` → `"Cadastre um contrato para este produtor + lavoura"` *(mantém referência clara ao contrato)*.
-  - `"Safra fechada — não é possível cadastrar viagens"` → manter (safra como entidade ainda existe).
-- Texto auxiliar `"Sem contrato para este produtor nesta safra."` → `"Sem contrato deste produtor para esta safra."` (mantém safra; é a entidade do cadastro).
-- O seletor `<Field label="Safra">` (escolher safra do contrato) **permanece "Safra"** — é a entidade real.
+### 1. Corrigir o push de safras
+Em `src/lib/sync.ts`, no `pushTable('harvests', ...)`, trocar a chave `fechado_em` por `fechada_em` (alinhar com o nome real da coluna no banco). Após a correção, na próxima tentativa de sync as 3 safras pendentes serão aceitas pelo servidor e marcadas como `synced`.
 
-### 2. Lista de viagens (`src/pages/TripsList.tsx`)
-- Badge do tipo da viagem: quando `t.kind === 'safra'` exibir **`LAVOURA`** em vez de `SAFRA`.
+### 2. Detalhar o indicador de pendências
+Trocar `countPending()` por uma função que retorna a contagem por tipo (`{ trucks, producers, harvests, contracts, trips, expenses, deletes }`). O `SyncIndicator` passa a:
+- Mostrar o total no badge (como hoje), mas com um tooltip/popover ao clicar/passar o mouse exibindo a quebra: "2 safras, 1 viagem", etc., usando rótulos em português.
+- Adicionar um botão "Sincronizar agora" dentro do popover para forçar o `syncAll` manualmente.
+- Logar no console um resumo legível em cada tentativa de sync para diagnóstico futuro.
 
-### 3. Dashboard (`src/pages/Dashboard.tsx`)
-- Card pizza atualmente intitulado **"Receita por Tipo de Frete"** → renomear para **"Receita por Tipo de Frete"** (já está correto) e ajustar a **legenda das fatias**:
-  - Hoje: cada fatia usa o nome da safra (ex.: "Safra 2026") + uma fatia "Fretes avulsos".
-  - Passa a usar: `"Lavoura — <nome da safra>"` (ex.: `"Lavoura — Safra 2026"`) + `"Fretes avulsos"`.
-- Item da lista de últimas viagens: `t.kind === 'safra' ? 'Safra' : 'Frete avulso'` → `'Lavoura' : 'Frete avulso'`.
-- O Stat "Safras abertas" **permanece** (refere-se à entidade safra).
+### 3. Melhorar o tratamento de erro no push
+Em `pushTable` (sync.ts), quando o insert/update falhar, registrar `console.warn` com tabela, payload e erro. Isso facilita identificar bugs como esse no futuro (hoje o erro é silencioso — a função apenas pula o `update` para `synced`).
 
-### 4. Relatórios (`src/pages/ReportsPage.tsx`)
-- Coluna "Tipo" da tabela de viagens: `'Safra'` → **`'Lavoura'`**.
-- O **modo de filtro "Safra"** (botão com ícone Wheat) **permanece "Safra"** — filtra por safra (entidade), exibindo todas as lavouras daquela safra. Faz sentido manter para coerência com o cadastro.
+## Resultado esperado
 
-## Fora de escopo
-- Não alterar schema do banco nem o tipo `TripKind` (continua `'safra' | 'frete'`).
-- Não renomear a entidade Safra em Cadastros, Contratos, HarvestsList, HarvestDetail nem o PDF de fechamento.
-- Lógica de cálculo do dashboard e relatórios permanece idêntica.
+- O badge "3 pendentes" desaparece automaticamente assim que a correção entra em produção e o app tentar sincronizar (acontece sozinho ao montar o `SyncIndicator` estando online).
+- Ao tocar/passar o mouse no badge, o usuário vê exatamente quais cadastros estão pendentes (ex.: "3 safras pendentes").
+- Botão "Sincronizar agora" para forçar manualmente.
 
-## Resumo dos arquivos editados
-- `src/pages/TripForm.tsx` — rótulos do seletor de tipo e mensagens.
-- `src/pages/TripsList.tsx` — badge do tipo.
-- `src/pages/Dashboard.tsx` — legendas da pizza e label da lista de últimas viagens.
-- `src/pages/ReportsPage.tsx` — coluna Tipo na tabela.
+## Detalhes técnicos
+
+Arquivos alterados:
+- `src/lib/sync.ts`: corrigir `fechado_em` → `fechada_em` no push de harvests; adicionar `countPendingByTable()`; logar erros do push.
+- `src/components/SyncIndicator.tsx`: usar `countPendingByTable`, embrulhar em Popover com breakdown e botão de sincronizar.
+
+Sem alterações de schema ou migrations — o banco já tem `fechada_em` correto.
