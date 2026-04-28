@@ -109,8 +109,7 @@ export default function ContractsPage() {
     const tripIds = new Set(r.trips.map(t => t.id));
     const exps = expenses.filter(e =>
       e.contractId === c.id ||
-      (e.tripId && tripIds.has(e.tripId)) ||
-      e.harvestId === c.harvestId
+      (e.tripId && tripIds.has(e.tripId))
     );
     const despesas = exps.reduce((s, e) => s + e.valor, 0);
     const liquido = r.receita - despesas;
