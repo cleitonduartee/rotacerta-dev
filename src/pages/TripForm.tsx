@@ -7,6 +7,8 @@ import { todayISO, fmtBRL } from '@/lib/format';
 import { Trash2, Save, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
 
 export default function TripForm() {
   const { id } = useParams();
