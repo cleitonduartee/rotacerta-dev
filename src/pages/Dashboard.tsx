@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Truck, Wheat, Package, Receipt, FileBarChart } from 'lucide-react';
+import { Truck, Wheat, Package, Receipt, FileBarChart, User, FileText, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
