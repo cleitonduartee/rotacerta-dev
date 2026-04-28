@@ -376,14 +376,124 @@ function Field({ label, children, action }: { label: string; children: React.Rea
   );
 }
 
-function QuickAdd({ to, label }: { to: string; label: string }) {
+function QuickAdd({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <Link
-      to={to}
+    <button
+      type="button"
+      onClick={onClick}
       className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary transition active:scale-95"
     >
       <Plus className="h-3 w-3" /> {label}
-    </Link>
+    </button>
+  );
+}
+
+function QuickModal({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4 animate-fade-in" onClick={onClose}>
+      <div
+        className="w-full max-w-md rounded-t-2xl border border-border bg-card p-4 shadow-elevated sm:rounded-2xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-display text-lg">{title}</h3>
+          <button onClick={onClose} className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function QuickTruckForm({ onSaved, onCancel }: { onSaved: (id: number) => void; onCancel: () => void }) {
+  const [placa, setPlaca] = useState('');
+  const [modelo, setModelo] = useState('');
+  async function save() {
+    if (!placa.trim()) return toast.error('Informe a placa');
+    const id = await db.trucks.add({ placa: placa.trim(), modelo: modelo.trim(), ...stamp() } as any);
+    toast.success('Caminhão cadastrado');
+    onSaved(Number(id));
+  }
+  return (
+    <div className="space-y-2">
+      <input className={inputCls} placeholder="Placa" value={placa} onChange={e => setPlaca(e.target.value.toUpperCase())} autoFocus />
+      <input className={inputCls} placeholder="Modelo (opcional)" value={modelo} onChange={e => setModelo(e.target.value)} />
+      <div className="flex gap-2 pt-1">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-border bg-secondary py-2.5 font-bold">Cancelar</button>
+        <button onClick={save} className="flex-1 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">Salvar</button>
+      </div>
+    </div>
+  );
+}
+
+function QuickProducerForm({ onSaved, onCancel }: { onSaved: (id: number) => void; onCancel: () => void }) {
+  const [nome, setNome] = useState('');
+  async function save() {
+    if (!nome.trim()) return toast.error('Informe o nome');
+    const id = await db.producers.add({ nome: nome.trim(), ...stamp() } as any);
+    toast.success('Produtor cadastrado');
+    onSaved(Number(id));
+  }
+  return (
+    <div className="space-y-2">
+      <input className={inputCls} placeholder="Nome do produtor" value={nome} onChange={e => setNome(e.target.value)} autoFocus />
+      <div className="flex gap-2 pt-1">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-border bg-secondary py-2.5 font-bold">Cancelar</button>
+        <button onClick={save} className="flex-1 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">Salvar</button>
+      </div>
+    </div>
+  );
+}
+
+function QuickContractForm({
+  producerId, harvestId, producerName, harvestName, onSaved, onCancel,
+}: {
+  producerId: number; harvestId: number;
+  producerName?: string; harvestName?: string;
+  onSaved: () => void; onCancel: () => void;
+}) {
+  const [valor, setValor] = useState('');
+  async function save() {
+    const v = parseMoney(valor);
+    if (!v) return toast.error('Informe o valor por saco');
+    await db.contracts.add({
+      producerId, harvestId, valorPorSaco: v, fechado: false, ...stamp(),
+    } as any);
+    toast.success('Contrato cadastrado');
+    onSaved();
+  }
+  return (
+    <div className="space-y-2">
+      <div className="rounded-lg border border-border bg-secondary/40 p-2 text-xs">
+        <p><span className="text-muted-foreground">Produtor: </span><strong>{producerName ?? '?'}</strong></p>
+        <p><span className="text-muted-foreground">Lavoura: </span><strong>{harvestName ?? '?'}</strong></p>
+      </div>
+      <input
+        className={inputCls}
+        inputMode="decimal"
+        placeholder="R$ por saco (60kg)"
+        value={valor}
+        onChange={e => setValor(maskMoneyInput(e.target.value))}
+        autoFocus
+      />
+      <div className="flex gap-2 pt-1">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-border bg-secondary py-2.5 font-bold">Cancelar</button>
+        <button onClick={save} className="flex-1 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">Salvar</button>
+      </div>
+    </div>
   );
 }
 
