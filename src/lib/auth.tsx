@@ -64,7 +64,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         profile,
         profileLoaded,
         loading,
-        refreshProfile: async () => { await loadProfile(session?.user?.id); },
+        refreshProfile: async () => {
+          // Recupera a sessão mais recente (pode ainda não ter propagado pelo listener)
+          // e atualiza o estado antes de carregar o profile. Isso evita que o
+          // RequireAuth veja session=null logo após signInWithPassword em PWA novo.
+          const { data } = await supabase.auth.getSession();
+          if (data.session) setSession(data.session);
+          await loadProfile(data.session?.user?.id ?? session?.user?.id);
+        },
         signOut: async () => { await supabase.auth.signOut(); setProfile(null); setProfileLoaded(false); },
       }}
     >
