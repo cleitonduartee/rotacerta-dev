@@ -45,9 +45,16 @@ export default function ContractsPage() {
     }
   }
 
-  async function remove(id: number) {
-    if (!confirm('Excluir contrato?')) return;
-    await deleteWithTombstone('contracts', id);
+  function askRemove(c: any) {
+    const p = producers.find(pp => pp.id === c.producerId);
+    const h = harvests.find(hh => hh.id === c.harvestId);
+    setToDelete({ id: c.id, produtor: p?.nome ?? '?', safra: h?.nome ?? '?' });
+  }
+  async function confirmRemove() {
+    if (!toDelete) return;
+    await deleteWithTombstone('contracts', toDelete.id);
+    toast.success('Contrato excluído');
+    setToDelete(null);
   }
 
   async function fechar(id: number) {
