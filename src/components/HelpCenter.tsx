@@ -43,11 +43,21 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
               <GuideStep n={1} icon={FileText} title="Cadastros">
                 Cadastre <strong>produtores</strong>, <strong>caminhões</strong>, <strong>motoristas</strong> e <strong>safras</strong>. Sem isso você não consegue criar contratos nem viagens.
               </GuideStep>
-              <GuideStep n={2} icon={FileSignature} title="Contratos">
-                Crie um contrato vinculando <strong>produtor + safra + valor por saco</strong>. Toda viagem de lavoura precisa estar ligada a um contrato.
+              <GuideStep n={2} icon={FileSignature} title="Contratos — o pulmão do sistema">
+                O <strong>contrato</strong> é o coração do RotaCerta: é ele que confirma que você fechou para <strong>puxar a lavoura do produtor</strong> e organiza todas as viagens daquela safra.
+                <br /><br />
+                <strong>Importante:</strong> a cada nova <strong>safra</strong>, é preciso lançar um novo contrato com o produtor para conseguir registrar viagens e gerar o fechamento no final.
+                <br /><br />
+                Cada contrato vincula <strong>produtor + safra + valor por saco</strong>. Toda viagem de lavoura precisa estar ligada a um contrato.
               </GuideStep>
               <GuideStep n={3} icon={Truck} title="Viagens">
                 Toque no botão <strong>+</strong> central para registrar uma viagem. Escolha entre <strong>Lavoura</strong> (usa contrato) ou <strong>Frete avulso</strong> (transportadora livre).
+                <br /><br />
+                <strong>Valor por saco flexível:</strong> mesmo que o contrato tenha um valor padrão por saco, ao lançar uma nova viagem você pode informar um valor diferente — útil quando o preço muda no meio da safra.
+                <br /><br />
+                <strong>Editar ou excluir viagem:</strong> na lista de Viagens, toque sobre uma viagem para abrir a tela de edição. Para excluir, use o botão <strong>Excluir</strong> dentro da edição (não é possível excluir viagens que tenham despesas vinculadas — exclua as despesas primeiro).
+                <br /><br />
+                <strong>Pré-preenchimento inteligente:</strong> ao lançar uma nova viagem, o sistema reaproveita os dados da viagem anterior (caminhão, motorista, origem, destino, contrato...) para você só precisar ajustar o que mudou. Isso agiliza muito o lançamento no dia a dia.
               </GuideStep>
               <GuideStep n={4} icon={Receipt} title="Despesas">
                 Lance custos como combustível, pedágio e manutenção. Eles entram no cálculo do <strong>lucro líquido</strong>.
@@ -55,14 +65,20 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
               <GuideStep n={5} icon={Wheat} title="Fechamento e WhatsApp">
                 Ao fechar um <strong>contrato</strong>, o app gera um <strong>PDF de fechamento</strong> que pode ser enviado direto para o produtor pelo WhatsApp.
               </GuideStep>
-              <GuideStep n={6} icon={Star} title="Contrato: o pulmão do sistema">
-                O <strong>contrato</strong> é o coração do RotaCerta — é ele que confirma e organiza todas as puxadas para o produtor durante a safra.
+              <GuideStep n={6} icon={Star} title="Fluxo completo no sistema">
+                Siga essa ordem para não travar em nenhuma etapa:
                 <br /><br />
-                <strong>Valor por saco flexível:</strong> mesmo que o contrato tenha um valor padrão por saco, ao lançar uma <strong>nova viagem</strong> você pode informar um valor diferente — útil quando o preço muda no meio da safra.
-                <br /><br />
-                <strong>Editar ou excluir viagem:</strong> na lista de Viagens, toque sobre uma viagem para abrir a tela de edição. Para excluir, use o botão <strong>Excluir</strong> dentro da edição (não é possível excluir viagens que tenham despesas vinculadas — exclua as despesas primeiro).
-                <br /><br />
-                <strong>Pré-preenchimento inteligente:</strong> ao lançar uma nova viagem, o sistema reaproveita os dados da viagem anterior (caminhão, motorista, origem, destino, contrato...) para você só precisar ajustar o que mudou. Isso agiliza muito o lançamento no dia a dia.
+                <strong>1.</strong> Cadastre o <strong>caminhão</strong> (placa) e o <strong>motorista</strong>.
+                <br />
+                <strong>2.</strong> Cadastre o <strong>produtor</strong> com quem vai trabalhar.
+                <br />
+                <strong>3.</strong> Cadastre a <strong>safra</strong> atual (ex.: Soja 2025).
+                <br />
+                <strong>4.</strong> Crie o <strong>contrato</strong> ligando esse produtor à safra — isso confirma que você fechou para puxar a lavoura dele naquele período.
+                <br />
+                <strong>5.</strong> Vá lançando as <strong>viagens</strong> à medida que puxa os grãos, e registre as <strong>despesas</strong> da rota.
+                <br />
+                <strong>6.</strong> Quando terminar de puxar toda a lavoura daquele produtor, <strong>feche o contrato</strong> e envie o <strong>relatório de fechamento</strong> pelo WhatsApp.
               </GuideStep>
             </ol>
           </section>
