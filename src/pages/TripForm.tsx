@@ -540,6 +540,54 @@ function QuickContractForm({
   );
 }
 
+const TIPO_LABELS_HARVEST: Record<string, string> = {
+  soja: 'Soja', milho: 'Milho', trigo: 'Trigo', algodao: 'Algodão', outros: 'Outros',
+};
+
+function QuickHarvestForm({ onSaved, onCancel }: { onSaved: (id: number) => void; onCancel: () => void }) {
+  const [tipo, setTipo] = useState('soja');
+  const currentYear = new Date().getFullYear();
+  const [ano, setAno] = useState(currentYear);
+  const anos = Array.from({ length: 11 }, (_, i) => currentYear - i);
+  const nome = `${TIPO_LABELS_HARVEST[tipo] ?? tipo} - ${ano}`;
+
+  async function save() {
+    const existente = await db.harvests
+      .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
+      .first();
+    if (existente) {
+      return toast.error(`Já existe uma safra de ${TIPO_LABELS_HARVEST[tipo] ?? tipo} para ${ano}`);
+    }
+    const id = await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() } as any);
+    toast.success(`Safra "${nome}" cadastrada`);
+    onSaved(Number(id));
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-2 gap-2">
+        <select className={inputCls} value={tipo} onChange={e => setTipo(e.target.value)}>
+          <option value="soja">Soja</option>
+          <option value="milho">Milho</option>
+          <option value="trigo">Trigo</option>
+          <option value="algodao">Algodão</option>
+          <option value="outros">Outros</option>
+        </select>
+        <select className={inputCls} value={ano} onChange={e => setAno(Number(e.target.value))}>
+          {anos.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Nome gerado: <strong className="text-foreground">{nome}</strong>
+      </p>
+      <div className="flex gap-2 pt-1">
+        <button onClick={onCancel} className="flex-1 rounded-lg border border-border bg-secondary py-2.5 font-bold">Cancelar</button>
+        <button onClick={save} className="flex-1 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">Salvar</button>
+      </div>
+    </div>
+  );
+}
+
 function Summary({ rows }: { rows: [string, string][] }) {
   return (
     <div className="rounded-xl border border-primary/30 bg-primary/5 p-4">
