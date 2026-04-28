@@ -111,9 +111,9 @@ export default function ContractsPage() {
     return { viagens: ts.length, sacos, receita, trips: ts };
   }
 
-  async function pdfContrato(c: any) {
+  async function buildContractPdf(c: any): Promise<{ blob: Blob; filename: string } | null> {
     const harvest = harvests.find(h => h.id === c.harvestId);
-    if (!harvest) return;
+    if (!harvest) return null;
     const r = calcContrato(c.id);
     const tripIds = new Set(r.trips.map(t => t.id));
     const exps = expenses.filter(e =>
@@ -138,13 +138,50 @@ export default function ContractsPage() {
         liquido: r.receita - despesas,
       },
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
     const p = producers.find(p => p.id === c.producerId);
+    const filename = `contrato-${p?.nome ?? 'produtor'}-${harvest.nome}.pdf`.replace(/\s+/g, '-');
+    return { blob, filename };
+  }
+
+  async function pdfContrato(c: any) {
+    const out = await buildContractPdf(c);
+    if (!out) return;
+    const url = URL.createObjectURL(out.blob);
+    const a = document.createElement('a');
     a.href = url;
-    a.download = `contrato-${p?.nome ?? 'produtor'}-${harvest.nome}.pdf`.replace(/\s+/g, '-');
+    a.download = out.filename;
     a.click();
     URL.revokeObjectURL(url);
+  }
+
+  async function shareContractPdf(c: any) {
+    const out = await buildContractPdf(c);
+    if (!out) return;
+    const harvest = harvests.find(h => h.id === c.harvestId);
+    const p = producers.find(p => p.id === c.producerId);
+    const file = new File([out.blob], out.filename, { type: 'application/pdf' });
+    const title = `Fechamento — ${p?.nome ?? ''} (${harvest?.nome ?? ''})`;
+    const text = `Relatório de fechamento do contrato — ${p?.nome ?? ''} • ${harvest?.nome ?? ''}`;
+    // Web Share API com arquivo: abre seletor nativo (WhatsApp, etc.) em mobile
+    const nav: any = navigator;
+    if (nav.canShare && nav.canShare({ files: [file] })) {
+      try {
+        await nav.share({ files: [file], title, text });
+        return;
+      } catch (e: any) {
+        if (e?.name === 'AbortError') return;
+        console.warn('[share] falhou, usando fallback', e);
+      }
+    }
+    // Fallback: baixa o PDF e abre WhatsApp Web com mensagem (anexar manual)
+    const url = URL.createObjectURL(out.blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = out.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.info('PDF baixado. Anexe manualmente no WhatsApp.');
+    shareWhatsApp(`${title}\n${text}`);
   }
 
   function whatsappContrato(c: any) {
