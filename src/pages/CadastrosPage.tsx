@@ -402,8 +402,13 @@ function AddTruck() {
       <input className={inputCls} placeholder="Modelo" value={modelo} onChange={e => setModelo(e.target.value)} />
       <button onClick={async () => {
         if (!placa) return toast.error('Informe a placa');
-        await db.trucks.add({ placa, modelo, ...stamp() });
-        setPlaca(''); setModelo(''); toast.success('Caminhão cadastrado');
+        try {
+          await db.trucks.add({ placa, modelo, ...stamp() });
+          setPlaca(''); setModelo(''); toast.success('Caminhão cadastrado');
+        } catch (e: any) {
+          console.error('[trucks.add] erro', e);
+          toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
+        }
       }} className="rounded-lg gradient-primary px-3 text-primary-foreground">
         <Plus className="h-5 w-5" />
       </button>
@@ -418,13 +423,18 @@ function AddProducer() {
       <input className={inputCls} placeholder="Nome do produtor" value={nome} onChange={e => setNome(e.target.value)} />
       <button onClick={async () => {
         const nomeTrim = nome.trim();
-        if (!nomeTrim) return;
-        const existente = await db.producers
-          .filter(p => (p.nome ?? '').trim().toLowerCase() === nomeTrim.toLowerCase())
-          .first();
-        if (existente) return toast.error('Já existe um produtor com esse nome');
-        await db.producers.add({ nome: nomeTrim, ...stamp() });
-        setNome(''); toast.success('Produtor cadastrado');
+        if (!nomeTrim) return toast.error('Informe o nome do produtor');
+        try {
+          const existente = await db.producers
+            .filter(p => (p.nome ?? '').trim().toLowerCase() === nomeTrim.toLowerCase())
+            .first();
+          if (existente) return toast.error('Já existe um produtor com esse nome');
+          await db.producers.add({ nome: nomeTrim, ...stamp() });
+          setNome(''); toast.success('Produtor cadastrado');
+        } catch (e: any) {
+          console.error('[producers.add] erro', e);
+          toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
+        }
       }} className="rounded-lg gradient-primary px-3 text-primary-foreground">
         <Plus className="h-5 w-5" />
       </button>
@@ -447,15 +457,20 @@ function AddHarvest() {
   const anos = Array.from({ length: 11 }, (_, i) => currentYear - i);
 
   async function add() {
-    const nome = `${TIPO_LABELS[tipo] ?? tipo} - ${ano}`;
-    const existente = await db.harvests
-      .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
-      .first();
-    if (existente) {
-      return toast.error(`Já existe uma safra de ${TIPO_LABELS[tipo] ?? tipo} para o ano ${ano} ("${existente.nome}")`);
+    try {
+      const nome = `${TIPO_LABELS[tipo] ?? tipo} - ${ano}`;
+      const existente = await db.harvests
+        .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
+        .first();
+      if (existente) {
+        return toast.error(`Já existe uma safra de ${TIPO_LABELS[tipo] ?? tipo} para o ano ${ano} ("${existente.nome}")`);
+      }
+      await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
+      toast.success(`Safra "${nome}" cadastrada`);
+    } catch (e: any) {
+      console.error('[harvests.add] erro', e);
+      toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
     }
-    await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
-    toast.success(`Safra "${nome}" cadastrada`);
   }
 
   return (

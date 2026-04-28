@@ -72,9 +72,16 @@ async function pullTrucks(uid: string) {
   const { data, error } = await supabase.from('trucks').select('*').eq('user_id', uid);
   if (error) throw error;
   for (const r of data ?? []) {
-    const local = await db.trucks.where('remoteId').equals(r.id).first();
+    let local = await db.trucks.where('remoteId').equals(r.id).first();
+    // Adopta linha local pendente sem remoteId (mesma placa) para evitar duplicatas
+    if (!local) {
+      local = await db.trucks.filter(t => !t.remoteId && (t.placa || '').trim().toUpperCase() === (r.placa || '').trim().toUpperCase()).first();
+    }
     const remoteUpdatedAt = fromIso(r.updated_at);
-    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') continue;
+    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') {
+      if (!local.remoteId) await db.trucks.update(local.id!, { remoteId: r.id });
+      continue;
+    }
     const payload = {
       remoteId: r.id,
       placa: r.placa,
@@ -91,9 +98,15 @@ async function pullProducers(uid: string) {
   const { data, error } = await supabase.from('producers').select('*').eq('user_id', uid);
   if (error) throw error;
   for (const r of data ?? []) {
-    const local = await db.producers.where('remoteId').equals(r.id).first();
+    let local = await db.producers.where('remoteId').equals(r.id).first();
+    if (!local) {
+      local = await db.producers.filter(p => !p.remoteId && (p.nome || '').trim().toLowerCase() === (r.nome || '').trim().toLowerCase()).first();
+    }
     const remoteUpdatedAt = fromIso(r.updated_at);
-    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') continue;
+    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') {
+      if (!local.remoteId) await db.producers.update(local.id!, { remoteId: r.id });
+      continue;
+    }
     const payload = {
       remoteId: r.id,
       nome: r.nome,
@@ -109,9 +122,15 @@ async function pullHarvests(uid: string) {
   const { data, error } = await supabase.from('harvests').select('*').eq('user_id', uid);
   if (error) throw error;
   for (const r of data ?? []) {
-    const local = await db.harvests.where('remoteId').equals(r.id).first();
+    let local = await db.harvests.where('remoteId').equals(r.id).first();
+    if (!local) {
+      local = await db.harvests.filter(h => !h.remoteId && h.tipo === r.tipo && Number(h.ano) === Number(r.ano)).first();
+    }
     const remoteUpdatedAt = fromIso(r.updated_at);
-    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') continue;
+    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') {
+      if (!local.remoteId) await db.harvests.update(local.id!, { remoteId: r.id });
+      continue;
+    }
     const payload = {
       remoteId: r.id,
       nome: r.nome,

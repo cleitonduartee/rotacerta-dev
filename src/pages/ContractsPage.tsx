@@ -25,17 +25,22 @@ export default function ContractsPage() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
     const v = parseMoney(valor);
     if (!v) return toast.error('Valor inválido');
-    const exists = contracts.find(c => c.producerId === Number(producerId) && c.harvestId === Number(harvestId));
-    if (exists) return toast.error('Já existe contrato para este produtor + safra');
-    await db.contracts.add({
-      producerId: Number(producerId),
-      harvestId: Number(harvestId),
-      valorPorSaco: v,
-      fechado: false,
-      ...stamp(),
-    });
-    setValor('');
-    toast.success('Contrato salvo');
+    try {
+      const exists = contracts.find(c => c.producerId === Number(producerId) && c.harvestId === Number(harvestId));
+      if (exists) return toast.error('Já existe contrato para este produtor + safra');
+      await db.contracts.add({
+        producerId: Number(producerId),
+        harvestId: Number(harvestId),
+        valorPorSaco: v,
+        fechado: false,
+        ...stamp(),
+      });
+      setValor('');
+      toast.success('Contrato salvo');
+    } catch (e: any) {
+      console.error('[contracts.add] erro', e);
+      toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
+    }
   }
 
   async function remove(id: number) {
