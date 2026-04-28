@@ -402,8 +402,13 @@ function AddTruck() {
       <input className={inputCls} placeholder="Modelo" value={modelo} onChange={e => setModelo(e.target.value)} />
       <button onClick={async () => {
         if (!placa) return toast.error('Informe a placa');
-        await db.trucks.add({ placa, modelo, ...stamp() });
-        setPlaca(''); setModelo(''); toast.success('Caminhão cadastrado');
+        try {
+          await db.trucks.add({ placa, modelo, ...stamp() });
+          setPlaca(''); setModelo(''); toast.success('Caminhão cadastrado');
+        } catch (e: any) {
+          console.error('[trucks.add] erro', e);
+          toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
+        }
       }} className="rounded-lg gradient-primary px-3 text-primary-foreground">
         <Plus className="h-5 w-5" />
       </button>
