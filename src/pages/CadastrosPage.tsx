@@ -28,11 +28,37 @@ import {
   onlyDigits,
 } from '@/lib/masks';
 
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+
+type DelTarget =
+  | { kind: 'truck'; id: number; placa: string }
+  | { kind: 'producer'; id: number; nome: string }
+  | { kind: 'harvest'; id: number; nome: string };
+
 export default function CadastrosPage() {
   const driver = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
+  const [del, setDel] = useState<DelTarget | null>(null);
+
+  async function confirmDelete() {
+    if (!del) return;
+    if (del.kind === 'truck') await deleteWithTombstone('trucks', del.id);
+    else if (del.kind === 'producer') await deleteWithTombstone('producers', del.id);
+    else if (del.kind === 'harvest') await deleteWithTombstone('harvests', del.id);
+    toast.success('Excluído');
+    setDel(null);
+  }
+
+  const dialogText = (() => {
+    if (!del) return null;
+    if (del.kind === 'truck')
+      return <>Esta ação não pode ser desfeita. O caminhão <strong>{del.placa}</strong> será removido.</>;
+    if (del.kind === 'producer')
+      return <>Esta ação não pode ser desfeita. O produtor <strong>{del.nome}</strong> será removido.</>;
+    return <>Esta ação não pode ser desfeita. A safra <strong>{del.nome}</strong> será removida.</>;
+  })();
 
   return (
     <div className="animate-fade-in">
@@ -44,7 +70,7 @@ export default function CadastrosPage() {
           <AddTruck />
           <ul className="space-y-2 mt-3">
             {trucks.map(t => (
-              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={async () => { if (confirm('Excluir?')) await deleteWithTombstone('trucks', t.id!); }} />
+              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={() => setDel({ kind: 'truck', id: t.id!, placa: t.placa })} />
             ))}
             {trucks.length === 0 && <Empty>Cadastre seu primeiro caminhão.</Empty>}
           </ul>
@@ -54,7 +80,7 @@ export default function CadastrosPage() {
           <AddProducer />
           <ul className="space-y-2 mt-3">
             {producers.map(p => (
-              <Row key={p.id} title={p.nome} onDel={async () => { if (confirm('Excluir?')) await deleteWithTombstone('producers', p.id!); }} />
+              <Row key={p.id} title={p.nome} onDel={() => setDel({ kind: 'producer', id: p.id!, nome: p.nome })} />
             ))}
             {producers.length === 0 && <Empty>Cadastre o primeiro produtor.</Empty>}
           </ul>
@@ -79,7 +105,7 @@ export default function CadastrosPage() {
                     {h.fechada ? 'Fechada' : 'Aberta'}
                   </span>
                   <button
-                    onClick={async () => { if (confirm('Excluir safra?')) await deleteWithTombstone('harvests', h.id!); }}
+                    onClick={() => setDel({ kind: 'harvest', id: h.id!, nome: h.nome })}
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -93,6 +119,18 @@ export default function CadastrosPage() {
 
         <ResetDataSection />
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!del}
+        onOpenChange={(open) => !open && setDel(null)}
+        title={
+          del?.kind === 'truck' ? 'Excluir caminhão?'
+          : del?.kind === 'producer' ? 'Excluir produtor?'
+          : 'Excluir safra?'
+        }
+        description={dialogText}
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }

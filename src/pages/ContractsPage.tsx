@@ -7,6 +7,7 @@ import { Plus, Trash2, Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
@@ -20,6 +21,7 @@ export default function ContractsPage() {
   const [producerId, setProducerId] = useState<number | ''>('');
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [valor, setValor] = useState('');
+  const [toDelete, setToDelete] = useState<{ id: number; produtor: string; safra: string } | null>(null);
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
@@ -43,9 +45,16 @@ export default function ContractsPage() {
     }
   }
 
-  async function remove(id: number) {
-    if (!confirm('Excluir contrato?')) return;
-    await deleteWithTombstone('contracts', id);
+  function askRemove(c: any) {
+    const p = producers.find(pp => pp.id === c.producerId);
+    const h = harvests.find(hh => hh.id === c.harvestId);
+    setToDelete({ id: c.id, produtor: p?.nome ?? '?', safra: h?.nome ?? '?' });
+  }
+  async function confirmRemove() {
+    if (!toDelete) return;
+    await deleteWithTombstone('contracts', toDelete.id);
+    toast.success('Contrato excluído');
+    setToDelete(null);
   }
 
   async function fechar(id: number) {
@@ -216,7 +225,7 @@ export default function ContractsPage() {
 
                 <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                   <span>R$ {fmtNum(c.valorPorSaco)} / saco</span>
-                  <button onClick={() => remove(c.id!)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
+                  <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -245,6 +254,22 @@ export default function ContractsPage() {
           {contracts.length === 0 && <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">Nenhum contrato.</p>}
         </ul>
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+        title="Excluir contrato?"
+        description={
+          toDelete && (
+            <>
+              Esta ação não pode ser desfeita. O contrato de{' '}
+              <strong>{toDelete.produtor}</strong> na safra{' '}
+              <strong>{toDelete.safra}</strong> será removido.
+            </>
+          )
+        }
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }
