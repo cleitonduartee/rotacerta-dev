@@ -1,22 +1,50 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut, WifiOff } from 'lucide-react';
+import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut, WifiOff, HelpCircle } from 'lucide-react';
 import { SyncIndicator } from './SyncIndicator';
+import { OnboardingTour } from './OnboardingTour';
+import { HelpCenter } from './HelpCenter';
 import { useAuth } from '@/lib/auth';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 import { cn } from '@/lib/utils';
+import { TOUR_FLAG_PREFIX } from '@/lib/tourSteps';
 
 const tabs = [
-  { to: '/', icon: Home, label: 'Início' },
-  { to: '/viagens', icon: Truck, label: 'Viagens' },
-  { to: '/contratos', icon: FileSignature, label: 'Contratos' },
-  { to: '/despesas', icon: Receipt, label: 'Despesas' },
-  { to: '/cadastros', icon: FileText, label: 'Cadastros' },
+  { to: '/', icon: Home, label: 'Início', tourKey: 'tab-inicio' },
+  { to: '/viagens', icon: Truck, label: 'Viagens', tourKey: 'tab-viagens' },
+  { to: '/contratos', icon: FileSignature, label: 'Contratos', tourKey: 'tab-contratos' },
+  { to: '/despesas', icon: Receipt, label: 'Despesas', tourKey: 'tab-despesas' },
+  { to: '/cadastros', icon: FileText, label: 'Cadastros', tourKey: 'tab-cadastros' },
 ];
 
 export function AppLayout() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const online = useOnlineStatus();
+  const [tourOpen, setTourOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // Auto-disparo do tour no primeiro acesso
+  useEffect(() => {
+    if (!user?.id) return;
+    const flag = localStorage.getItem(TOUR_FLAG_PREFIX + user.id);
+    if (!flag) {
+      // pequeno delay para garantir que tabs/FAB já renderizaram
+      const t = window.setTimeout(() => setTourOpen(true), 600);
+      return () => window.clearTimeout(t);
+    }
+  }, [user?.id]);
+
+  function handleCloseTour() {
+    setTourOpen(false);
+    if (user?.id) localStorage.setItem(TOUR_FLAG_PREFIX + user.id, '1');
+  }
+
+  function handleStartTour() {
+    if (user?.id) localStorage.removeItem(TOUR_FLAG_PREFIX + user.id);
+    setTourOpen(true);
+  }
+
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur">
@@ -33,8 +61,16 @@ export function AppLayout() {
             <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Estrada na palma da mão</p>
           </div>
         </NavLink>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <SyncIndicator />
+          <button
+            onClick={() => setHelpOpen(true)}
+            aria-label="Ajuda"
+            data-tour="header-help"
+            className="rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <HelpCircle className="h-4 w-4" />
+          </button>
           <button
             onClick={async () => { await signOut(); navigate('/login', { replace: true }); }}
             aria-label="Sair"
@@ -60,6 +96,7 @@ export function AppLayout() {
       <button
         onClick={() => navigate('/viagens/nova')}
         aria-label="Nova viagem"
+        data-tour="fab-nova-viagem"
         className="fixed bottom-24 left-1/2 z-40 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full gradient-primary text-primary-foreground shadow-elevated active:scale-95 transition-transform"
       >
         <Plus className="h-7 w-7" strokeWidth={3} />
@@ -68,7 +105,7 @@ export function AppLayout() {
       <nav className="safe-bottom fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 border-t border-border/60 bg-card/95 backdrop-blur">
         <ul className="grid grid-cols-5">
           {tabs.map((t) => (
-            <li key={t.to}>
+            <li key={t.to} data-tour={t.tourKey}>
               <NavLink
                 to={t.to}
                 end={t.to === '/'}
@@ -89,6 +126,9 @@ export function AppLayout() {
           Desenvolvido por Cleiton Duarte © {new Date().getFullYear()}
         </p>
       </nav>
+
+      <OnboardingTour open={tourOpen} onClose={handleCloseTour} />
+      <HelpCenter open={helpOpen} onOpenChange={setHelpOpen} onStartTour={handleStartTour} />
     </div>
   );
 }

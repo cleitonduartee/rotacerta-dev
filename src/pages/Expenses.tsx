@@ -73,9 +73,13 @@ export function ExpensesList() {
           <Plus className="h-5 w-5" /> Nova despesa
         </button>
         {expenses.length === 0 && (
-          <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-            Nenhuma despesa registrada.
-          </p>
+          <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+            <Wallet className="mx-auto h-10 w-10 text-muted-foreground/50" />
+            <p className="mt-3 text-sm font-semibold text-foreground">Nenhuma despesa registrada</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Lance combustível, pedágio, manutenção e outros custos para calcular seu lucro líquido real.
+            </p>
+          </div>
         )}
         {expenses.map(e => {
           const v = vinculoInfo(e);
