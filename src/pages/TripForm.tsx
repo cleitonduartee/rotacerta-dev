@@ -377,7 +377,7 @@ export default function TripForm() {
         </button>
 
         {editingId && (
-          <button onClick={remove} className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 font-semibold text-destructive">
+          <button onClick={askRemove} className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 font-semibold text-destructive">
             <Trash2 className="h-4 w-4" /> Excluir viagem
           </button>
         )}
