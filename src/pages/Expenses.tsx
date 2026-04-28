@@ -110,32 +110,22 @@ export function ExpensesList() {
         })}
       </div>
 
-      <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Excluir despesa?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {toDelete && (
-                <>
-                  Esta ação não pode ser desfeita. Será removida a despesa{' '}
-                  <strong>{toDelete.tipo}</strong> de{' '}
-                  <strong>{fmtBRL(toDelete.valor)}</strong> do dia{' '}
-                  <strong>{fmtDate(toDelete.data)}</strong>.
-                </>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Sim, excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <ConfirmDeleteDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+        title="Excluir despesa?"
+        description={
+          toDelete && (
+            <>
+              Esta ação não pode ser desfeita. Será removida a despesa{' '}
+              <strong>{toDelete.tipo}</strong> de{' '}
+              <strong>{fmtBRL(toDelete.valor)}</strong> do dia{' '}
+              <strong>{fmtDate(toDelete.data)}</strong>.
+            </>
+          )
+        }
+        onConfirm={confirmDelete}
+      />
     </div>
   );
 }
