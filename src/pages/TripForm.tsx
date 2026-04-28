@@ -42,6 +42,11 @@ export default function TripForm() {
   const [notaProdutor, setNotaProdutor] = useState('');
   const [loaded, setLoaded] = useState(!editingId);
 
+  // Modais de cadastro rápido
+  const [openTruckModal, setOpenTruckModal] = useState(false);
+  const [openProducerModal, setOpenProducerModal] = useState(false);
+  const [openContractModal, setOpenContractModal] = useState(false);
+
   // Carregar para edição
   useEffect(() => {
     if (!editingId) return;
