@@ -209,7 +209,7 @@ export default function TripForm() {
 
         <Field
           label="Caminhão"
-          action={<QuickAdd to="/cadastros" label="Novo caminhão" />}
+          action={<QuickAdd label="Novo caminhão" onClick={() => setOpenTruckModal(true)} />}
         >
           <select value={truckId} onChange={e => setTruckId(Number(e.target.value))} className={inputCls}>
             <option value="">Selecione…</option>
