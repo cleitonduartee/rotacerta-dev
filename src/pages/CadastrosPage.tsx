@@ -1,12 +1,24 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp, deleteWithTombstone } from '@/lib/db';
+import { db, stamp, deleteWithTombstone, wipeLocalData } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock, Pencil, Info } from 'lucide-react';
+import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock, Pencil, Info, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
+import { syncAll } from '@/lib/sync';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import {
   maskCpfCnpj,
   maskCPF,
