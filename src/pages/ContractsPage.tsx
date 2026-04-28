@@ -89,9 +89,14 @@ export default function ContractsPage() {
   }
   async function confirmFechar() {
     if (!toClose) return;
-    await db.contracts.update(toClose.id, { fechado: true, fechadoEm: Date.now(), ...stamp() });
+    const id = toClose.id;
+    const produtor = toClose.produtor;
+    const safra = toClose.safra;
+    await db.contracts.update(id, { fechado: true, fechadoEm: Date.now(), ...stamp() });
     toast.success('Contrato fechado');
     setToClose(null);
+    const c = await db.contracts.get(id);
+    if (c) setAskSend({ contract: c, produtor, safra });
   }
 
   async function reabrir(id: number) {
