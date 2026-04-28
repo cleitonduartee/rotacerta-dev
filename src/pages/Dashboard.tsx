@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Truck, Wheat, Package, Receipt, FileBarChart } from 'lucide-react';
+import { Truck, Wheat, Package, Receipt, FileBarChart, User, FileText, Building2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
@@ -30,6 +30,7 @@ export default function Dashboard() {
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
+  const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
 
   const hoje = new Date();
   const [mode, setMode] = useState<PeriodMode>('tudo');
@@ -329,19 +330,51 @@ export default function Dashboard() {
           </div>
         ) : (
           <ul className="space-y-2">
-            {last5.map(t => (
-              <li key={t.id} className="rounded-xl border border-border bg-card p-3 shadow-card">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                      {t.kind === 'safra' ? 'Lavoura' : 'Frete avulso'} • {t.data}
-                    </p>
-                    <p className="font-semibold">{t.origem} → {t.destino}</p>
+            {last5.map(t => {
+              let owner: string | null = null;
+              let detail: string | null = null;
+              let safra = false;
+              if (t.kind === 'safra' && t.contractId) {
+                safra = true;
+                const c = contracts.find(cc => cc.id === t.contractId);
+                const p = c ? producers.find(pp => pp.id === c.producerId) : null;
+                const h = c ? harvests.find(hh => hh.id === c.harvestId) : null;
+                owner = p?.nome ?? 'Produtor removido';
+                detail = h?.nome ?? null;
+              } else if (t.kind === 'frete') {
+                owner = t.transportadora || 'Frete avulso';
+              }
+              return (
+                <li key={t.id} className="rounded-xl border border-border bg-card p-3 shadow-card">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                        {t.kind === 'safra' ? 'Lavoura' : 'Frete avulso'} • {t.data}
+                      </p>
+                      <p className="font-semibold truncate">{t.origem} → {t.destino}</p>
+                      {owner && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                          <span className={'inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ' +
+                            (safra
+                              ? 'bg-primary/10 text-primary border-primary/30'
+                              : 'bg-accent/10 text-accent-foreground border-accent/30')}>
+                            {safra ? <User className="h-3 w-3" /> : <Building2 className="h-3 w-3" />}
+                            <span className="truncate">{owner}</span>
+                          </span>
+                          {detail && (
+                            <span className="inline-flex max-w-full items-center gap-1 rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                              <FileText className="h-3 w-3" />
+                              <span className="truncate">{detail}</span>
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <p className="font-display text-2xl text-primary whitespace-nowrap">{fmtBRL(t.valorTotal)}</p>
                   </div>
-                  <p className="font-display text-2xl text-primary">{fmtBRL(t.valorTotal)}</p>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
