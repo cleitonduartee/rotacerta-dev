@@ -29,6 +29,7 @@ import {
 } from '@/lib/masks';
 
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
 
 type DelTarget =
   | { kind: 'truck'; id: number; placa: string }
@@ -40,7 +41,39 @@ export default function CadastrosPage() {
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
+  const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
+  const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const [del, setDel] = useState<DelTarget | null>(null);
+  const [blocked, setBlocked] = useState<{ title: string; message: React.ReactNode } | null>(null);
+
+  function tryDelete(target: DelTarget) {
+    if (target.kind === 'truck') {
+      const n = trips.filter(t => t.truckId === target.id).length;
+      if (n > 0) {
+        return setBlocked({
+          title: 'Não é possível excluir o caminhão',
+          message: <>O caminhão <strong>{target.placa}</strong> possui <strong>{n}</strong> {n === 1 ? 'viagem vinculada' : 'viagens vinculadas'}. Exclua as viagens antes de remover o caminhão.</>,
+        });
+      }
+    } else if (target.kind === 'producer') {
+      const n = contracts.filter(c => c.producerId === target.id).length;
+      if (n > 0) {
+        return setBlocked({
+          title: 'Não é possível excluir o produtor',
+          message: <>O produtor <strong>{target.nome}</strong> possui <strong>{n}</strong> {n === 1 ? 'contrato vinculado' : 'contratos vinculados'}. Exclua os contratos antes de remover o produtor.</>,
+        });
+      }
+    } else if (target.kind === 'harvest') {
+      const n = contracts.filter(c => c.harvestId === target.id).length;
+      if (n > 0) {
+        return setBlocked({
+          title: 'Não é possível excluir a safra',
+          message: <>A safra <strong>{target.nome}</strong> possui <strong>{n}</strong> {n === 1 ? 'contrato vinculado' : 'contratos vinculados'}. Exclua os contratos antes de remover a safra.</>,
+        });
+      }
+    }
+    setDel(target);
+  }
 
   async function confirmDelete() {
     if (!del) return;
@@ -70,7 +103,7 @@ export default function CadastrosPage() {
           <AddTruck />
           <ul className="space-y-2 mt-3">
             {trucks.map(t => (
-              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={() => setDel({ kind: 'truck', id: t.id!, placa: t.placa })} />
+              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={() => tryDelete({ kind: 'truck', id: t.id!, placa: t.placa })} />
             ))}
             {trucks.length === 0 && <Empty>Cadastre seu primeiro caminhão.</Empty>}
           </ul>
@@ -80,7 +113,7 @@ export default function CadastrosPage() {
           <AddProducer />
           <ul className="space-y-2 mt-3">
             {producers.map(p => (
-              <Row key={p.id} title={p.nome} onDel={() => setDel({ kind: 'producer', id: p.id!, nome: p.nome })} />
+              <Row key={p.id} title={p.nome} onDel={() => tryDelete({ kind: 'producer', id: p.id!, nome: p.nome })} />
             ))}
             {producers.length === 0 && <Empty>Cadastre o primeiro produtor.</Empty>}
           </ul>
@@ -100,7 +133,7 @@ export default function CadastrosPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setDel({ kind: 'harvest', id: h.id!, nome: h.nome })}
+                    onClick={() => tryDelete({ kind: 'harvest', id: h.id!, nome: h.nome })}
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -125,6 +158,13 @@ export default function CadastrosPage() {
         }
         description={dialogText}
         onConfirm={confirmDelete}
+      />
+
+      <BlockedDeleteDialog
+        open={!!blocked}
+        onOpenChange={(open) => !open && setBlocked(null)}
+        title={blocked?.title}
+        description={blocked?.message}
       />
     </div>
   );
