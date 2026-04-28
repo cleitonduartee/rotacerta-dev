@@ -174,7 +174,11 @@ export default function ContractsPage() {
             const p = producers.find(p => p.id === c.producerId);
             const h = harvests.find(h => h.id === c.harvestId);
             const r = calcContrato(c.id!);
-            const liquido = r.receita;
+            const tripIds = new Set(r.trips.map(t => t.id));
+            const despesas = expenses
+              .filter(e => e.contractId === c.id || (e.tripId && tripIds.has(e.tripId)))
+              .reduce((s, e) => s + (e.valor || 0), 0);
+            const liquido = r.receita - despesas;
             return (
               <li key={c.id} className={'rounded-xl border bg-card p-3 ' + (c.fechado ? 'border-muted opacity-90' : 'border-border')}>
                 <div className="flex items-start justify-between gap-2">
@@ -192,7 +196,22 @@ export default function ContractsPage() {
                 <div className="mt-2 grid grid-cols-3 gap-2 text-center">
                   <Mini label="Viagens" v={r.viagens} />
                   <Mini label="Sacos" v={fmtNum(r.sacos, 1)} />
-                  <Mini label="Total" v={fmtBRL(liquido)} />
+                  <Mini label="Despesas" v={fmtBRL(despesas)} cls="text-destructive" />
+                </div>
+
+                <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-2 space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Bruto</span>
+                    <span className="font-display text-sm">{fmtBRL(r.receita)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Despesas</span>
+                    <span className="font-display text-sm text-destructive">−{fmtBRL(despesas)}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-border pt-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Líquido</span>
+                    <span className="font-display text-base text-primary">{fmtBRL(liquido)}</span>
+                  </div>
                 </div>
 
                 <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
@@ -230,10 +249,10 @@ export default function ContractsPage() {
   );
 }
 
-function Mini({ label, v }: { label: string; v: any }) {
+function Mini({ label, v, cls }: { label: string; v: any; cls?: string }) {
   return (
     <div className="rounded-lg bg-secondary/60 py-1.5">
-      <p className="font-display text-base leading-none text-foreground">{v}</p>
+      <p className={'font-display text-base leading-none ' + (cls ?? 'text-foreground')}>{v}</p>
       <p className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">{label}</p>
     </div>
   );
