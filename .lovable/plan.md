@@ -1,46 +1,38 @@
 ## O que será feito
 
-### 1. Corrigir ícones quebrados do PWA
-Os arquivos `public/icon-192.png` e `public/favicon.ico` estão com 0 bytes (vazios). Só o `icon-512.png` tem a arte nova (carreta + boneco joia).
+### 1. Nova arte do caminhão com asfalto
+Manter exatamente o mesmo caminhão laranja + boneco joia já aprovado, mas agora apoiado sobre um trecho de pista (asfalto cinza com faixa central tracejada amarela/branca). Mantém o estilo cartoon limpo, fundo transparente em volta.
 
-- Regenerar `public/icon-192.png` (192×192) a partir do `icon-512.png`.
-- Regenerar `public/favicon.ico` multi-resolução (16, 32, 48) a partir da mesma arte.
-- QA: confirmar que os 3 arquivos têm tamanho > 0 e visualmente mostram o caminhão carreta + boneco joia.
+- Gerar nova versão de `public/logo-mark.png` usando o `logo-mark.png` atual como referência (Nano Banana Pro, modelo `google/gemini-3-pro-image-preview`) com a instrução de adicionar uma pista curta sob as rodas, mantendo personagem idêntico e fundo transparente.
+- A pista vai ser pequena, só um "chão" sob o caminhão — não ocupa a imagem inteira. Sombra suave embaixo do asfalto pra dar peso.
 
-### 2. Criar versão "logo" da imagem
-A arte do `icon-512.png` foi feita para ícone de app (fundo escuro sólido, padding grande). Usar ela direto no header fica pesado.
+### 2. Ícone do PWA com caminhão + wordmark "RotaCerta"
+Hoje os ícones do PWA (`icon-192.png`, `icon-512.png`) mostram só o caminhão sobre fundo navy. Vou refazer os dois com:
 
-- Gerar `public/logo-mark.png` — variante com **fundo transparente**, ~256×256, sem padding extra.
-- Mesma identidade: carreta laranja `#F97316` + boneco joinha.
-- Gerada com Nano Banana Pro usando o `icon-512.png` como referência para manter o personagem consistente.
+- Fundo navy `#0F1620` (mantém identidade do app).
+- Caminhão (versão nova com asfalto) centralizado na metade superior.
+- Texto **"RotaCerta"** em Bebas Neue laranja `#F97316` na metade inferior, bem legível mesmo no tamanho 192px.
+- Layout pensado pra funcionar como ícone na home do celular **e** como splash screen do PWA — onde o iOS/Android amplia o ícone.
+- `favicon.ico` regenerado também (multi-res 16/32/48) — no 16px o texto fica ilegível, então no favicon uso só o caminhão.
 
-### 3. Logo na tela de Login
-Em `src/pages/LoginPage.tsx`:
-- Logo `logo-mark.png` **acima** do nome "RotaCerta", composição vertical centralizada.
-- Tamanho: `h-16` (64px) mobile, `h-20` (80px) desktop.
-- `mb-3` entre logo e wordmark.
-- Wordmark "RotaCerta" mantém a tipografia atual.
+### 3. Onde a imagem nova aparece automaticamente
+- **Tela de login** (`src/pages/LoginPage.tsx`): já usa `/logo-mark.png` — vai puxar a nova versão com asfalto sem precisar mexer no código. O wordmark "ROTACERTA" abaixo continua igual.
+- **Header pós-login** (`src/components/AppLayout.tsx`): mesma coisa — já usa `/logo-mark.png`. Vai mostrar a versão com asfalto em tamanho pequeno (`h-9`).
+- **PWA (ícone na home + splash)**: passa a mostrar caminhão + "RotaCerta" juntos, resolvendo a falta de impacto da marca que você apontou.
 
-### 4. Logo pequeno no cabeçalho pós-login
-Em `src/components/AppLayout.tsx` (ou onde fica o header global):
-- Layout horizontal: `[logo] RotaCerta` lado a lado.
-- Tamanho **pequeno**: `h-8` (32px), proporcional à altura do header.
-- `gap-2` entre logo e texto.
-- Clicável → leva para a home.
-
-### Boas práticas de design aplicadas
-- Hierarquia: logo grande no login (momento de marca), pequeno no header (momento de uso).
-- Wordmark fica como **texto real** (não imagem) — melhor para acessibilidade e SEO.
-- `alt="RotaCerta"` no `<img>`.
-- Fundo transparente no logo garante que funciona em qualquer cor de fundo.
+### Boas práticas aplicadas
+- Wordmark fica dentro do **ícone do PWA** (PNG) porque ali não tem como renderizar texto HTML — é a única forma de garantir a marca no splash/home screen do celular.
+- Na **tela de login e header** o "RotaCerta" continua como **texto real** (Bebas Neue), preservando acessibilidade e SEO.
+- Asfalto pequeno e contido pra não competir com o caminhão nem inflar a imagem visualmente.
 
 ## Arquivos tocados
 
-- `public/icon-192.png` — regenerado.
-- `public/favicon.ico` — regenerado multi-res.
-- `public/logo-mark.png` — **novo**.
-- `src/pages/LoginPage.tsx` — logo + wordmark no topo.
-- `src/components/AppLayout.tsx` — logo pequeno no header (vou inspecionar primeiro pra confirmar que é esse o arquivo certo do header global).
+- `public/logo-mark.png` — regenerado com asfalto sob o caminhão, fundo transparente.
+- `public/icon-512.png` — regenerado: caminhão+asfalto em cima, "RotaCerta" embaixo, fundo navy.
+- `public/icon-192.png` — mesma composição em 192×192.
+- `public/favicon.ico` — regenerado multi-res a partir do caminhão (sem texto, ilegível em 16px).
 
-## Observação para teste no celular
-Após o deploy, o ícone do PWA já instalado pode continuar mostrando a versão antiga por causa do cache do sistema. Para ver o ícone novo no celular: **desinstalar o PWA e instalar de novo**.
+Sem alterações em `.tsx` — login e header já apontam pro `logo-mark.png` e vão atualizar sozinhos.
+
+## Observação importante
+Depois de publicar, o ícone antigo do PWA pode continuar aparecendo no celular por causa do cache do sistema operacional. Pra ver o novo ícone + splash com "RotaCerta": **desinstale o PWA e instale de novo**.
