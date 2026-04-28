@@ -381,3 +381,30 @@ export async function countPending() {
   total += await db.tombstones.count();
   return total;
 }
+
+export type PendingBreakdown = {
+  trucks: number;
+  producers: number;
+  harvests: number;
+  contracts: number;
+  trips: number;
+  expenses: number;
+  deletes: number;
+  total: number;
+};
+
+export async function countPendingByTable(): Promise<PendingBreakdown> {
+  const [trucks, producers, harvests, contracts, trips, expenses, deletes] = await Promise.all([
+    db.trucks.where('syncStatus').equals('pending').count(),
+    db.producers.where('syncStatus').equals('pending').count(),
+    db.harvests.where('syncStatus').equals('pending').count(),
+    db.contracts.where('syncStatus').equals('pending').count(),
+    db.trips.where('syncStatus').equals('pending').count(),
+    db.expenses.where('syncStatus').equals('pending').count(),
+    db.tombstones.count(),
+  ]);
+  return {
+    trucks, producers, harvests, contracts, trips, expenses, deletes,
+    total: trucks + producers + harvests + contracts + trips + expenses + deletes,
+  };
+}
