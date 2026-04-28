@@ -1,46 +1,41 @@
-## Diagnóstico
+## Plano
 
-Verifiquei o servidor (Lovable Cloud) e o login `67991568155` (user `144b3229...`) tem **apenas 1 safra** cadastrada: "Soja - 2026", criada hoje às 14:06. Também há 1 produtor, 1 caminhão, 1 contrato e 1 viagem — todos sincronizados corretamente.
+Duas melhorias na tela de Login / identidade visual do app.
 
-### Por que apareceram "3 pendentes" antes?
+### 1. Botão de copiar código de verificação
 
-Os "3 pendentes" que você viu **NÃO eram 3 safras**. Eram 3 registros distintos no IndexedDB (o banco local do navegador) aguardando upload:
+Na tela "Código de verificação" (modo teste), o código aparece dentro de uma caixa (`DevCodeBox`) e hoje precisa ser selecionado manualmente para copiar. Vou adicionar um botão de cópia ao lado do código.
 
-1. **1 safra** (Soja - 2026)
-2. **1 contrato** (Gustavo × Soja 2026, R$ 2/saco)
-3. **1 viagem** (kind=safra, Gleba → Producel, 700 sacos)
+**Arquivo:** `src/pages/LoginPage.tsx` — componente `DevCodeBox` (linhas 324–331).
 
-Eles estavam travados como `pending` porque o push antigo enviava o campo errado `fechado_em` em vez de `fechada_em` para a tabela `harvests` — isso fazia o insert da safra falhar, e como contrato/viagem dependiam do `remoteId` da safra, eles ficavam em fila também. O contador somava os 3 → "3 pendentes".
+Mudanças:
+- Layout em flex: código à esquerda, botão de ícone à direita.
+- Botão usa o ícone `Copy` (já importado), troca para `Check` por ~2s após copiar.
+- Ao clicar: `navigator.clipboard.writeText(code)` + toast "Código copiado".
+- Estilo coerente com o sistema (borda primária, hover sutil, área de toque adequada para mobile).
+- O mesmo `DevCodeBox` já é usado também no fluxo de recuperação ("Troquei meu número"), então a melhoria se aplica em todos os lugares automaticamente.
 
-Após a correção do bug + a sincronização que rodou agora, os 3 subiram com sucesso. Por isso aparece **só 1 safra** (que é o correto — é o mesmo dado, só estava preso localmente).
+### 2. Caminhão truck (2 eixos atrás) no ícone do app
 
-### Sobre o PWA do celular
+Hoje o ícone do app (`public/icon-192.png`, `public/icon-512.png` e `public/favicon.ico`) é um caminhão simples com 1 roda na frente e 1 roda atrás. Esses arquivos formam a imagem que aparece como splash/loading do PWA quando o sistema está abrindo a tela de login.
 
-Não foram criadas safras extras no celular. Se tivessem sido criadas e não sincronizado, elas estariam pendentes no IndexedDB do **celular**, não aqui — cada dispositivo tem seu próprio banco local. Quando o celular abrir online, ele vai puxar essa mesma safra "Soja - 2026" do servidor (e mandar qualquer pendência local que tenha).
+Vou redesenhar o caminhão como **truck (2 eixos traseiros — roda dianteira sob o capô + duas rodas traseiras lado a lado)**, mantendo:
+- Paleta atual do sistema (laranja `#F97316` primário, fundo escuro `#0F1620`).
+- Mesma silhueta geral (cabine + carroceria) para preservar reconhecimento.
+- Estilo flat / sólido legível em tamanhos pequenos (favicon 32px) e grandes (512px).
 
----
+**Como será feito (lado técnico):**
+1. Criar um SVG do caminhão truck com cabine, capô, baú/carroceria e 3 rodas (1 dianteira + 2 traseiras agrupadas próximas formando o segundo eixo).
+2. Renderizar esse SVG em PNG nos tamanhos 192×192 e 512×512 (com `purpose: any maskable` — área segura central) e gerar o `favicon.ico` multi-resolução (16, 32, 48).
+3. Substituir os arquivos:
+   - `public/icon-192.png`
+   - `public/icon-512.png`
+   - `public/favicon.ico`
+4. Não é preciso alterar `manifest.webmanifest` nem `index.html` (os caminhos continuam os mesmos).
 
-## Plano de limpeza para testes
+### Resumo de arquivos tocados
 
-Você pediu para limpar e poder começar testes do zero garantindo paridade entre dev e celular. Vou:
-
-### 1. Limpar todos os dados do usuário no servidor
-Executar DELETE em cascata para o `user_id = 144b3229-c71a-49b1-bc85-dda68eaadf50`:
-- `expenses` → `trips` → `contracts` → `harvests` → `producers` → `trucks`
-
-Mantenho `profiles` (cadastro do usuário) intacto para você não precisar refazer login/cadastro.
-
-### 2. Garantir que o cliente local também limpe
-No próximo login (ou refresh) o `pullAll` vai trazer o servidor vazio, mas registros locais antigos **não são apagados** automaticamente pelo pull. Para garantir paridade total entre dev e celular, vou adicionar:
-
-- Função utilitária `wipeLocalData()` em `src/lib/db.ts` que limpa todas as tabelas de dados (trucks, producers, harvests, contracts, trips, expenses, tombstones) preservando login.
-- Botão **"Limpar dados locais"** discreto na página `Configurações` (ou no menu de perfil), com modal de confirmação no estilo do sistema. Ao confirmar: limpa local + faz `pullAll` + recarrega.
-
-Assim, tanto aqui no preview quanto no PWA do celular você consegue começar testes do zero sem dúvida.
-
-### Arquivos a editar
-- `src/lib/db.ts` — adicionar `wipeLocalData()`
-- `src/pages/SettingsPage.tsx` (ou equivalente) — botão + modal de confirmação
-
-### Operação de banco
-- DELETE direto via migração nas 6 tabelas filtrando pelo `user_id`.
+- `src/pages/LoginPage.tsx` — botão de copiar no `DevCodeBox`.
+- `public/icon-192.png` — novo caminhão truck.
+- `public/icon-512.png` — novo caminhão truck.
+- `public/favicon.ico` — novo caminhão truck.
