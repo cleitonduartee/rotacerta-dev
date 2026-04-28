@@ -469,8 +469,13 @@ function QuickTruckForm({ onSaved, onCancel }: { onSaved: (id: number) => void; 
 function QuickProducerForm({ onSaved, onCancel }: { onSaved: (id: number) => void; onCancel: () => void }) {
   const [nome, setNome] = useState('');
   async function save() {
-    if (!nome.trim()) return toast.error('Informe o nome');
-    const id = await db.producers.add({ nome: nome.trim(), ...stamp() } as any);
+    const nomeTrim = nome.trim();
+    if (!nomeTrim) return toast.error('Informe o nome');
+    const existente = await db.producers
+      .filter(p => (p.nome ?? '').trim().toLowerCase() === nomeTrim.toLowerCase())
+      .first();
+    if (existente) return toast.error('Já existe um produtor com esse nome');
+    const id = await db.producers.add({ nome: nomeTrim, ...stamp() } as any);
     toast.success('Produtor cadastrado');
     onSaved(Number(id));
   }

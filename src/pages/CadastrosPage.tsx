@@ -345,8 +345,13 @@ function AddProducer() {
     <div className="grid grid-cols-[1fr_auto] gap-2">
       <input className={inputCls} placeholder="Nome do produtor" value={nome} onChange={e => setNome(e.target.value)} />
       <button onClick={async () => {
-        if (!nome) return;
-        await db.producers.add({ nome, ...stamp() });
+        const nomeTrim = nome.trim();
+        if (!nomeTrim) return;
+        const existente = await db.producers
+          .filter(p => (p.nome ?? '').trim().toLowerCase() === nomeTrim.toLowerCase())
+          .first();
+        if (existente) return toast.error('Já existe um produtor com esse nome');
+        await db.producers.add({ nome: nomeTrim, ...stamp() });
         setNome(''); toast.success('Produtor cadastrado');
       }} className="rounded-lg gradient-primary px-3 text-primary-foreground">
         <Plus className="h-5 w-5" />
