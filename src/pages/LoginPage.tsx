@@ -5,6 +5,16 @@ import { useAuth } from '@/lib/auth';
 import { maskPhone, maskCPF, onlyDigits, isValidCPF } from '@/lib/masks';
 import { toast } from 'sonner';
 import { Phone, KeyRound, ArrowLeft, User, IdCard, Mail, ShieldCheck, Copy, Check } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Step = 'phone' | 'code' | 'signup' | 'recovery';
 
@@ -25,6 +35,7 @@ export default function LoginPage() {
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [confirmedSaved, setConfirmedSaved] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const nav = useNavigate();
 
@@ -202,13 +213,7 @@ export default function LoginPage() {
         {step === 'signup' && !recoveryCode && (
           <>
             <button
-              onClick={async () => {
-                if (!confirm('Voltar irá encerrar esta sessão. Você precisará receber um novo código. Continuar?')) return;
-                await supabase.auth.signOut();
-                setStep('phone');
-                setCode(''); setDevCode(null);
-                setNome(''); setCpf(''); setEmail('');
-              }}
+              onClick={() => setShowBackConfirm(true)}
               className="mb-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" /> Voltar
@@ -270,6 +275,31 @@ export default function LoginPage() {
           <RecoverFlow onBack={() => setStep('phone')} onDone={() => { setStep('phone'); }} />
         )}
       </div>
+
+      <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Deseja sair?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ao voltar, esta sessão será encerrada e você precisará receber um novo código para entrar. Os dados preenchidos serão perdidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Não</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowBackConfirm(false);
+                await supabase.auth.signOut();
+                setStep('phone');
+                setCode(''); setDevCode(null);
+                setNome(''); setCpf(''); setEmail('');
+              }}
+            >
+              Sim, sair
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
