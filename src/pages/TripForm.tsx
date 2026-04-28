@@ -50,6 +50,10 @@ export default function TripForm() {
   const [openContractModal, setOpenContractModal] = useState(false);
   const [openHarvestModal, setOpenHarvestModal] = useState(false);
 
+  // Modais de exclusão
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [blockedDel, setBlockedDel] = useState<React.ReactNode | null>(null);
+
   // Carregar para edição
   useEffect(() => {
     if (!editingId) return;
