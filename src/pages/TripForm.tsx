@@ -232,7 +232,7 @@ export default function TripForm() {
           <>
             <Field
               label="Produtor"
-              action={<QuickAdd to="/cadastros" label="Novo produtor" />}
+              action={<QuickAdd label="Novo produtor" onClick={() => setOpenProducerModal(true)} />}
             >
               <select value={producerId} onChange={e => setProducerId(Number(e.target.value))} className={inputCls}>
                 <option value="">Selecione…</option>
