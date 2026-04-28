@@ -446,7 +446,8 @@ function QuickModal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-0 sm:items-center sm:p-4 animate-fade-in" onClick={onClose}>
       <div
-        className="w-full max-w-md rounded-t-2xl border border-border bg-card p-4 shadow-elevated sm:rounded-2xl"
+        className="w-full max-w-md rounded-t-2xl border border-border bg-card p-4 pb-[calc(5rem+env(safe-area-inset-bottom))] shadow-elevated sm:rounded-2xl sm:pb-4 sm:mb-0 mb-0"
+        style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
         onClick={e => e.stopPropagation()}
       >
         <div className="mb-3 flex items-center justify-between">
