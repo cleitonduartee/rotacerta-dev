@@ -7,6 +7,7 @@ import { Plus, Trash2, Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
@@ -20,6 +21,7 @@ export default function ContractsPage() {
   const [producerId, setProducerId] = useState<number | ''>('');
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [valor, setValor] = useState('');
+  const [toDelete, setToDelete] = useState<{ id: number; produtor: string; safra: string } | null>(null);
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
