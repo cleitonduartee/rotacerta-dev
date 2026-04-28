@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, todayISO } from '@/lib/format';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, FileText, Truck as TruckIcon, Wallet } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -12,8 +12,47 @@ const TIPOS_PADRAO = ['Combustível', 'Pedágio', 'Manutenção', 'Alimentação
 
 export function ExpensesList() {
   const expenses = useLiveQuery(() => db.expenses.orderBy('data').reverse().toArray(), []) ?? [];
+  const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
+  const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
+  const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
+  const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
+  const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const navigate = useNavigate();
   const total = expenses.reduce((s, e) => s + e.valor, 0);
+
+  function vinculoInfo(e: any): { icon: JSX.Element; label: string; cls: string } {
+    if (e.contractId) {
+      const c = contracts.find(cc => cc.id === e.contractId);
+      const p = c ? producers.find(pp => pp.id === c.producerId) : null;
+      const h = c ? harvests.find(hh => hh.id === c.harvestId) : null;
+      const label = c
+        ? `Contrato • ${p?.nome ?? '?'} — ${h?.nome ?? '?'}`
+        : 'Contrato (removido)';
+      return {
+        icon: <FileText className="h-3 w-3" />,
+        label,
+        cls: 'bg-primary/15 text-primary border-primary/30',
+      };
+    }
+    if (e.tripId) {
+      const t = trips.find(tt => tt.id === e.tripId);
+      const tr = t ? trucks.find(x => x.id === t.truckId) : null;
+      const label = t
+        ? `Viagem • ${fmtDate(t.data)} ${tr?.placa ?? ''} ${t.origem}→${t.destino}`
+        : 'Viagem (removida)';
+      return {
+        icon: <TruckIcon className="h-3 w-3" />,
+        label,
+        cls: 'bg-accent/15 text-accent-foreground border-accent/30',
+      };
+    }
+    return {
+      icon: <Wallet className="h-3 w-3" />,
+      label: 'Despesa livre',
+      cls: 'bg-muted text-muted-foreground border-border',
+    };
+  }
+
   return (
     <div className="animate-fade-in">
       <PageHeader title="Despesas" subtitle={fmtBRL(total)} />
@@ -29,26 +68,37 @@ export function ExpensesList() {
             Nenhuma despesa registrada.
           </p>
         )}
-        {expenses.map(e => (
-          <div key={e.id} className="rounded-xl border border-border bg-card p-3">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <p className="font-semibold truncate">{e.tipo}</p>
-                <p className="text-xs text-muted-foreground">{fmtDate(e.data)}</p>
-                {e.descricao && <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{e.descricao}</p>}
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
-                <button
-                  onClick={async () => { if (confirm('Excluir?')) { await deleteWithTombstone('expenses', e.id!); toast.success('Excluído'); } }}
-                  className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+        {expenses.map(e => {
+          const v = vinculoInfo(e);
+          return (
+            <div key={e.id} className="rounded-xl border border-border bg-card p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold truncate">{e.tipo}</p>
+                  <p className="text-xs text-muted-foreground">{fmtDate(e.data)}</p>
+                  <span
+                    className={`mt-1.5 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-medium ${v.cls}`}
+                  >
+                    {v.icon}
+                    <span className="truncate">{v.label}</span>
+                  </span>
+                  {e.descricao && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{e.descricao}</p>
+                  )}
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
+                  <button
+                    onClick={async () => { if (confirm('Excluir?')) { await deleteWithTombstone('expenses', e.id!); toast.success('Excluído'); } }}
+                    className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
