@@ -28,6 +28,98 @@
 
   <body>
     <div id="root"></div>
+
+    <!-- Splash screen (PWA / primeiro carregamento) -->
+    <div id="rc-splash" aria-hidden="true">
+      <div class="rc-splash__inner">
+        <img src="/logo-mark.png" alt="" class="rc-splash__logo" draggable="false" />
+        <div class="rc-splash__title" aria-label="Rota Certa">
+          <span class="rc-splash__text"></span><span class="rc-splash__caret"></span>
+        </div>
+        <p class="rc-splash__tagline">Estrada na palma da mão</p>
+      </div>
+    </div>
+    <style>
+      #rc-splash {
+        position: fixed; inset: 0; z-index: 9999;
+        display: flex; align-items: center; justify-content: center;
+        background: linear-gradient(180deg, #15202e 0%, #0b1119 100%);
+        transition: opacity .45s ease;
+        padding: env(safe-area-inset-top) 1rem env(safe-area-inset-bottom);
+      }
+      #rc-splash.rc-splash--hide { opacity: 0; pointer-events: none; }
+      .rc-splash__inner {
+        display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
+        animation: rcFadeUp .5s ease-out both;
+      }
+      .rc-splash__logo {
+        width: 144px; height: auto; max-width: 60vw;
+        filter: drop-shadow(0 10px 30px rgba(249,115,22,.35));
+        animation: rcPop .6s cubic-bezier(.2,.8,.2,1) both;
+      }
+      .rc-splash__title {
+        font-family: 'Bebas Neue', 'Inter', system-ui, sans-serif;
+        font-size: clamp(2.25rem, 9vw, 3.25rem);
+        letter-spacing: .04em;
+        color: #F97316;
+        line-height: 1;
+        display: inline-flex; align-items: center;
+        min-height: 1em;
+      }
+      .rc-splash__text { white-space: pre; }
+      .rc-splash__caret {
+        display: inline-block; width: 3px; height: .9em; margin-left: 4px;
+        background: #F97316; animation: rcBlink 1s steps(1) infinite;
+      }
+      .rc-splash__tagline {
+        margin: 0; font-family: 'Inter', system-ui, sans-serif;
+        font-size: .72rem; letter-spacing: .25em; text-transform: uppercase;
+        color: rgba(245,235,220,.55);
+        opacity: 0; animation: rcFadeIn .4s ease-out 1.4s forwards;
+      }
+      @keyframes rcPop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+      @keyframes rcFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes rcFadeIn { to { opacity: 1; } }
+      @keyframes rcBlink { 50% { opacity: 0; } }
+    </style>
+    <script>
+      (function () {
+        var word = 'ROTA CERTA';
+        var el = document.querySelector('.rc-splash__text');
+        var i = 0;
+        function type() {
+          if (!el) return;
+          if (i <= word.length) {
+            el.textContent = word.slice(0, i);
+            i++;
+            setTimeout(type, 110);
+          }
+        }
+        setTimeout(type, 350);
+
+        function hide() {
+          var s = document.getElementById('rc-splash');
+          if (!s) return;
+          s.classList.add('rc-splash--hide');
+          setTimeout(function () { s && s.parentNode && s.parentNode.removeChild(s); }, 500);
+        }
+        // Esconde quando o app montar (mínimo 1.6s para ver a animação)
+        var start = Date.now();
+        var obs = new MutationObserver(function () {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            var elapsed = Date.now() - start;
+            var wait = Math.max(0, 1600 - elapsed);
+            setTimeout(hide, wait);
+            obs.disconnect();
+          }
+        });
+        obs.observe(document.getElementById('root'), { childList: true });
+        // Fallback
+        setTimeout(hide, 5000);
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
