@@ -41,7 +41,9 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
             </div>
             <ol className="space-y-3">
               <GuideStep n={1} icon={FileText} title="Cadastros">
-                Cadastre <strong>produtores</strong>, <strong>caminhões</strong>, <strong>motoristas</strong> e <strong>safras</strong>. Sem isso você não consegue criar contratos nem viagens.
+                O cadastro da <strong>placa do caminhão</strong> e do <strong>produtor</strong> é feito <strong>uma única vez</strong> — depois é só usar nas viagens e contratos. Você pode incluir novos a qualquer momento.
+                <br /><br />
+                Já a <strong>safra</strong> é cadastrada <strong>a cada novo período</strong>: se está na colheita do milho, cadastre a safra do milho daquele ano (ex.: <em>Milho 2025</em>); quando começar a soja, cadastre a safra da soja, e assim por diante.
               </GuideStep>
               <GuideStep n={2} icon={FileSignature} title="Contratos — o pulmão do sistema">
                 O <strong>contrato</strong> é o coração do RotaCerta: é ele que confirma que você fechou para <strong>puxar a lavoura do produtor</strong> e organiza todas as viagens daquela safra.
@@ -60,7 +62,13 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
                 <strong>Pré-preenchimento inteligente:</strong> ao lançar uma nova viagem, o sistema reaproveita os dados da viagem anterior (caminhão, motorista, origem, destino, contrato...) para você só precisar ajustar o que mudou. Isso agiliza muito o lançamento no dia a dia.
               </GuideStep>
               <GuideStep n={4} icon={Receipt} title="Despesas">
-                Lance custos como combustível, pedágio e manutenção. Eles entram no cálculo do <strong>lucro líquido</strong>.
+                Existem <strong>3 tipos</strong> de despesa, cada uma com uma finalidade:
+                <br /><br />
+                <strong>• Despesa por viagem:</strong> custos ligados a uma viagem específica (combustível, pedágio, refeição). Serve para <strong>controle de gastos</strong> e aparece no relatório, deduzindo do <strong>lucro bruto</strong> para mostrar o líquido real.
+                <br /><br />
+                <strong>• Despesa avulsa:</strong> gastos gerais que não pertencem a uma viagem (manutenção do caminhão, peças, lavagem). Também entram no relatório como dedução do lucro bruto, apenas para controle.
+                <br /><br />
+                <strong>• Despesa por contrato:</strong> esta é diferente — é o que o <strong>produtor deve descontar no fechamento</strong>. Por exemplo: um abastecimento feito <em>na fazenda</em> do produtor que será abatido no acerto final. Ela <strong>reduz o valor a receber</strong> no PDF de fechamento enviado pelo WhatsApp.
               </GuideStep>
               <GuideStep n={5} icon={Wheat} title="Fechamento e WhatsApp">
                 Ao fechar um <strong>contrato</strong>, o app gera um <strong>PDF de fechamento</strong> que pode ser enviado direto para o produtor pelo WhatsApp.
@@ -68,7 +76,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
               <GuideStep n={6} icon={Star} title="Fluxo completo no sistema">
                 Siga essa ordem para não travar em nenhuma etapa:
                 <br /><br />
-                <strong>1.</strong> Cadastre o <strong>caminhão</strong> (placa) e o <strong>motorista</strong>.
+                <strong>1.</strong> Cadastre o <strong>caminhão</strong> (placa).
                 <br />
                 <strong>2.</strong> Cadastre o <strong>produtor</strong> com quem vai trabalhar.
                 <br />
