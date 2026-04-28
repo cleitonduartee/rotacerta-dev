@@ -7,6 +7,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const TIPOS_PADRAO = ['Combustível', 'Pedágio', 'Manutenção', 'Alimentação', 'Hospedagem', 'Frete retorno', 'Socorro mecânico'];
 
@@ -19,6 +29,14 @@ export function ExpensesList() {
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const navigate = useNavigate();
   const total = expenses.reduce((s, e) => s + e.valor, 0);
+  const [toDelete, setToDelete] = useState<any | null>(null);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    await deleteWithTombstone('expenses', toDelete.id!);
+    toast.success('Despesa excluída');
+    setToDelete(null);
+  }
 
   function vinculoInfo(e: any): { icon: JSX.Element; label: string; cls: string } {
     if (e.contractId) {
@@ -89,7 +107,7 @@ export function ExpensesList() {
                 <div className="flex items-center gap-1 shrink-0">
                   <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
                   <button
-                    onClick={async () => { if (confirm('Excluir?')) { await deleteWithTombstone('expenses', e.id!); toast.success('Excluído'); } }}
+                    onClick={() => setToDelete(e)}
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -100,6 +118,33 @@ export function ExpensesList() {
           );
         })}
       </div>
+
+      <AlertDialog open={!!toDelete} onOpenChange={(open) => !open && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir despesa?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {toDelete && (
+                <>
+                  Esta ação não pode ser desfeita. Será removida a despesa{' '}
+                  <strong>{toDelete.tipo}</strong> de{' '}
+                  <strong>{fmtBRL(toDelete.valor)}</strong> do dia{' '}
+                  <strong>{fmtDate(toDelete.data)}</strong>.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Sim, excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
