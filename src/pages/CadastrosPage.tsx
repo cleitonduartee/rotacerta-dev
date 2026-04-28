@@ -103,7 +103,7 @@ export default function CadastrosPage() {
           <AddTruck />
           <ul className="space-y-2 mt-3">
             {trucks.map(t => (
-              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={() => setDel({ kind: 'truck', id: t.id!, placa: t.placa })} />
+              <Row key={t.id} title={t.placa} sub={t.modelo} onDel={() => tryDelete({ kind: 'truck', id: t.id!, placa: t.placa })} />
             ))}
             {trucks.length === 0 && <Empty>Cadastre seu primeiro caminhão.</Empty>}
           </ul>
@@ -113,7 +113,7 @@ export default function CadastrosPage() {
           <AddProducer />
           <ul className="space-y-2 mt-3">
             {producers.map(p => (
-              <Row key={p.id} title={p.nome} onDel={() => setDel({ kind: 'producer', id: p.id!, nome: p.nome })} />
+              <Row key={p.id} title={p.nome} onDel={() => tryDelete({ kind: 'producer', id: p.id!, nome: p.nome })} />
             ))}
             {producers.length === 0 && <Empty>Cadastre o primeiro produtor.</Empty>}
           </ul>
@@ -133,7 +133,7 @@ export default function CadastrosPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
-                    onClick={() => setDel({ kind: 'harvest', id: h.id!, nome: h.nome })}
+                    onClick={() => tryDelete({ kind: 'harvest', id: h.id!, nome: h.nome })}
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -158,6 +158,13 @@ export default function CadastrosPage() {
         }
         description={dialogText}
         onConfirm={confirmDelete}
+      />
+
+      <BlockedDeleteDialog
+        open={!!blocked}
+        onOpenChange={(open) => !open && setBlocked(null)}
+        title={blocked?.title}
+        description={blocked?.message}
       />
     </div>
   );
