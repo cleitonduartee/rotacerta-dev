@@ -151,29 +151,34 @@ export default function TripForm() {
         return toast.error('Informe peso e valor por tonelada');
     }
 
-    const trip: Trip = {
-      kind, data,
-      truckId: Number(truckId),
-      origem, destino,
-      contractId: kind === 'safra' ? contract!.id : undefined,
-      pesoKg: kind === 'safra' ? pesoKgNum : undefined,
-      sacos: kind === 'safra' ? calc.sacos : undefined,
-      valorPorSacoOverride: kind === 'safra' && valorPorSacoOverride ? parseFloat(valorPorSacoOverride.replace(',', '.')) : undefined,
-      transportadora: kind === 'frete' ? transportadora : undefined,
-      pesoToneladas: kind === 'frete' ? parseFloat(pesoToneladas.replace(',', '.')) : undefined,
-      valorPorTonelada: kind === 'frete' ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
-      valorTotal: calc.valorTotal,
-      observacao,
-      notaProdutor: notaProdutor.trim() || undefined,
-      ...stamp(),
-    };
+    try {
+      const trip: Trip = {
+        kind, data,
+        truckId: Number(truckId),
+        origem, destino,
+        contractId: kind === 'safra' ? contract!.id : undefined,
+        pesoKg: kind === 'safra' ? pesoKgNum : undefined,
+        sacos: kind === 'safra' ? calc.sacos : undefined,
+        valorPorSacoOverride: kind === 'safra' && valorPorSacoOverride ? parseFloat(valorPorSacoOverride.replace(',', '.')) : undefined,
+        transportadora: kind === 'frete' ? transportadora : undefined,
+        pesoToneladas: kind === 'frete' ? parseFloat(pesoToneladas.replace(',', '.')) : undefined,
+        valorPorTonelada: kind === 'frete' ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
+        valorTotal: calc.valorTotal,
+        observacao,
+        notaProdutor: notaProdutor.trim() || undefined,
+        ...stamp(),
+      };
 
-    if (editingId) await db.trips.update(editingId, trip);
-    else await db.trips.add(trip);
+      if (editingId) await db.trips.update(editingId, trip);
+      else await db.trips.add(trip);
 
-    if (kind === 'safra' && producerId !== '') localStorage.setItem('lastProducerId', String(producerId));
-    toast.success(editingId ? 'Viagem atualizada' : 'Viagem salva');
-    navigate('/viagens');
+      if (kind === 'safra' && producerId !== '') localStorage.setItem('lastProducerId', String(producerId));
+      toast.success(editingId ? 'Viagem atualizada' : 'Viagem salva');
+      navigate('/viagens');
+    } catch (e: any) {
+      console.error('[trips.save] erro', e);
+      toast.error('Não foi possível salvar a viagem', { description: e?.message ?? String(e) });
+    }
   }
 
   async function remove() {
