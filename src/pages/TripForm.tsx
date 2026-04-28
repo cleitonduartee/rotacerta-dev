@@ -46,6 +46,7 @@ export default function TripForm() {
   const [openTruckModal, setOpenTruckModal] = useState(false);
   const [openProducerModal, setOpenProducerModal] = useState(false);
   const [openContractModal, setOpenContractModal] = useState(false);
+  const [openHarvestModal, setOpenHarvestModal] = useState(false);
 
   // Carregar para edição
   useEffect(() => {
