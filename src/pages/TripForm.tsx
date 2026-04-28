@@ -249,7 +249,7 @@ export default function TripForm() {
             >
               <select value={harvestId} onChange={e => setHarvestId(Number(e.target.value))} className={inputCls}>
                 <option value="">Selecione…</option>
-                {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} ({h.tipo}){h.fechada ? ' — fechada' : ''}</option>)}
+                {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} ({h.tipo})</option>)}
               </select>
             </Field>
 
