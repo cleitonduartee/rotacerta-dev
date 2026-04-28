@@ -367,6 +367,30 @@ export default function ContractsPage() {
         title={blocked?.title}
         description={blocked?.message}
       />
+
+      <ConfirmDeleteDialog
+        open={!!askSend}
+        onOpenChange={(open) => !open && setAskSend(null)}
+        title="Enviar relatório ao produtor?"
+        description={
+          askSend && (
+            <>
+              Deseja enviar agora o PDF de fechamento do contrato de{' '}
+              <strong>{askSend.produtor}</strong> na safra{' '}
+              <strong>{askSend.safra}</strong> pelo WhatsApp?
+              <br />
+              <span className="text-xs">No celular, será aberto o seletor de contatos com o PDF anexado.</span>
+            </>
+          )
+        }
+        confirmLabel="Sim, enviar"
+        cancelLabel="Agora não"
+        onConfirm={async () => {
+          const target = askSend;
+          setAskSend(null);
+          if (target) await shareContractPdf(target.contract);
+        }}
+      />
     </div>
   );
 }
