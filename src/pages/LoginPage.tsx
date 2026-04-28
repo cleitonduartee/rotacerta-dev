@@ -213,13 +213,7 @@ export default function LoginPage() {
         {step === 'signup' && !recoveryCode && (
           <>
             <button
-              onClick={async () => {
-                if (!confirm('Voltar irá encerrar esta sessão. Você precisará receber um novo código. Continuar?')) return;
-                await supabase.auth.signOut();
-                setStep('phone');
-                setCode(''); setDevCode(null);
-                setNome(''); setCpf(''); setEmail('');
-              }}
+              onClick={() => setShowBackConfirm(true)}
               className="mb-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4" /> Voltar
