@@ -95,8 +95,10 @@ export default function LoginPage() {
           complete = Boolean(prof?.nome && prof?.cpf);
         }
         if (complete) {
+          // Aguarda o AuthProvider atualizar o profile no contexto ANTES de navegar,
+          // senão o RequireAuth pode ver profile=null e redirecionar de volta para /login.
+          await refreshProfile();
           toast.success('Bem-vindo de volta!');
-          refreshProfile();
           nav('/', { replace: true });
         } else {
           setStep('signup');
