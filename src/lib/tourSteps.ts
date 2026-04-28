@@ -15,25 +15,25 @@ export const TOUR_STEPS: TourStep[] = [
   {
     selector: '[data-tour="tab-cadastros"]',
     title: '1. Comece pelos cadastros',
-    body: 'Aqui você cadastra produtores, caminhões, motoristas e safras. É a base para tudo no app.',
+    body: 'Placa do caminhão e produtor são cadastrados uma única vez (pode incluir novos depois). Já a safra é cadastrada a cada novo período: colheita do milho? Cadastre "Milho 2025". Começou a soja? Cadastre a safra da soja. E assim por diante.',
     placement: 'top',
   },
   {
     selector: '[data-tour="tab-contratos"]',
     title: '2. Crie um contrato',
-    body: 'Vincule um produtor a uma safra e defina o valor por saco. Cada viagem de lavoura usa um contrato.',
+    body: 'O contrato é o pulmão do sistema: confirma que você fechou para puxar a lavoura do produtor. A cada nova safra é preciso criar um novo contrato, vinculando produtor + safra + valor por saco.',
     placement: 'top',
   },
   {
     selector: '[data-tour="fab-nova-viagem"]',
     title: '3. Registre uma viagem',
-    body: 'Toque no + para lançar viagens de lavoura (vinculadas a um contrato) ou fretes avulsos.',
+    body: 'Toque no + para lançar viagens de Lavoura (vinculadas a um contrato) ou Frete avulso. O sistema pré-preenche os campos da viagem anterior para agilizar, e você pode mudar o valor por saco mesmo se o contrato tiver um padrão.',
     placement: 'top',
   },
   {
     selector: '[data-tour="tab-despesas"]',
     title: '4. Lance suas despesas',
-    body: 'Combustível, pedágio, manutenção... Tudo aqui. O lucro líquido é calculado automaticamente.',
+    body: 'São 3 tipos: por viagem (custos da rota, deduz do lucro bruto), avulsa (gastos gerais como manutenção, também deduz do lucro), e por contrato (ex.: abastecimento na fazenda) — esta abate no fechamento com o produtor.',
     placement: 'top',
   },
   {
