@@ -234,9 +234,9 @@ export default function ReportsPage() {
 
 function Card({ label, value, danger, highlight }: { label: string; value: string; danger?: boolean; highlight?: boolean }) {
   return (
-    <div className={'rounded-lg border p-3 ' + (highlight ? 'border-primary/40 bg-primary/10' : 'border-border bg-card')}>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
-      <p className={'font-display text-xl mt-1 ' + (danger ? 'text-destructive' : highlight ? 'text-primary' : '')}>{value}</p>
+    <div className={'rounded-lg border p-3 min-w-0 overflow-hidden ' + (highlight ? 'border-primary/40 bg-primary/10' : 'border-border bg-card')}>
+      <p className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">{label}</p>
+      <p className={'font-display text-lg sm:text-xl mt-1 break-all leading-tight ' + (danger ? 'text-destructive' : highlight ? 'text-primary' : '')}>{value}</p>
     </div>
   );
 }
