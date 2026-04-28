@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { Link } from 'react-router-dom';
-import { Plus, Lock, Unlock } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { fmtBRL } from '@/lib/format';
 import { useState } from 'react';
 import { toast } from 'sonner';
