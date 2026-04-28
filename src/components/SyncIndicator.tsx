@@ -38,9 +38,13 @@ export function SyncIndicator() {
     setSyncing(true);
     try {
       const res = await syncAll(user.id);
-      if (manual) {
-        if (res.ok) toast.success('Sincronização concluída');
-        else toast.error('Falha ao sincronizar');
+      if (res.ok) {
+        if (manual) toast.success('Sincronização concluída');
+      } else {
+        const first = res.errors?.[0] ?? 'Erro desconhecido';
+        const extra = (res.errors?.length ?? 0) > 1 ? ` (+${res.errors!.length - 1} outros)` : '';
+        toast.error('Falha ao sincronizar', { description: first + extra, duration: 8000 });
+        console.error('[sync] erros:', res.errors);
       }
     } finally {
       setSyncing(false);

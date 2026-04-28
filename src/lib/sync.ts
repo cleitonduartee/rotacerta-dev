@@ -18,6 +18,14 @@ type IdMap = Map<string, number>; // remoteId -> localId
 const ORDER: SyncTable[] = ['trucks', 'producers', 'harvests', 'contracts', 'trips', 'expenses'];
 
 let syncing = false;
+const syncErrors: string[] = [];
+function recordError(table: string, op: 'insert' | 'update' | 'delete', err: any, payload?: any, localId?: number) {
+  const msg = err?.message || err?.error_description || JSON.stringify(err);
+  const detail = `[${table} ${op}] ${msg}`;
+  console.warn('[sync]', detail, { payload, localId, err });
+  syncErrors.push(detail);
+}
+export function getLastSyncErrors() { return [...syncErrors]; }
 
 // ---------- helpers ----------
 
@@ -222,6 +230,7 @@ async function pushTombstones() {
   for (const t of tombs) {
     const { error } = await supabase.from(t.table).delete().eq('id', t.remoteId);
     if (!error) await db.tombstones.delete(t.id!);
+    else recordError(t.table, 'delete', error, { id: t.remoteId });
   }
 }
 
@@ -233,14 +242,17 @@ async function pushTable<T extends { id?: number; remoteId?: string; syncStatus:
   const pendentes = await t.where('syncStatus').equals('pending').toArray();
   for (const row of pendentes as unknown as T[]) {
     const payload = toServer(row);
-    if (!payload) continue; // dependência ainda não tem remoteId — tenta na próxima rodada
+    if (!payload) {
+      recordError(table, 'insert', { message: 'dependência local sem remoteId (FK não resolvida ainda)' }, row, row.id);
+      continue;
+    }
     if (row.remoteId) {
       const { error } = await (supabase.from(table) as any).update(payload).eq('id', row.remoteId);
-      if (error) console.warn(`[sync] update ${table} falhou`, { error, payload, localId: row.id });
+      if (error) recordError(table, 'update', error, payload, row.id);
       else await (t as any).update(row.id!, { syncStatus: 'synced' });
     } else {
       const { data, error } = await (supabase.from(table) as any).insert(payload).select('id').single();
-      if (error) console.warn(`[sync] insert ${table} falhou`, { error, payload, localId: row.id });
+      if (error) recordError(table, 'insert', error, payload, row.id);
       else if (data) await (t as any).update(row.id!, { remoteId: data.id, syncStatus: 'synced' });
     }
   }
@@ -346,17 +358,21 @@ export async function pushAll(uid: string) {
 // ============================================================
 
 export async function syncAll(uid: string) {
-  if (syncing) return { ok: true, count: 0, skipped: true };
-  if (!navigator.onLine) return { ok: false, count: 0 };
+  if (syncing) return { ok: true, count: 0, skipped: true, errors: [] as string[] };
+  if (!navigator.onLine) return { ok: false, count: 0, errors: [] as string[] };
   syncing = true;
+  syncErrors.length = 0;
   try {
     await pushAll(uid);
     await pullAll(uid);
     await pushAll(uid); // 2ª passada caso o pull tenha resolvido dependências
-    return { ok: true, count: 0 };
-  } catch (e) {
+    const errors = [...syncErrors];
+    return { ok: errors.length === 0, count: 0, errors };
+  } catch (e: any) {
     console.warn('[sync] falhou', e);
-    return { ok: false, count: 0, error: e };
+    const msg = e?.message || String(e);
+    syncErrors.push(`[fatal] ${msg}`);
+    return { ok: false, count: 0, error: e, errors: [...syncErrors] };
   } finally {
     syncing = false;
   }
