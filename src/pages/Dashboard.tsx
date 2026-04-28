@@ -70,7 +70,7 @@ export default function Dashboard() {
   const totalDespesas = expensesF.reduce((s, e) => s + e.valor, 0);
   const liquido = totalReceita - totalDespesas;
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
-  const safrasAbertas = harvests.filter(h => !h.fechada).length;
+  
 
   // Gráfico 1 — Receita vs Despesa últimos 6 meses
   const barsData = useMemo(() => {
