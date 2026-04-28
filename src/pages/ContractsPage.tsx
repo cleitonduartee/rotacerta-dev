@@ -254,6 +254,22 @@ export default function ContractsPage() {
           {contracts.length === 0 && <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">Nenhum contrato.</p>}
         </ul>
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!toDelete}
+        onOpenChange={(open) => !open && setToDelete(null)}
+        title="Excluir contrato?"
+        description={
+          toDelete && (
+            <>
+              Esta ação não pode ser desfeita. O contrato de{' '}
+              <strong>{toDelete.produtor}</strong> na safra{' '}
+              <strong>{toDelete.safra}</strong> será removido.
+            </>
+          )
+        }
+        onConfirm={confirmRemove}
+      />
     </div>
   );
 }
