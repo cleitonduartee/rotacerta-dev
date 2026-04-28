@@ -148,9 +148,6 @@ export default function HarvestDetail() {
           </button>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          O fechamento agora é feito por contrato. Acesse <Link to="/safras/contratos" className="text-primary underline">Contratos</Link> para fechar.
-        </p>
       </div>
     </div>
   );
