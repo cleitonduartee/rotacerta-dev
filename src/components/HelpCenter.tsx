@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PlayCircle, BookOpen, HelpCircle, WifiOff, Truck, Receipt, FileSignature, FileText, Wheat } from 'lucide-react';
+import { PlayCircle, BookOpen, HelpCircle, WifiOff, Truck, Receipt, FileSignature, FileText, Wheat, Star } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -53,7 +53,16 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
                 Lance custos como combustível, pedágio e manutenção. Eles entram no cálculo do <strong>lucro líquido</strong>.
               </GuideStep>
               <GuideStep n={5} icon={Wheat} title="Fechamento e WhatsApp">
-                Ao fechar uma safra ou contrato, o app gera um <strong>PDF de fechamento</strong> que pode ser enviado direto para o produtor pelo WhatsApp.
+                Ao fechar um <strong>contrato</strong>, o app gera um <strong>PDF de fechamento</strong> que pode ser enviado direto para o produtor pelo WhatsApp.
+              </GuideStep>
+              <GuideStep n={6} icon={Star} title="Contrato: o pulmão do sistema">
+                O <strong>contrato</strong> é o coração do RotaCerta — é ele que confirma e organiza todas as puxadas para o produtor durante a safra.
+                <br /><br />
+                <strong>Valor por saco flexível:</strong> mesmo que o contrato tenha um valor padrão por saco, ao lançar uma <strong>nova viagem</strong> você pode informar um valor diferente — útil quando o preço muda no meio da safra.
+                <br /><br />
+                <strong>Editar ou excluir viagem:</strong> na lista de Viagens, toque sobre uma viagem para abrir a tela de edição. Para excluir, use o botão <strong>Excluir</strong> dentro da edição (não é possível excluir viagens que tenham despesas vinculadas — exclua as despesas primeiro).
+                <br /><br />
+                <strong>Pré-preenchimento inteligente:</strong> ao lançar uma nova viagem, o sistema reaproveita os dados da viagem anterior (caminhão, motorista, origem, destino, contrato...) para você só precisar ajustar o que mudou. Isso agiliza muito o lançamento no dia a dia.
               </GuideStep>
             </ol>
           </section>
@@ -81,7 +90,10 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
                 Reabra-o em Contratos (ícone de cadeado). Depois de reaberto, ele aceita novas viagens e edições.
               </FAQ>
               <FAQ q="Onde vejo o lucro de cada safra?">
-                Em Cadastros → Safras, toque na safra. Você verá viagens, sacos, receita, despesas e líquido consolidados.
+                Você pode acompanhar pelo <strong>Dashboard</strong> (visão consolidada) ou em <strong>Relatórios → por Safra</strong>, onde aparece receita, despesas e líquido detalhados.
+              </FAQ>
+              <FAQ q="Onde vejo o lucro do contrato firmado com o produtor?">
+                Na tela de <strong>Contratos</strong>, cada contrato mostra o <strong>lucro</strong> e a <strong>quantidade de viagens realizadas</strong> diretamente no card. É só abrir a aba Contratos e conferir.
               </FAQ>
               <FAQ q="Excluí algo por engano. Como recupero?">
                 A exclusão é definitiva. Recomendamos fechar contratos em vez de excluí-los — assim os dados ficam preservados para histórico.
