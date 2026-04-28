@@ -267,12 +267,13 @@ export default function TripForm() {
                           })}
                         </>
                       )}
-                      <Link
-                        to="/contratos"
-                        className="mt-1 flex items-center justify-center gap-1.5 rounded-lg border border-warning/60 bg-warning/20 px-3 py-2 text-sm font-semibold text-warning"
+                      <button
+                        type="button"
+                        onClick={() => setOpenContractModal(true)}
+                        className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-lg border border-warning/60 bg-warning/20 px-3 py-2 text-sm font-semibold text-warning"
                       >
                         <Plus className="h-4 w-4" /> Cadastrar contrato
-                      </Link>
+                      </button>
                     </div>
                   );
                 })()}
