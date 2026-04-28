@@ -29,6 +29,14 @@ export function ExpensesList() {
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const navigate = useNavigate();
   const total = expenses.reduce((s, e) => s + e.valor, 0);
+  const [toDelete, setToDelete] = useState<any | null>(null);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    await deleteWithTombstone('expenses', toDelete.id!);
+    toast.success('Despesa excluída');
+    setToDelete(null);
+  }
 
   function vinculoInfo(e: any): { icon: JSX.Element; label: string; cls: string } {
     if (e.contractId) {
