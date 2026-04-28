@@ -240,7 +240,10 @@ export default function TripForm() {
                 {producers.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
               </select>
             </Field>
-            <Field label="Safra">
+            <Field
+              label="Safra"
+              action={<QuickAdd label="Nova safra" onClick={() => setOpenHarvestModal(true)} />}
+            >
               <select value={harvestId} onChange={e => setHarvestId(Number(e.target.value))} className={inputCls}>
                 <option value="">Selecione…</option>
                 {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} ({h.tipo}){h.fechada ? ' — fechada' : ''}</option>)}
