@@ -135,7 +135,6 @@ export default function TripForm() {
     return { sacos: 0, valorTotal: calcFrete(pt, vt) };
   }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada]);
 
-  const harvestFechada = harvestId !== '' && harvests.find(h => h.id === harvestId)?.fechada;
   const contratoFechado = contract?.fechado;
 
   async function save() {
@@ -144,7 +143,6 @@ export default function TripForm() {
     if (kind === 'safra') {
       if (!contract) return toast.error('Cadastre um contrato para este produtor + lavoura');
       if (contratoFechado) return toast.error('Contrato fechado — não é possível cadastrar viagens');
-      if (harvestFechada) return toast.error('Safra fechada — não é possível cadastrar viagens');
       if (pesoKgNum <= 0) return toast.error('Informe o peso');
     } else {
       if (!parseFloat(pesoToneladas) || !parseFloat(valorPorTonelada))
