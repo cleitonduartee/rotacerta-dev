@@ -176,7 +176,7 @@ export default function ContractsPage() {
           <input
             className={inputCls}
             inputMode="decimal"
-            placeholder="ex: R$ 3,50"
+            placeholder="R$ por saco (60 kg) — ex: 3,50"
             value={valor}
             onChange={e => setValor(maskMoneyInput(e.target.value))}
           />
