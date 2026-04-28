@@ -46,9 +46,12 @@ export default function LoginPage() {
   useEffect(() => {
     if (!session || !profileLoaded) return;
     if (recoveryCode) return;
+    // Evita decidir com profile "stale" de outro usuário (race ao trocar de sessão).
+    if (profile && profile.user_id !== session.user.id) return;
     if (profile?.cpf && profile?.nome) {
       nav('/', { replace: true });
-    } else if (step === 'phone') {
+    } else if (step === 'phone' && profile && profile.user_id === session.user.id) {
+      // Só vai para signup se confirmadamente o profile do usuário atual está incompleto.
       setStep('signup');
     }
   }, [session, profile, profileLoaded, step, nav, recoveryCode]);
@@ -95,8 +98,10 @@ export default function LoginPage() {
           complete = Boolean(prof?.nome && prof?.cpf);
         }
         if (complete) {
+          // Aguarda o AuthProvider atualizar o profile no contexto ANTES de navegar,
+          // senão o RequireAuth pode ver profile=null e redirecionar de volta para /login.
+          await refreshProfile();
           toast.success('Bem-vindo de volta!');
-          refreshProfile();
           nav('/', { replace: true });
         } else {
           setStep('signup');
