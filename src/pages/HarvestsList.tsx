@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { Link } from 'react-router-dom';
-import { Plus, Lock, Unlock } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { fmtBRL } from '@/lib/format';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -106,11 +106,6 @@ function HarvestCard({ h }: { h: any }) {
           <p className="font-display text-2xl leading-none">{h.nome}</p>
           <p className="text-xs uppercase tracking-wider text-muted-foreground mt-1">{h.tipo} • {h.ano}</p>
         </div>
-        <span className={'flex items-center gap-1 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-wider ' +
-          (h.fechada ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
-          {h.fechada ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-          {h.fechada ? 'Fechada' : 'Aberta'}
-        </span>
       </div>
       <div className="mt-3 grid grid-cols-3 gap-2 text-center">
         <Mini label="Viagens" v={tripsH.length} />

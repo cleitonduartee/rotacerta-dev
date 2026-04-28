@@ -1,27 +1,37 @@
-## O que vai acontecer
+## Objetivo
 
-Vou **gerar uma prévia** da nova versão do `logo-mark.png` e te mostrar como artefato pra você aprovar visualmente. **Nada será aplicado no projeto ainda.**
+A safra deixa de ter status "Aberta/Fechada". Ela passa a ser apenas um rótulo do período de plantio (ex.: "Soja 2026"). O fechamento continua exclusivo dos **contratos** dentro da safra, como já é feito hoje na página Contratos.
 
-Depois que você aprovar, aí sim:
-1. Substituo o `public/logo-mark.png` pela versão aprovada.
-2. Regenero `public/icon-192.png` e `public/icon-512.png` (caminhão + pista nova em cima, "RotaCerta" embaixo, fundo navy).
-3. Regenero o `public/favicon.ico`.
+## Por que mexer em mais de um arquivo
 
-## Nova arte da pista (versão minimalista)
+O conceito de "safra fechada" já estava sendo descontinuado (a própria tela `HarvestDetail` informa: *"O fechamento agora é feito por contrato"*), mas restaram resíduos visuais e regras zumbis espalhadas pelo app que precisam sair juntas para não confundir.
 
-- **Sem asfalto cinza.** Some a faixa cinza pesada que estava embaixo do caminhão.
-- **Só linhas brancas** sugerindo a pista — tracejado branco simples no chão, alinhado por baixo das rodas.
-- **Linha em curva**: começa reta à direita e faz uma curva suave pra esquerda, acompanhando todas as rodas do caminhão (que está de perfil virado pra esquerda).
-- **Sombra leve** sob as rodas pra dar apoio visual.
-- **Fundo transparente** em todo o resto da imagem.
-- Caminhão e boneco mantidos exatamente iguais ao atual.
+## O que muda na interface
 
-## Como vou gerar
+1. **Listagem de Safras** (`HarvestsList.tsx`) — remover o badge verde/cinza "Aberta/Fechada" ao lado do nome da safra.
+2. **Cadastros → aba Safras** (`CadastrosPage.tsx`) — remover o mesmo badge "Aberta/Fechada".
+3. **Detalhe da Safra** (`HarvestDetail.tsx`) — remover o aviso *"O fechamento agora é feito por contrato…"*, que não faz mais sentido sem o conceito de safra fechada.
+4. **Cadastrar Viagem** (`TripForm.tsx`):
+   - Remover o sufixo " — fechada" no `<select>` de safra.
+   - Remover a trava que bloqueia salvar viagem quando a safra está marcada como fechada (essa regra agora vive só no contrato).
+5. **Início (Dashboard)** — remover o KPI "Safras abertas", que ficou sem significado (sempre conta todas).
 
-- Modelo: `google/gemini-3-pro-image-preview` (Nano Banana Pro).
-- Uso o `public/logo-mark.png` atual como referência + instrução: "remover completamente a faixa de asfalto cinza. Manter o caminhão e o personagem idênticos. Adicionar apenas algumas linhas brancas tracejadas no chão sob as rodas, formando uma curva suave da direita pra esquerda. Sombra leve sob o caminhão. Fundo 100% transparente."
-- Salvo em `/mnt/documents/logo-mark-preview.png` e te mostro via `<lov-artifact>`.
+## O que muda no código (detalhes técnicos)
 
-## Próximo passo
+- O campo `fechada` / `fechada_em` na tabela `harvests` **permanece no banco** por compatibilidade e sincronização com instalações antigas — só deixa de ser lido/exibido na UI. Não vamos rodar migração para apagar coluna agora (evita risco em quem tem dados locais com a flag setada).
+- Em `db.ts`, mantém o tipo `fechada?: boolean` como opcional/legado (sem remover, para não quebrar o schema do Dexie já instalado nos PWAs dos usuários).
+- `sync.ts` continua espelhando o campo normalmente.
 
-Aprova esse plano que eu gero a prévia. Você olha e me diz **"pode aplicar"** ou pede ajuste (ex.: "linhas mais curtas", "curva mais fechada", "tira a sombra"). Só depois mexo nos arquivos do projeto.
+## Arquivos afetados
+
+- `src/pages/HarvestsList.tsx` — remove badge.
+- `src/pages/CadastrosPage.tsx` — remove badge na aba Safras.
+- `src/pages/HarvestDetail.tsx` — remove aviso de fechamento por contrato.
+- `src/pages/TripForm.tsx` — remove sufixo "— fechada" e a validação `harvestFechada`.
+- `src/pages/Dashboard.tsx` — remove KPI "Safras abertas" (e ajusta o grid de stats se necessário para manter alinhamento).
+
+## Fora do escopo
+
+- Não mexe em **Contratos** — fechar/reabrir contrato continua igual.
+- Não remove colunas no banco nem no IndexedDB.
+- Não altera relatórios/PDF.

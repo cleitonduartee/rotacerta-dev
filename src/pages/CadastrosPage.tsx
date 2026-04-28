@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone, wipeLocalData } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Lock, Unlock, Pencil, Info, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Pencil, Info, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -99,11 +99,6 @@ export default function CadastrosPage() {
                   <p className="text-xs text-muted-foreground">{h.tipo} • {h.ano}</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={'flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ' +
-                    (h.fechada ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
-                    {h.fechada ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-                    {h.fechada ? 'Fechada' : 'Aberta'}
-                  </span>
                   <button
                     onClick={() => setDel({ kind: 'harvest', id: h.id!, nome: h.nome })}
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
