@@ -27,9 +27,13 @@ export default function HarvestsList() {
             return <HarvestCard key={h.id} h={h} />;
           })}
           {harvests.length === 0 && (
-            <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-              Nenhuma safra. Cadastre uma acima.
-            </p>
+            <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
+              <Plus className="mx-auto h-8 w-8 text-muted-foreground/50" />
+              <p className="mt-2 text-sm font-semibold text-foreground">Nenhuma safra cadastrada</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Cadastre uma safra acima (ex: <em>Soja 2026</em>) para depois criar contratos com produtores.
+              </p>
+            </div>
           )}
         </ul>
       </div>

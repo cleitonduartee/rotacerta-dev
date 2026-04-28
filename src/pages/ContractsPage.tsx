@@ -330,7 +330,15 @@ export default function ContractsPage() {
               </li>
             );
           })}
-          {contracts.length === 0 && <p className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">Nenhum contrato.</p>}
+          {contracts.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+              <FileDown className="mx-auto h-10 w-10 text-muted-foreground/50" />
+              <p className="mt-3 text-sm font-semibold text-foreground">Nenhum contrato ainda</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Crie um contrato acima vinculando <strong>produtor + safra + valor por saco</strong>. Toda viagem de lavoura usa um contrato.
+              </p>
+            </div>
+          )}
         </ul>
       </div>
 
