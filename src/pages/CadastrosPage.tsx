@@ -457,15 +457,20 @@ function AddHarvest() {
   const anos = Array.from({ length: 11 }, (_, i) => currentYear - i);
 
   async function add() {
-    const nome = `${TIPO_LABELS[tipo] ?? tipo} - ${ano}`;
-    const existente = await db.harvests
-      .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
-      .first();
-    if (existente) {
-      return toast.error(`Já existe uma safra de ${TIPO_LABELS[tipo] ?? tipo} para o ano ${ano} ("${existente.nome}")`);
+    try {
+      const nome = `${TIPO_LABELS[tipo] ?? tipo} - ${ano}`;
+      const existente = await db.harvests
+        .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
+        .first();
+      if (existente) {
+        return toast.error(`Já existe uma safra de ${TIPO_LABELS[tipo] ?? tipo} para o ano ${ano} ("${existente.nome}")`);
+      }
+      await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
+      toast.success(`Safra "${nome}" cadastrada`);
+    } catch (e: any) {
+      console.error('[harvests.add] erro', e);
+      toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
     }
-    await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
-    toast.success(`Safra "${nome}" cadastrada`);
   }
 
   return (
