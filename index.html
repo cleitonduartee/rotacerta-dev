@@ -75,7 +75,7 @@
         margin: 0; font-family: 'Inter', system-ui, sans-serif;
         font-size: .72rem; letter-spacing: .25em; text-transform: uppercase;
         color: rgba(245,235,220,.55);
-        opacity: 0; animation: rcFadeIn .4s ease-out 1.4s forwards;
+        opacity: 0; animation: rcFadeIn .4s ease-out .9s forwards;
       }
       @keyframes rcPop { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
       @keyframes rcFadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
@@ -92,10 +92,10 @@
           if (i <= word.length) {
             el.textContent = word.slice(0, i);
             i++;
-            setTimeout(type, 110);
+            setTimeout(type, 85);
           }
         }
-        setTimeout(type, 350);
+        type();
 
         function hide() {
           var s = document.getElementById('rc-splash');
@@ -103,7 +103,7 @@
           s.classList.add('rc-splash--hide');
           setTimeout(function () { s && s.parentNode && s.parentNode.removeChild(s); }, 500);
         }
-        // Esconde quando o app montar (mínimo 1.6s para ver a animação)
+        // Esconde quando o app montar (mínimo 1.4s para ver a animação)
         var start = Date.now();
         var obs = new MutationObserver(function () {
           var root = document.getElementById('root');
