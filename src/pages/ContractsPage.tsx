@@ -24,6 +24,7 @@ export default function ContractsPage() {
   const [valor, setValor] = useState('');
   const [toDelete, setToDelete] = useState<{ id: number; produtor: string; safra: string } | null>(null);
   const [toClose, setToClose] = useState<{ id: number; produtor: string; safra: string } | null>(null);
+  const [askSend, setAskSend] = useState<{ contract: any; produtor: string; safra: string } | null>(null);
   const [blocked, setBlocked] = useState<{ title: string; message: React.ReactNode } | null>(null);
 
   async function add() {
