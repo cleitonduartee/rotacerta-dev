@@ -358,17 +358,21 @@ export async function pushAll(uid: string) {
 // ============================================================
 
 export async function syncAll(uid: string) {
-  if (syncing) return { ok: true, count: 0, skipped: true };
-  if (!navigator.onLine) return { ok: false, count: 0 };
+  if (syncing) return { ok: true, count: 0, skipped: true, errors: [] as string[] };
+  if (!navigator.onLine) return { ok: false, count: 0, errors: [] as string[] };
   syncing = true;
+  syncErrors.length = 0;
   try {
     await pushAll(uid);
     await pullAll(uid);
     await pushAll(uid); // 2ª passada caso o pull tenha resolvido dependências
-    return { ok: true, count: 0 };
-  } catch (e) {
+    const errors = [...syncErrors];
+    return { ok: errors.length === 0, count: 0, errors };
+  } catch (e: any) {
     console.warn('[sync] falhou', e);
-    return { ok: false, count: 0, error: e };
+    const msg = e?.message || String(e);
+    syncErrors.push(`[fatal] ${msg}`);
+    return { ok: false, count: 0, error: e, errors: [...syncErrors] };
   } finally {
     syncing = false;
   }
