@@ -5,6 +5,16 @@ import { useAuth } from '@/lib/auth';
 import { maskPhone, maskCPF, onlyDigits, isValidCPF } from '@/lib/masks';
 import { toast } from 'sonner';
 import { Phone, KeyRound, ArrowLeft, User, IdCard, Mail, ShieldCheck, Copy, Check } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 type Step = 'phone' | 'code' | 'signup' | 'recovery';
 
