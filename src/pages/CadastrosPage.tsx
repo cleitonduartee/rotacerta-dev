@@ -360,27 +360,34 @@ function AddProducer() {
   );
 }
 
+const TIPO_LABELS: Record<string, string> = {
+  soja: 'Soja',
+  milho: 'Milho',
+  trigo: 'Trigo',
+  algodao: 'Algodão',
+  outros: 'Outros',
+};
+
 function AddHarvest() {
-  const [nome, setNome] = useState('');
   const [tipo, setTipo] = useState('soja');
-  const [ano, setAno] = useState(new Date().getFullYear());
+  const currentYear = new Date().getFullYear();
+  const [ano, setAno] = useState(currentYear);
+  const anos = Array.from({ length: 11 }, (_, i) => currentYear - i);
 
   async function add() {
-    if (!nome) return toast.error('Informe o nome da safra');
+    const nome = `${TIPO_LABELS[tipo] ?? tipo} - ${ano}`;
     const existente = await db.harvests
       .filter(h => h.tipo === tipo && Number(h.ano) === Number(ano))
       .first();
     if (existente) {
-      return toast.error(`Já existe uma safra de ${tipo} para o ano ${ano} ("${existente.nome}")`);
+      return toast.error(`Já existe uma safra de ${TIPO_LABELS[tipo] ?? tipo} para o ano ${ano} ("${existente.nome}")`);
     }
     await db.harvests.add({ nome, tipo, ano, fechada: false, ...stamp() });
-    setNome('');
-    toast.success('Safra cadastrada');
+    toast.success(`Safra "${nome}" cadastrada`);
   }
 
   return (
     <div className="space-y-2">
-      <input className={inputCls} placeholder="Nome (ex: Safra 2026)" value={nome} onChange={e => setNome(e.target.value)} />
       <div className="grid grid-cols-2 gap-2">
         <select className={inputCls} value={tipo} onChange={e => setTipo(e.target.value)}>
           <option value="soja">Soja</option>
@@ -389,8 +396,13 @@ function AddHarvest() {
           <option value="algodao">Algodão</option>
           <option value="outros">Outros</option>
         </select>
-        <input type="number" className={inputCls} value={ano} onChange={e => setAno(Number(e.target.value))} />
+        <select className={inputCls} value={ano} onChange={e => setAno(Number(e.target.value))}>
+          {anos.map(a => <option key={a} value={a}>{a}</option>)}
+        </select>
       </div>
+      <p className="text-xs text-muted-foreground">
+        Nome gerado: <strong className="text-foreground">{TIPO_LABELS[tipo] ?? tipo} - {ano}</strong>
+      </p>
       <button onClick={add} className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">
         <Plus className="h-4 w-4" /> Adicionar safra
       </button>
