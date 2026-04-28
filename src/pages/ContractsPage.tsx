@@ -249,10 +249,10 @@ export default function ContractsPage() {
   );
 }
 
-function Mini({ label, v }: { label: string; v: any }) {
+function Mini({ label, v, cls }: { label: string; v: any; cls?: string }) {
   return (
     <div className="rounded-lg bg-secondary/60 py-1.5">
-      <p className="font-display text-base leading-none text-foreground">{v}</p>
+      <p className={'font-display text-base leading-none ' + (cls ?? 'text-foreground')}>{v}</p>
       <p className="text-[9px] uppercase tracking-wider text-muted-foreground mt-0.5">{label}</p>
     </div>
   );
