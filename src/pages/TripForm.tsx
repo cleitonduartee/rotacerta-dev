@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, calcSafra, calcFrete, deleteWithTombstone, type Trip, type TripKind } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { todayISO, fmtBRL } from '@/lib/format';
-import { Trash2, Save } from 'lucide-react';
+import { Trash2, Save, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function TripForm() {
@@ -201,7 +201,10 @@ export default function TripForm() {
           <input type="date" value={data} onChange={e => setData(e.target.value)} className={inputCls} />
         </Field>
 
-        <Field label="Caminhão">
+        <Field
+          label="Caminhão"
+          action={<QuickAdd to="/cadastros" label="Novo caminhão" />}
+        >
           <select value={truckId} onChange={e => setTruckId(Number(e.target.value))} className={inputCls}>
             <option value="">Selecione…</option>
             {trucks.map(t => <option key={t.id} value={t.id}>{t.placa}{t.modelo ? ` — ${t.modelo}` : ''}</option>)}
@@ -221,7 +224,10 @@ export default function TripForm() {
 
         {kind === 'safra' ? (
           <>
-            <Field label="Produtor">
+            <Field
+              label="Produtor"
+              action={<QuickAdd to="/cadastros" label="Novo produtor" />}
+            >
               <select value={producerId} onChange={e => setProducerId(Number(e.target.value))} className={inputCls}>
                 <option value="">Selecione…</option>
                 {producers.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -239,19 +245,28 @@ export default function TripForm() {
                 Sem contrato para este produtor nesta safra.
                 {(() => {
                   const outros = contracts.filter(c => c.producerId === producerId && !c.fechado);
-                  if (outros.length === 0) return <> Cadastre em <strong>Contratos</strong>.</>;
                   return (
                     <div className="mt-2 space-y-1">
-                      <p className="text-xs">Contratos disponíveis para este produtor:</p>
-                      {outros.map(c => {
-                        const h = harvests.find(h => h.id === c.harvestId);
-                        return (
-                          <button key={c.id} type="button" onClick={() => setHarvestId(c.harvestId)}
-                            className="block w-full rounded-lg border border-warning/40 bg-card px-3 py-2 text-left text-sm text-foreground">
-                            Usar safra <strong>{h?.nome ?? '?'}</strong>
-                          </button>
-                        );
-                      })}
+                      {outros.length > 0 && (
+                        <>
+                          <p className="text-xs">Contratos disponíveis para este produtor:</p>
+                          {outros.map(c => {
+                            const h = harvests.find(h => h.id === c.harvestId);
+                            return (
+                              <button key={c.id} type="button" onClick={() => setHarvestId(c.harvestId)}
+                                className="block w-full rounded-lg border border-warning/40 bg-card px-3 py-2 text-left text-sm text-foreground">
+                                Usar safra <strong>{h?.nome ?? '?'}</strong>
+                              </button>
+                            );
+                          })}
+                        </>
+                      )}
+                      <Link
+                        to="/contratos"
+                        className="mt-1 flex items-center justify-center gap-1.5 rounded-lg border border-warning/60 bg-warning/20 px-3 py-2 text-sm font-semibold text-warning"
+                      >
+                        <Plus className="h-4 w-4" /> Cadastrar contrato
+                      </Link>
                     </div>
                   );
                 })()}
@@ -342,12 +357,26 @@ export default function TripForm() {
 const inputCls =
   'w-full rounded-lg border border-border bg-input px-3 py-3 text-base text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary';
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, children, action }: { label: string; children: React.ReactNode; action?: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+      <div className="mb-1.5 flex items-baseline justify-between gap-2">
+        <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+        {action}
+      </div>
       {children}
     </label>
+  );
+}
+
+function QuickAdd({ to, label }: { to: string; label: string }) {
+  return (
+    <Link
+      to={to}
+      className="inline-flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary transition active:scale-95"
+    >
+      <Plus className="h-3 w-3" /> {label}
+    </Link>
   );
 }
 
