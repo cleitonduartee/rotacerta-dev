@@ -7,6 +7,8 @@ import { todayISO, fmtBRL } from '@/lib/format';
 import { Trash2, Save, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
 
 export default function TripForm() {
   const { id } = useParams();
@@ -47,6 +49,10 @@ export default function TripForm() {
   const [openProducerModal, setOpenProducerModal] = useState(false);
   const [openContractModal, setOpenContractModal] = useState(false);
   const [openHarvestModal, setOpenHarvestModal] = useState(false);
+
+  // Modais de exclusão
+  const [confirmDel, setConfirmDel] = useState(false);
+  const [blockedDel, setBlockedDel] = useState<React.ReactNode | null>(null);
 
   // Carregar para edição
   useEffect(() => {
@@ -179,10 +185,22 @@ export default function TripForm() {
     }
   }
 
-  async function remove() {
+  async function askRemove() {
     if (!editingId) return;
-    if (!confirm('Excluir esta viagem?')) return;
+    const n = await db.expenses.where('tripId').equals(editingId).count();
+    if (n > 0) {
+      setBlockedDel(
+        <>Esta viagem possui <strong>{n}</strong> despesa{n !== 1 ? 's' : ''} vinculada{n !== 1 ? 's' : ''}. Exclua ou desvincule a{n !== 1 ? 's' : ''} despesa{n !== 1 ? 's' : ''} antes de remover a viagem.</>
+      );
+      return;
+    }
+    setConfirmDel(true);
+  }
+
+  async function confirmRemove() {
+    if (!editingId) return;
     await deleteWithTombstone('trips', editingId);
+    setConfirmDel(false);
     toast.success('Viagem excluída');
     navigate('/viagens');
   }
@@ -359,7 +377,7 @@ export default function TripForm() {
         </button>
 
         {editingId && (
-          <button onClick={remove} className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 font-semibold text-destructive">
+          <button onClick={askRemove} className="flex w-full items-center justify-center gap-2 rounded-xl border border-destructive/40 bg-destructive/10 py-3 font-semibold text-destructive">
             <Trash2 className="h-4 w-4" /> Excluir viagem
           </button>
         )}
@@ -398,6 +416,20 @@ export default function TripForm() {
           />
         </QuickModal>
       )}
+
+      <ConfirmDeleteDialog
+        open={confirmDel}
+        onOpenChange={setConfirmDel}
+        description={<>Tem certeza que deseja excluir esta viagem? Essa ação não pode ser desfeita.</>}
+        onConfirm={confirmRemove}
+      />
+
+      <BlockedDeleteDialog
+        open={blockedDel !== null}
+        onOpenChange={(o) => !o && setBlockedDel(null)}
+        title="Não é possível excluir a viagem"
+        description={blockedDel}
+      />
     </div>
   );
 }
