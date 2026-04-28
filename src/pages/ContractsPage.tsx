@@ -24,6 +24,7 @@ export default function ContractsPage() {
   const [valor, setValor] = useState('');
   const [toDelete, setToDelete] = useState<{ id: number; produtor: string; safra: string } | null>(null);
   const [toClose, setToClose] = useState<{ id: number; produtor: string; safra: string } | null>(null);
+  const [blocked, setBlocked] = useState<{ title: string; message: React.ReactNode } | null>(null);
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
@@ -50,7 +51,28 @@ export default function ContractsPage() {
   function askRemove(c: any) {
     const p = producers.find(pp => pp.id === c.producerId);
     const h = harvests.find(hh => hh.id === c.harvestId);
-    setToDelete({ id: c.id, produtor: p?.nome ?? '?', safra: h?.nome ?? '?' });
+    const nome = p?.nome ?? '?';
+    const safraNome = h?.nome ?? '?';
+    const nViagens = trips.filter(t => t.kind === 'safra' && t.contractId === c.id).length;
+    const tripIds = new Set(
+      trips.filter(t => t.kind === 'safra' && t.contractId === c.id).map(t => t.id),
+    );
+    const nDespesas = expenses.filter(e => e.contractId === c.id || (e.tripId && tripIds.has(e.tripId))).length;
+    if (nViagens > 0 || nDespesas > 0) {
+      const partes: string[] = [];
+      if (nViagens > 0) partes.push(`${nViagens} ${nViagens === 1 ? 'viagem' : 'viagens'}`);
+      if (nDespesas > 0) partes.push(`${nDespesas} ${nDespesas === 1 ? 'despesa' : 'despesas'}`);
+      return setBlocked({
+        title: 'Não é possível excluir o contrato',
+        message: (
+          <>
+            O contrato de <strong>{nome}</strong> na safra <strong>{safraNome}</strong> possui{' '}
+            <strong>{partes.join(' e ')}</strong> vinculadas. Exclua os registros vinculados antes de remover o contrato.
+          </>
+        ),
+      });
+    }
+    setToDelete({ id: c.id, produtor: nome, safra: safraNome });
   }
   async function confirmRemove() {
     if (!toDelete) return;
