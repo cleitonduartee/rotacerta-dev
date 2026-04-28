@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
