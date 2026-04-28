@@ -423,13 +423,18 @@ function AddProducer() {
       <input className={inputCls} placeholder="Nome do produtor" value={nome} onChange={e => setNome(e.target.value)} />
       <button onClick={async () => {
         const nomeTrim = nome.trim();
-        if (!nomeTrim) return;
-        const existente = await db.producers
-          .filter(p => (p.nome ?? '').trim().toLowerCase() === nomeTrim.toLowerCase())
-          .first();
-        if (existente) return toast.error('Já existe um produtor com esse nome');
-        await db.producers.add({ nome: nomeTrim, ...stamp() });
-        setNome(''); toast.success('Produtor cadastrado');
+        if (!nomeTrim) return toast.error('Informe o nome do produtor');
+        try {
+          const existente = await db.producers
+            .filter(p => (p.nome ?? '').trim().toLowerCase() === nomeTrim.toLowerCase())
+            .first();
+          if (existente) return toast.error('Já existe um produtor com esse nome');
+          await db.producers.add({ nome: nomeTrim, ...stamp() });
+          setNome(''); toast.success('Produtor cadastrado');
+        } catch (e: any) {
+          console.error('[producers.add] erro', e);
+          toast.error('Não foi possível salvar', { description: e?.message ?? String(e) });
+        }
       }} className="rounded-lg gradient-primary px-3 text-primary-foreground">
         <Plus className="h-5 w-5" />
       </button>
