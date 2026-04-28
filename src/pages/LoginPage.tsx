@@ -83,6 +83,15 @@ export default function LoginPage() {
       const { email, password, needs_signup } = data;
       const { data: signRes, error: sErr } = await supabase.auth.signInWithPassword({ email, password });
       if (sErr) throw sErr;
+      // Garante que a sessão foi de fato persistida no client antes de navegar.
+      // Sem isso, em PWA recém-instalado, o nav('/') pode acontecer antes do
+      // onAuthStateChange propagar a sessão no contexto, e o RequireAuth
+      // redireciona de volta para /login.
+      for (let i = 0; i < 20; i++) {
+        const { data: s } = await supabase.auth.getSession();
+        if (s.session?.user?.id) break;
+        await new Promise(r => setTimeout(r, 50));
+      }
       if (needs_signup) {
         setStep('signup');
         toast.success('Telefone confirmado. Complete seu cadastro.');
