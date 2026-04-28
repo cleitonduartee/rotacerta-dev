@@ -225,7 +225,7 @@ export default function ContractsPage() {
 
                 <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
                   <span>R$ {fmtNum(c.valorPorSaco)} / saco</span>
-                  <button onClick={() => remove(c.id!)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
+                  <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
