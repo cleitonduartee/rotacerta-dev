@@ -95,7 +95,7 @@
             setTimeout(type, 110);
           }
         }
-        setTimeout(type, 350);
+        type();
 
         function hide() {
           var s = document.getElementById('rc-splash');
@@ -103,7 +103,7 @@
           s.classList.add('rc-splash--hide');
           setTimeout(function () { s && s.parentNode && s.parentNode.removeChild(s); }, 500);
         }
-        // Esconde quando o app montar (mínimo 1.6s para ver a animação)
+        // Esconde quando o app montar (mínimo 1.4s para ver a animação)
         var start = Date.now();
         var obs = new MutationObserver(function () {
           var root = document.getElementById('root');
