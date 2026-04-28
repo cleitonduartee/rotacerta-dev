@@ -35,6 +35,7 @@ export default function LoginPage() {
   const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [confirmedSaved, setConfirmedSaved] = useState(false);
+  const [showBackConfirm, setShowBackConfirm] = useState(false);
 
   const nav = useNavigate();
 
