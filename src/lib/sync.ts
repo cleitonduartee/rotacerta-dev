@@ -267,7 +267,7 @@ export async function pushAll(uid: string) {
     tipo: r.tipo,
     ano: r.ano,
     fechada: !!r.fechada,
-    fechado_em: r.fechadaEm ? toIso(r.fechadaEm) : null,
+    fechada_em: r.fechadaEm ? toIso(r.fechadaEm) : null,
     updated_at: toIso(r.updatedAt),
   }));
 
