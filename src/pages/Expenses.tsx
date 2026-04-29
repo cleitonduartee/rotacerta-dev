@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 
-const TIPOS_PADRAO = ['Combustível', 'Pedágio', 'Manutenção', 'Alimentação', 'Hospedagem', 'Frete retorno', 'Socorro mecânico'];
+const TIPOS_PADRAO = ['Combustível', 'Pedágio', 'Manutenção', 'Alimentação', 'Hospedagem', 'Comissão motorista', 'Socorro mecânico'];
 
 export function ExpensesList() {
   const expenses = useLiveQuery(() => db.expenses.orderBy('data').reverse().toArray(), []) ?? [];
