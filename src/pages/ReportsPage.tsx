@@ -259,7 +259,7 @@ export default function ReportsPage() {
                     <td className="pr-2">{t.kind === 'safra' ? 'Lavoura' : 'Frete'}</td>
                     <td className="pr-2">{placa(t.truckId)}</td>
                     <td className="pr-2">{t.origem} → {t.destino}</td>
-                    <td className="pr-2">{t.notaProdutor || '—'}</td>
+                    <td className="pr-2">{t.numeroNota || '—'}</td>
                     <td className="pr-2 text-right">{t.sacos ? fmtNum(t.sacos, 1) : '—'}</td>
                     <td className="pr-2 text-right font-semibold">{fmtBRL(t.valorTotal)}</td>
                   </tr>
