@@ -284,11 +284,19 @@ export default function Dashboard() {
               <XAxis dataKey="mes" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
               <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--popover-foreground))' }}
-                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                formatter={(v: number) => fmtBRL(v)}
                 cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const row = payload[0].payload as { receita: number; despesa: number; viagens: number };
+                  return (
+                    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-elevated">
+                      <p className="font-bold mb-1">{label}</p>
+                      <p><span className="text-muted-foreground">Receita:</span> <span className="font-semibold">{fmtBRL(row.receita)}</span></p>
+                      <p><span className="text-muted-foreground">Despesa:</span> <span className="font-semibold">{fmtBRL(row.despesa)}</span></p>
+                      <p className="mt-1 pt-1 border-t border-border"><span className="text-muted-foreground">Viagens:</span> <span className="font-semibold">{row.viagens}</span></p>
+                    </div>
+                  );
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="receita" name="Receita" fill="hsl(22 95% 55%)" radius={[6, 6, 0, 0]} />
