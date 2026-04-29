@@ -101,26 +101,29 @@ export default function Dashboard() {
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
   
 
-  // Gráfico 1 — Receita vs Despesa últimos 6 meses
+  // Gráfico 1 — Receita vs Despesa últimos 6 meses (respeita o filtro de período)
   const barsData = useMemo(() => {
-    const base: { mes: string; key: string; receita: number; despesa: number }[] = [];
+    const base: { mes: string; key: string; receita: number; despesa: number; viagens: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      base.push({ mes: `${MES_LABEL[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, key, receita: 0, despesa: 0 });
+      base.push({ mes: `${MES_LABEL[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, key, receita: 0, despesa: 0, viagens: 0 });
     }
-    trips.forEach(t => {
+    tripsF.forEach(t => {
       const k = t.data?.slice(0, 7);
       const row = base.find(b => b.key === k);
-      if (row) row.receita += t.valorTotal || 0;
+      if (row) {
+        row.receita += t.valorTotal || 0;
+        row.viagens += 1;
+      }
     });
-    expenses.forEach(e => {
+    expensesF.forEach(e => {
       const k = e.data?.slice(0, 7);
       const row = base.find(b => b.key === k);
       if (row) row.despesa += e.valor || 0;
     });
     return base;
-  }, [trips, expenses]);
+  }, [tripsF, expensesF]);
 
   // Gráfico 2 — Receita por Safra (pizza)
   const pizzaSafra = useMemo(() => {
