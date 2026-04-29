@@ -1,4 +1,4 @@
-import { db, type SyncTable, type SyncStatus } from './db';
+import { db, LOCAL_RESET_PULL_ONLY_KEY, type SyncTable, type SyncStatus } from './db';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -384,6 +384,11 @@ export async function syncAll(uid: string) {
   syncing = true;
   syncErrors.length = 0;
   try {
+    if (localStorage.getItem(LOCAL_RESET_PULL_ONLY_KEY) === uid) {
+      await pullAll(uid);
+      localStorage.removeItem(LOCAL_RESET_PULL_ONLY_KEY);
+      return { ok: true, count: 0, errors: [] as string[] };
+    }
     await pushAll(uid);
     await pullAll(uid);
     await pushAll(uid); // 2ª passada caso o pull tenha resolvido dependências
