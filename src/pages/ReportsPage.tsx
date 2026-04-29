@@ -3,7 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
-import { Printer, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
+import { FileDown, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  generateAnalyticHarvestReport,
+  generateAnalyticContractReport,
+  generateAnalyticMonthReport,
+  generateAnalyticFreteReport,
+} from '@/lib/analyticReports';
 
 type Modo = 'mes' | 'safra' | 'contrato' | 'frete';
 
