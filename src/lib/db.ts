@@ -183,14 +183,7 @@ export async function deleteWithTombstone(table: SyncTable, localId: number) {
 export async function wipeLocalData() {
   await db.transaction(
     'rw',
-    db.trucks,
-    db.producers,
-    db.harvests,
-    db.contracts,
-    db.trips,
-    db.expenses,
-    db.tombstones,
-    db.drivers,
+    [db.trucks, db.producers, db.harvests, db.contracts, db.trips, db.expenses, db.tombstones, db.drivers],
     async () => {
       await Promise.all([
         db.trucks.clear(),
