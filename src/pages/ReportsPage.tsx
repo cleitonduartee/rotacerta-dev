@@ -215,7 +215,7 @@ export default function ReportsPage() {
       {/* Área imprimível */}
       <div id="print-area" className="px-4 pb-10 print:px-0">
         <div className="mb-3 border-b border-border pb-2">
-          <p className="font-display text-2xl text-primary">RotaCerta — Extrato</p>
+          <p className="font-display text-2xl text-primary">RotaSafra — Extrato</p>
           <p className="text-sm text-muted-foreground">{titulo}</p>
           {effectiveDriver?.nome && <p className="text-xs text-muted-foreground">{effectiveDriver.nome}{effectiveDriver.cpf ? ` • ${effectiveDriver.cpf}` : ''}</p>}
         </div>
@@ -327,7 +327,7 @@ export default function ReportsPage() {
         </div>
 
         <p className="mt-6 text-[10px] text-muted-foreground text-center">
-          Gerado em {new Date().toLocaleString('pt-BR')} • RotaCerta
+          Gerado em {new Date().toLocaleString('pt-BR')} • RotaSafra
         </p>
       </div>
     </div>

@@ -174,12 +174,12 @@ export default function LoginPage() {
       <div className="mb-8 flex flex-col items-center text-center">
         <img
           src="/logo-mark.png"
-          alt="RotaCerta"
+          alt="RotaSafra"
           className="mb-3 h-20 w-auto sm:h-24"
           draggable={false}
         />
-        <p className="font-display text-4xl text-primary">ROTACERTA</p>
-        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">Estrada na palma da mão</p>
+        <p className="font-display text-4xl text-primary">ROTASAFRA</p>
+        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">Controle total dos seus fretes agrícolas</p>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated">

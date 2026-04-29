@@ -29,7 +29,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(22);
-  doc.text('ROTACERTA — Fechamento de Safra', 40, 35);
+  doc.text('ROTASAFRA — Fechamento de Safra', 40, 35);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
   doc.text(`${input.harvest.nome} • ${input.harvest.tipo} • ${input.harvest.ano}`, 40, 55);
@@ -216,7 +216,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(50);
     doc.setTextColor(249, 115, 22);
-    doc.text('ROTACERTA', W / 2, pageH / 2, { align: 'center', angle: 30 });
+    doc.text('ROTASAFRA', W / 2, pageH / 2, { align: 'center', angle: 30 });
     doc.restoreGraphicsState();
 
     // Rodapé
@@ -224,7 +224,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
     doc.text(
-      `Gerado em ${new Date().toLocaleString('pt-BR')} • RotaCerta © ${year}`,
+      `Gerado em ${new Date().toLocaleString('pt-BR')} • RotaSafra © ${year}`,
       W / 2,
       pageH - 20,
       { align: 'center' }

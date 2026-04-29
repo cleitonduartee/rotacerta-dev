@@ -9,7 +9,7 @@ export type TourStep = {
 
 export const TOUR_STEPS: TourStep[] = [
   {
-    title: 'Bem-vindo ao RotaCerta!',
+    title: 'Bem-vindo ao RotaSafra!',
     body: 'Em menos de 1 minuto vamos te mostrar como organizar viagens, safras e despesas. Você pode pular a qualquer momento.',
   },
   {

@@ -48,7 +48,7 @@ export function AppLayout() {
   return (
     <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background">
       <header className="safe-top sticky top-0 z-30 flex items-center justify-between border-b border-border/60 bg-background/90 px-4 py-3 backdrop-blur">
-        <NavLink to="/" className="flex items-center gap-2" aria-label="RotaCerta — Início">
+        <NavLink to="/" className="flex items-center gap-2" aria-label="RotaSafra — Início">
           <img
             src="/logo-mark.png"
             alt=""
@@ -57,8 +57,8 @@ export function AppLayout() {
             draggable={false}
           />
           <div className="leading-tight">
-            <p className="font-display text-2xl leading-none text-primary">ROTACERTA</p>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Estrada na palma da mão</p>
+            <p className="font-display text-2xl leading-none text-primary">ROTASAFRA</p>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Controle total dos seus fretes agrícolas</p>
           </div>
         </NavLink>
         <div className="flex items-center gap-1">
