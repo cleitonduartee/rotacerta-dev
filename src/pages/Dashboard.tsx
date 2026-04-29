@@ -9,7 +9,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
-type PeriodMode = 'mes' | 'ano' | 'tudo';
+type PeriodMode = 'mes' | 'ano' | 'safra' | 'tudo';
 
 // Paleta a partir do laranja primário (HSL → variações de matiz)
 const PIE_COLORS = [
