@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp, deleteWithTombstone, wipeLocalData } from '@/lib/db';
+import { db, LOCAL_RESET_PULL_ONLY_KEY, stamp, deleteWithTombstone, wipeLocalData } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Pencil, Info, RefreshCw } from 'lucide-react';
@@ -179,6 +179,7 @@ function ResetDataSection() {
     try {
       await wipeLocalData();
       if (user?.id && navigator.onLine) {
+        localStorage.setItem(LOCAL_RESET_PULL_ONLY_KEY, user.id);
         // Apenas baixa do servidor — NÃO faz push, senão os registros recém
         // apagados localmente (sem tombstone) seriam recriados a partir do
         // que ainda existe no servidor antes do pull.
