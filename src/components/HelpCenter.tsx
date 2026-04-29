@@ -137,7 +137,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
           </section>
 
           <p className="pt-2 text-center text-[10px] text-muted-foreground/60">
-            RotaSafra • Controle total dos seus fretes agrícolas
+            RotaSafra • CONTROLE DE FRETES AGRÍCOLAS
           </p>
         </div>
       </SheetContent>
