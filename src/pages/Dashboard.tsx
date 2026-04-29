@@ -101,26 +101,29 @@ export default function Dashboard() {
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
   
 
-  // Gráfico 1 — Receita vs Despesa últimos 6 meses
+  // Gráfico 1 — Receita vs Despesa últimos 6 meses (respeita o filtro de período)
   const barsData = useMemo(() => {
-    const base: { mes: string; key: string; receita: number; despesa: number }[] = [];
+    const base: { mes: string; key: string; receita: number; despesa: number; viagens: number }[] = [];
     for (let i = 5; i >= 0; i--) {
       const d = new Date(hoje.getFullYear(), hoje.getMonth() - i, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      base.push({ mes: `${MES_LABEL[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, key, receita: 0, despesa: 0 });
+      base.push({ mes: `${MES_LABEL[d.getMonth()]}/${String(d.getFullYear()).slice(2)}`, key, receita: 0, despesa: 0, viagens: 0 });
     }
-    trips.forEach(t => {
+    tripsF.forEach(t => {
       const k = t.data?.slice(0, 7);
       const row = base.find(b => b.key === k);
-      if (row) row.receita += t.valorTotal || 0;
+      if (row) {
+        row.receita += t.valorTotal || 0;
+        row.viagens += 1;
+      }
     });
-    expenses.forEach(e => {
+    expensesF.forEach(e => {
       const k = e.data?.slice(0, 7);
       const row = base.find(b => b.key === k);
       if (row) row.despesa += e.valor || 0;
     });
     return base;
-  }, [trips, expenses]);
+  }, [tripsF, expensesF]);
 
   // Gráfico 2 — Receita por Safra (pizza)
   const pizzaSafra = useMemo(() => {
@@ -281,11 +284,19 @@ export default function Dashboard() {
               <XAxis dataKey="mes" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1000 ? `${(v/1000).toFixed(0)}k` : `${v}`} />
               <Tooltip
-                contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12, color: 'hsl(var(--popover-foreground))' }}
-                itemStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                labelStyle={{ color: 'hsl(var(--popover-foreground))' }}
-                formatter={(v: number) => fmtBRL(v)}
                 cursor={{ fill: 'hsl(var(--muted) / 0.4)' }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload || !payload.length) return null;
+                  const row = payload[0].payload as { receita: number; despesa: number; viagens: number };
+                  return (
+                    <div className="rounded-lg border border-border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-elevated">
+                      <p className="font-bold mb-1">{label}</p>
+                      <p><span className="text-muted-foreground">Receita:</span> <span className="font-semibold">{fmtBRL(row.receita)}</span></p>
+                      <p><span className="text-muted-foreground">Despesa:</span> <span className="font-semibold">{fmtBRL(row.despesa)}</span></p>
+                      <p className="mt-1 pt-1 border-t border-border"><span className="text-muted-foreground">Viagens:</span> <span className="font-semibold">{row.viagens}</span></p>
+                    </div>
+                  );
+                }}
               />
               <Legend wrapperStyle={{ fontSize: 11 }} />
               <Bar dataKey="receita" name="Receita" fill="hsl(22 95% 55%)" radius={[6, 6, 0, 0]} />
@@ -376,6 +387,7 @@ export default function Dashboard() {
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
         <QuickLink to="/viagens/nova" label="Nova viagem" icon={Truck} primary />
+        <QuickLink to="/viagens/nova?kind=frete" label="Frete avulso" icon={Building2} />
         <QuickLink to="/despesas/nova" label="Nova despesa" icon={Receipt} />
         <QuickLink to="/relatorios" label="Relatórios" icon={FileBarChart} />
         <QuickLink to="/contratos" label="Contratos" icon={Wheat} />

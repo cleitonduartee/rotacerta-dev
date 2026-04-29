@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link, useSearchParams } from 'react-router-dom';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, calcSafra, calcFrete, deleteWithTombstone, type Trip, type TripKind } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
@@ -14,13 +14,15 @@ export default function TripForm() {
   const { id } = useParams();
   const editingId = id ? Number(id) : undefined;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialKind: TripKind = searchParams.get('kind') === 'frete' ? 'frete' : 'safra';
 
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
 
-  const [kind, setKind] = useState<TripKind>('safra');
+  const [kind, setKind] = useState<TripKind>(initialKind);
   const [data, setData] = useState(todayISO());
   const [truckId, setTruckId] = useState<number | ''>('');
   const [origem, setOrigem] = useState('');
