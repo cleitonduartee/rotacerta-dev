@@ -36,6 +36,8 @@ export default function Dashboard() {
   const [mode, setMode] = useState<PeriodMode>('tudo');
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
   const [ano, setAno] = useState<number>(hoje.getFullYear());
+  const [safraId, setSafraId] = useState<string>('');
+  const [contratoId, setContratoId] = useState<string>('');
 
   // Anos disponíveis a partir dos dados
   const anosDisponiveis = useMemo(() => {
