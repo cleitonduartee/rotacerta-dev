@@ -75,6 +75,11 @@ export default function TripForm() {
         setTransportadora(t.transportadora ?? '');
         setPesoToneladas(t.pesoToneladas?.toString() ?? '');
         setValorPorTonelada(t.valorPorTonelada?.toString() ?? '');
+        // Se não há valor por tonelada mas há valorTotal, era frete cheio
+        if (!t.valorPorTonelada && t.valorTotal) {
+          setFreteModo('cheio');
+          setValorCheio(maskMoneyInput(String(Math.round((t.valorTotal || 0) * 100))));
+        }
       }
       setObservacao(t.observacao ?? '');
       setNotaProdutor(t.notaProdutor ?? '');
