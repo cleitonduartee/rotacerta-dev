@@ -168,68 +168,6 @@ export default function CadastrosPage() {
   );
 }
 
-function ResetDataSection() {
-  const { user } = useAuth();
-  const [busy, setBusy] = useState(false);
-
-  async function handleReset() {
-    setBusy(true);
-    try {
-      await wipeLocalData();
-      if (user?.id && navigator.onLine) {
-        localStorage.setItem(LOCAL_RESET_PULL_ONLY_KEY, user.id);
-        // Apenas baixa do servidor — NÃO faz push, senão os registros recém
-        // apagados localmente (sem tombstone) seriam recriados a partir do
-        // que ainda existe no servidor antes do pull.
-        await pullAll(user.id);
-      }
-      toast.success('Dados locais limpos. Recarregando…');
-      setTimeout(() => window.location.reload(), 600);
-    } catch (e: any) {
-      toast.error('Falha ao limpar: ' + (e?.message ?? 'erro'));
-      setBusy(false);
-    }
-  }
-
-  return (
-    <section className="mt-2 rounded-xl border border-border bg-card p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <RefreshCw className="h-4 w-4" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-bold">Limpar dados locais</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Apaga os dados salvos neste dispositivo e baixa novamente do servidor. Útil para testes.
-          </p>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <button
-                className="mt-3 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-semibold hover:bg-secondary/70 disabled:opacity-50"
-                disabled={busy}
-              >
-                {busy ? 'Limpando…' : 'Limpar e ressincronizar'}
-              </button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Limpar dados deste dispositivo?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Vamos apagar caminhões, produtores, safras, contratos, viagens e despesas salvos localmente neste aparelho. Em seguida vamos baixar novamente o que está no servidor. Seu cadastro de login não é afetado.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Não</AlertDialogCancel>
-                <AlertDialogAction onClick={handleReset}>Sim, limpar</AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      </div>
-    </section>
-  );
-}
-
 function DriverSection({ driver }: { driver?: any }) {
   const { profile, user, refreshProfile } = useAuth();
   const [nome, setNome] = useState('');
