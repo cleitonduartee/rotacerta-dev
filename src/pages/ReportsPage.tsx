@@ -35,22 +35,35 @@ export default function ReportsPage() {
     if (sugerida?.id) setHarvestId(sugerida.id);
   }, [harvests, contracts, harvestTouched, harvestId]);
 
-  const { tripsFiltradas, despesasFiltradas, titulo } = useMemo(() => {
+  const { tripsFiltradas, despesasFiltradas, titulo, contratosAbertos } = useMemo(() => {
     if (modo === 'mes') {
       const t = trips.filter(x => x.data?.startsWith(mes));
       const e = expenses.filter(x => x.data?.startsWith(mes));
       const [y, m] = mes.split('-');
-      return { tripsFiltradas: t, despesasFiltradas: e, titulo: `Mês ${m}/${y}` };
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: `Mês ${m}/${y}`, contratosAbertos: [] as any[] };
     } else if (modo === 'safra') {
-      if (!harvestId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma safra' };
-      const cIds = new Set(contracts.filter(c => c.harvestId === Number(harvestId)).map(c => c.id));
+      if (!harvestId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma safra', contratosAbertos: [] };
+      const cs = contracts.filter(c => c.harvestId === Number(harvestId));
+      const cIds = new Set(cs.map(c => c.id));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId && cIds.has(x.contractId));
       const e = expenses.filter(x => (x.contractId && cIds.has(x.contractId)) || x.harvestId === Number(harvestId));
       const h = harvests.find(hh => hh.id === Number(harvestId));
-      return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra' };
+      const abertos = cs.filter(c => !c.fechado);
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra', contratosAbertos: abertos };
+    } else if (modo === 'frete') {
+      if (!tripAvulsaId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma viagem avulsa', contratosAbertos: [] };
+      const t = trips.filter(x => x.id === Number(tripAvulsaId) && x.kind === 'frete');
+      const e = expenses.filter(x => x.tripId === Number(tripAvulsaId));
+      const tt = t[0];
+      return {
+        tripsFiltradas: t,
+        despesasFiltradas: e,
+        titulo: tt ? `Frete avulso — ${fmtDate(tt.data)} • ${tt.origem}→${tt.destino}` : 'Frete avulso',
+        contratosAbertos: [],
+      };
     } else {
       // contrato
-      if (!contratoId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione um contrato' };
+      if (!contratoId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione um contrato', contratosAbertos: [] };
       const c = contracts.find(cc => cc.id === Number(contratoId));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId === Number(contratoId));
       const tripIds = new Set(t.map(tt => tt.id));
@@ -60,9 +73,9 @@ export default function ReportsPage() {
       );
       const p = c ? producers.find(pp => pp.id === c.producerId) : undefined;
       const h = c ? harvests.find(hh => hh.id === c.harvestId) : undefined;
-      return { tripsFiltradas: t, despesasFiltradas: e, titulo: c ? `Contrato — ${p?.nome ?? '?'} / ${h?.nome ?? '?'}` : 'Contrato' };
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: c ? `Contrato — ${p?.nome ?? '?'} / ${h?.nome ?? '?'}` : 'Contrato', contratosAbertos: [] };
     }
-  }, [modo, mes, harvestId, contratoId, trips, expenses, contracts, harvests, producers]);
+  }, [modo, mes, harvestId, contratoId, tripAvulsaId, trips, expenses, contracts, harvests, producers]);
 
   const receita = tripsFiltradas.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = despesasFiltradas.reduce((s, e) => s + e.valor, 0);
