@@ -212,16 +212,11 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.setPage(i);
     doc.saveGraphicsState();
     // @ts-ignore - setGState existe em runtime
-    doc.setGState(new (doc as any).GState({ opacity: 0.12 }));
+    doc.setGState(new (doc as any).GState({ opacity: 0.06 }));
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(42);
+    doc.setFontSize(50);
     doc.setTextColor(249, 115, 22);
-    doc.text(
-      `Desenvolvido por CLEITON DUARTE • ${year}`,
-      W / 2,
-      pageH / 2,
-      { align: 'center', angle: 30 }
-    );
+    doc.text('ROTACERTA', W / 2, pageH / 2, { align: 'center', angle: 30 });
     doc.restoreGraphicsState();
 
     // Rodapé
@@ -229,7 +224,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.setFontSize(8);
     doc.setTextColor(140, 140, 140);
     doc.text(
-      `Gerado em ${new Date().toLocaleString('pt-BR')} • RotaCerta • Desenvolvido por CLEITON DUARTE © ${year}`,
+      `Gerado em ${new Date().toLocaleString('pt-BR')} • RotaCerta © ${year}`,
       W / 2,
       pageH - 20,
       { align: 'center' }

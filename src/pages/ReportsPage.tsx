@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
 import { FileDown, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 import {
   generateAnalyticHarvestReport,
   generateAnalyticContractReport,
@@ -15,6 +16,7 @@ import {
 type Modo = 'mes' | 'safra' | 'contrato' | 'frete';
 
 export default function ReportsPage() {
+  const { profile } = useAuth();
   const [modo, setModo] = useState<Modo>('mes');
   const hoje = new Date();
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
@@ -30,6 +32,14 @@ export default function ReportsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const drivers = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
+
+  // Driver efetivo: usa o cadastro local; se vazio, faz fallback para o profile (Cloud)
+  const effectiveDriver = drivers[0] ?? (profile ? {
+    nome: profile.nome ?? '',
+    cpf: profile.cpf ?? '',
+    telefone: profile.telefone ?? '',
+    email: profile.email ?? '',
+  } : undefined);
 
   // Sugestão: safra com algum contrato em aberto (preferir mais recente)
   useEffect(() => {
@@ -113,7 +123,7 @@ export default function ReportsPage() {
   async function gerarPDF() {
     try {
       const baseInput = {
-        driver: drivers[0],
+        driver: effectiveDriver,
         trips: tripsFiltradas,
         expenses: despesasFiltradas,
         trucks, contracts, producers, harvests,
@@ -207,7 +217,7 @@ export default function ReportsPage() {
         <div className="mb-3 border-b border-border pb-2">
           <p className="font-display text-2xl text-primary">RotaCerta — Extrato</p>
           <p className="text-sm text-muted-foreground">{titulo}</p>
-          {drivers[0] && <p className="text-xs text-muted-foreground">{drivers[0].nome}{drivers[0].cpf ? ` • ${drivers[0].cpf}` : ''}</p>}
+          {effectiveDriver?.nome && <p className="text-xs text-muted-foreground">{effectiveDriver.nome}{effectiveDriver.cpf ? ` • ${effectiveDriver.cpf}` : ''}</p>}
         </div>
 
         {modo === 'safra' && contratosAbertos.length > 0 && (
