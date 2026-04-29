@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { syncAll } from '@/lib/sync';
+import { pullAll } from '@/lib/sync';
 import {
   AlertDialog,
   AlertDialogAction,
