@@ -33,6 +33,14 @@ export default function ReportsPage() {
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const drivers = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
 
+  // Driver efetivo: usa o cadastro local; se vazio, faz fallback para o profile (Cloud)
+  const effectiveDriver = drivers[0] ?? (profile ? {
+    nome: profile.nome ?? '',
+    cpf: profile.cpf ?? '',
+    telefone: profile.telefone ?? '',
+    email: profile.email ?? '',
+  } : undefined);
+
   // Sugestão: safra com algum contrato em aberto (preferir mais recente)
   useEffect(() => {
     if (harvestTouched || harvestId !== '') return;
