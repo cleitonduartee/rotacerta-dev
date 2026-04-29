@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { syncAll } from '@/lib/sync';
+import { pullAll } from '@/lib/sync';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -179,7 +179,10 @@ function ResetDataSection() {
     try {
       await wipeLocalData();
       if (user?.id && navigator.onLine) {
-        await syncAll(user.id);
+        // Apenas baixa do servidor — NÃO faz push, senão os registros recém
+        // apagados localmente (sem tombstone) seriam recriados a partir do
+        // que ainda existe no servidor antes do pull.
+        await pullAll(user.id);
       }
       toast.success('Dados locais limpos. Recarregando…');
       setTimeout(() => window.location.reload(), 600);
