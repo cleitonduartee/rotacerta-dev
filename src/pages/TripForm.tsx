@@ -14,13 +14,15 @@ export default function TripForm() {
   const { id } = useParams();
   const editingId = id ? Number(id) : undefined;
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const initialKind: TripKind = searchParams.get('kind') === 'frete' ? 'frete' : 'safra';
 
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
 
-  const [kind, setKind] = useState<TripKind>('safra');
+  const [kind, setKind] = useState<TripKind>(initialKind);
   const [data, setData] = useState(todayISO());
   const [truckId, setTruckId] = useState<number | ''>('');
   const [origem, setOrigem] = useState('');
