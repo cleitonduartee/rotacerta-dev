@@ -41,6 +41,8 @@ export default function TripForm() {
   const [transportadora, setTransportadora] = useState('');
   const [pesoToneladas, setPesoToneladas] = useState<string>('');
   const [valorPorTonelada, setValorPorTonelada] = useState<string>('');
+  const [freteModo, setFreteModo] = useState<'tonelada' | 'cheio'>('tonelada');
+  const [valorCheio, setValorCheio] = useState<string>('');
 
   const [observacao, setObservacao] = useState('');
   const [notaProdutor, setNotaProdutor] = useState('');
