@@ -123,7 +123,7 @@ export default function ReportsPage() {
   async function gerarPDF() {
     try {
       const baseInput = {
-        driver: drivers[0],
+        driver: effectiveDriver,
         trips: tripsFiltradas,
         expenses: despesasFiltradas,
         trucks, contracts, producers, harvests,
