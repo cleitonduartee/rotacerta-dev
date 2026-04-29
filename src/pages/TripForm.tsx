@@ -41,6 +41,8 @@ export default function TripForm() {
   const [transportadora, setTransportadora] = useState('');
   const [pesoToneladas, setPesoToneladas] = useState<string>('');
   const [valorPorTonelada, setValorPorTonelada] = useState<string>('');
+  const [freteModo, setFreteModo] = useState<'tonelada' | 'cheio'>('tonelada');
+  const [valorCheio, setValorCheio] = useState<string>('');
 
   const [observacao, setObservacao] = useState('');
   const [notaProdutor, setNotaProdutor] = useState('');
@@ -73,6 +75,11 @@ export default function TripForm() {
         setTransportadora(t.transportadora ?? '');
         setPesoToneladas(t.pesoToneladas?.toString() ?? '');
         setValorPorTonelada(t.valorPorTonelada?.toString() ?? '');
+        // Se não há valor por tonelada mas há valorTotal, era frete cheio
+        if (!t.valorPorTonelada && t.valorTotal) {
+          setFreteModo('cheio');
+          setValorCheio(maskMoneyInput(String(Math.round((t.valorTotal || 0) * 100))));
+        }
       }
       setObservacao(t.observacao ?? '');
       setNotaProdutor(t.notaProdutor ?? '');
@@ -138,10 +145,13 @@ export default function TripForm() {
 
   const calc = useMemo(() => {
     if (kind === 'safra') return calcSafra(pesoKgNum, valorPorSacoUsado);
+    if (freteModo === 'cheio') {
+      return { sacos: 0, valorTotal: parseMoney(valorCheio) };
+    }
     const pt = parseFloat(pesoToneladas.replace(',', '.')) || 0;
     const vt = parseFloat(valorPorTonelada.replace(',', '.')) || 0;
     return { sacos: 0, valorTotal: calcFrete(pt, vt) };
-  }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada]);
+  }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada, freteModo, valorCheio]);
 
   const contratoFechado = contract?.fechado;
 
@@ -152,6 +162,8 @@ export default function TripForm() {
       if (!contract) return toast.error('Cadastre um contrato para este produtor + lavoura');
       if (contratoFechado) return toast.error('Contrato fechado — não é possível cadastrar viagens');
       if (pesoKgNum <= 0) return toast.error('Informe o peso');
+    } else if (freteModo === 'cheio') {
+      if (!parseMoney(valorCheio)) return toast.error('Informe o valor cheio do frete');
     } else {
       if (!parseFloat(pesoToneladas) || !parseFloat(valorPorTonelada))
         return toast.error('Informe peso e valor por tonelada');
@@ -167,8 +179,8 @@ export default function TripForm() {
         sacos: kind === 'safra' ? calc.sacos : undefined,
         valorPorSacoOverride: kind === 'safra' && valorPorSacoOverride ? parseFloat(valorPorSacoOverride.replace(',', '.')) : undefined,
         transportadora: kind === 'frete' ? transportadora : undefined,
-        pesoToneladas: kind === 'frete' ? parseFloat(pesoToneladas.replace(',', '.')) : undefined,
-        valorPorTonelada: kind === 'frete' ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
+        pesoToneladas: kind === 'frete' && pesoToneladas ? parseFloat(pesoToneladas.replace(',', '.')) : undefined,
+        valorPorTonelada: kind === 'frete' && freteModo === 'tonelada' && valorPorTonelada ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
         valorTotal: calc.valorTotal,
         observacao,
         notaProdutor: notaProdutor.trim() || undefined,
@@ -354,14 +366,51 @@ export default function TripForm() {
         ) : (
           <>
             <Field label="Transportadora"><input value={transportadora} onChange={e => setTransportadora(e.target.value)} className={inputCls} placeholder="Opcional" /></Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Peso (toneladas)">
-                <input inputMode="decimal" value={pesoToneladas} onChange={e => setPesoToneladas(e.target.value)} className={inputCls} placeholder="0" />
-              </Field>
-              <Field label="Valor / tonelada (R$)">
-                <input inputMode="decimal" value={valorPorTonelada} onChange={e => setValorPorTonelada(e.target.value)} className={inputCls} placeholder="0" />
-              </Field>
+
+            <div>
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Forma de cobrança</span>
+              <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+                {([['tonelada', 'Por tonelada'], ['cheio', 'Frete cheio']] as const).map(([v, l]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setFreteModo(v)}
+                    className={'rounded-md py-2 ' + (freteModo === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Use <strong>frete cheio</strong> quando o valor é fechado, independente do peso.
+              </p>
             </div>
+
+            {freteModo === 'tonelada' ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Peso (toneladas)">
+                  <input inputMode="decimal" value={pesoToneladas} onChange={e => setPesoToneladas(e.target.value)} className={inputCls} placeholder="0" />
+                </Field>
+                <Field label="Valor / tonelada (R$)">
+                  <input inputMode="decimal" value={valorPorTonelada} onChange={e => setValorPorTonelada(e.target.value)} className={inputCls} placeholder="0" />
+                </Field>
+              </div>
+            ) : (
+              <>
+                <Field label="Valor cheio do frete (R$)">
+                  <input
+                    inputMode="decimal"
+                    value={valorCheio}
+                    onChange={e => setValorCheio(maskMoneyInput(e.target.value))}
+                    className={inputCls}
+                    placeholder="0,00"
+                  />
+                </Field>
+                <Field label="Peso em toneladas (opcional)">
+                  <input inputMode="decimal" value={pesoToneladas} onChange={e => setPesoToneladas(e.target.value)} className={inputCls} placeholder="Apenas para informação no relatório" />
+                </Field>
+              </>
+            )}
             <Summary rows={[['Valor total', fmtBRL(calc.valorTotal)]]} />
           </>
         )}

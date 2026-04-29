@@ -3,9 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
-import { Printer, Calendar, Wheat, FileText } from 'lucide-react';
+import { Printer, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
 
-type Modo = 'mes' | 'safra' | 'contrato';
+type Modo = 'mes' | 'safra' | 'contrato' | 'frete';
 
 export default function ReportsPage() {
   const [modo, setModo] = useState<Modo>('mes');
@@ -14,6 +14,7 @@ export default function ReportsPage() {
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [harvestTouched, setHarvestTouched] = useState(false);
   const [contratoId, setContratoId] = useState<number | ''>('');
+  const [tripAvulsaId, setTripAvulsaId] = useState<number | ''>('');
 
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
@@ -34,22 +35,35 @@ export default function ReportsPage() {
     if (sugerida?.id) setHarvestId(sugerida.id);
   }, [harvests, contracts, harvestTouched, harvestId]);
 
-  const { tripsFiltradas, despesasFiltradas, titulo } = useMemo(() => {
+  const { tripsFiltradas, despesasFiltradas, titulo, contratosAbertos } = useMemo(() => {
     if (modo === 'mes') {
       const t = trips.filter(x => x.data?.startsWith(mes));
       const e = expenses.filter(x => x.data?.startsWith(mes));
       const [y, m] = mes.split('-');
-      return { tripsFiltradas: t, despesasFiltradas: e, titulo: `Mês ${m}/${y}` };
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: `Mês ${m}/${y}`, contratosAbertos: [] as any[] };
     } else if (modo === 'safra') {
-      if (!harvestId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma safra' };
-      const cIds = new Set(contracts.filter(c => c.harvestId === Number(harvestId)).map(c => c.id));
+      if (!harvestId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma safra', contratosAbertos: [] };
+      const cs = contracts.filter(c => c.harvestId === Number(harvestId));
+      const cIds = new Set(cs.map(c => c.id));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId && cIds.has(x.contractId));
       const e = expenses.filter(x => (x.contractId && cIds.has(x.contractId)) || x.harvestId === Number(harvestId));
       const h = harvests.find(hh => hh.id === Number(harvestId));
-      return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra' };
+      const abertos = cs.filter(c => !c.fechado);
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra', contratosAbertos: abertos };
+    } else if (modo === 'frete') {
+      if (!tripAvulsaId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione uma viagem avulsa', contratosAbertos: [] };
+      const t = trips.filter(x => x.id === Number(tripAvulsaId) && x.kind === 'frete');
+      const e = expenses.filter(x => x.tripId === Number(tripAvulsaId));
+      const tt = t[0];
+      return {
+        tripsFiltradas: t,
+        despesasFiltradas: e,
+        titulo: tt ? `Frete avulso — ${fmtDate(tt.data)} • ${tt.origem}→${tt.destino}` : 'Frete avulso',
+        contratosAbertos: [],
+      };
     } else {
       // contrato
-      if (!contratoId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione um contrato' };
+      if (!contratoId) return { tripsFiltradas: [], despesasFiltradas: [], titulo: 'Selecione um contrato', contratosAbertos: [] };
       const c = contracts.find(cc => cc.id === Number(contratoId));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId === Number(contratoId));
       const tripIds = new Set(t.map(tt => tt.id));
@@ -59,9 +73,9 @@ export default function ReportsPage() {
       );
       const p = c ? producers.find(pp => pp.id === c.producerId) : undefined;
       const h = c ? harvests.find(hh => hh.id === c.harvestId) : undefined;
-      return { tripsFiltradas: t, despesasFiltradas: e, titulo: c ? `Contrato — ${p?.nome ?? '?'} / ${h?.nome ?? '?'}` : 'Contrato' };
+      return { tripsFiltradas: t, despesasFiltradas: e, titulo: c ? `Contrato — ${p?.nome ?? '?'} / ${h?.nome ?? '?'}` : 'Contrato', contratosAbertos: [] };
     }
-  }, [modo, mes, harvestId, contratoId, trips, expenses, contracts, harvests, producers]);
+  }, [modo, mes, harvestId, contratoId, tripAvulsaId, trips, expenses, contracts, harvests, producers]);
 
   const receita = tripsFiltradas.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = despesasFiltradas.reduce((s, e) => s + e.valor, 0);
@@ -93,7 +107,7 @@ export default function ReportsPage() {
     <div className="animate-fade-in">
       <PageHeader title="Relatórios" subtitle="Extrato detalhado para impressão" />
       <div className="space-y-4 px-4 pb-6 print:hidden">
-        <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+        <div className="grid grid-cols-4 gap-1 rounded-lg border border-border bg-input p-1 text-[11px] font-bold">
           <button onClick={() => setModo('mes')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'mes' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
             <Calendar className="h-4 w-4" /> Mensal
           </button>
@@ -102,6 +116,9 @@ export default function ReportsPage() {
           </button>
           <button onClick={() => setModo('contrato')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'contrato' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
             <FileText className="h-4 w-4" /> Contrato
+          </button>
+          <button onClick={() => setModo('frete')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'frete' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+            <TruckIcon className="h-4 w-4" /> Frete
           </button>
         </div>
 
@@ -112,7 +129,7 @@ export default function ReportsPage() {
             <option value="">Selecione uma safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} — {h.tipo} {h.ano}</option>)}
           </select>
-        ) : (
+        ) : modo === 'contrato' ? (
           <select value={contratoId} onChange={e => setContratoId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
             <option value="">Selecione um contrato…</option>
             {contracts.map(c => {
@@ -120,6 +137,13 @@ export default function ReportsPage() {
               const h = harvests.find(hh => hh.id === c.harvestId);
               return <option key={c.id} value={c.id}>{p?.nome ?? '?'} / {h?.nome ?? '?'}{c.fechado ? ' — fechado' : ''}</option>;
             })}
+          </select>
+        ) : (
+          <select value={tripAvulsaId} onChange={e => setTripAvulsaId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
+            <option value="">Selecione uma viagem avulsa…</option>
+            {trips.filter(t => t.kind === 'frete').sort((a, b) => b.data.localeCompare(a.data)).map(t => (
+              <option key={t.id} value={t.id}>{fmtDate(t.data)} • {t.origem}→{t.destino} • {fmtBRL(t.valorTotal)}</option>
+            ))}
           </select>
         )}
 
@@ -135,6 +159,24 @@ export default function ReportsPage() {
           <p className="text-sm text-muted-foreground">{titulo}</p>
           {drivers[0] && <p className="text-xs text-muted-foreground">{drivers[0].nome}{drivers[0].cpf ? ` • ${drivers[0].cpf}` : ''}</p>}
         </div>
+
+        {modo === 'safra' && contratosAbertos.length > 0 && (
+          <div className="mb-4 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-warning flex items-start gap-2">
+            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Atenção: existem {contratosAbertos.length} contrato{contratosAbertos.length > 1 ? 's' : ''} ainda em aberto nesta safra.</p>
+              <p className="text-xs mt-1">
+                O faturamento abaixo pode mudar até que todos os contratos sejam fechados:
+              </p>
+              <ul className="text-xs mt-1 list-disc pl-4">
+                {contratosAbertos.map(c => {
+                  const p = producers.find(pp => pp.id === c.producerId);
+                  return <li key={c.id}>{p?.nome ?? '?'}</li>;
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2 mb-4 sm:grid-cols-4">
           <Card label="Receita" value={fmtBRL(receita)} />
