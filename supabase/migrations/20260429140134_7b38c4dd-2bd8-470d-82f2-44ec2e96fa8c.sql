@@ -1,0 +1,1 @@
+TRUNCATE TABLE public.expenses, public.trips, public.contracts, public.harvests, public.producers, public.trucks RESTART IDENTITY CASCADE;
