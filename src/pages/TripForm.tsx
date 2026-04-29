@@ -366,14 +366,51 @@ export default function TripForm() {
         ) : (
           <>
             <Field label="Transportadora"><input value={transportadora} onChange={e => setTransportadora(e.target.value)} className={inputCls} placeholder="Opcional" /></Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label="Peso (toneladas)">
-                <input inputMode="decimal" value={pesoToneladas} onChange={e => setPesoToneladas(e.target.value)} className={inputCls} placeholder="0" />
-              </Field>
-              <Field label="Valor / tonelada (R$)">
-                <input inputMode="decimal" value={valorPorTonelada} onChange={e => setValorPorTonelada(e.target.value)} className={inputCls} placeholder="0" />
-              </Field>
+
+            <div>
+              <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">Forma de cobrança</span>
+              <div className="grid grid-cols-2 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+                {([['tonelada', 'Por tonelada'], ['cheio', 'Frete cheio']] as const).map(([v, l]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setFreteModo(v)}
+                    className={'rounded-md py-2 ' + (freteModo === v ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Use <strong>frete cheio</strong> quando o valor é fechado, independente do peso.
+              </p>
             </div>
+
+            {freteModo === 'tonelada' ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Peso (toneladas)">
+                  <input inputMode="decimal" value={pesoToneladas} onChange={e => setPesoToneladas(e.target.value)} className={inputCls} placeholder="0" />
+                </Field>
+                <Field label="Valor / tonelada (R$)">
+                  <input inputMode="decimal" value={valorPorTonelada} onChange={e => setValorPorTonelada(e.target.value)} className={inputCls} placeholder="0" />
+                </Field>
+              </div>
+            ) : (
+              <>
+                <Field label="Valor cheio do frete (R$)">
+                  <input
+                    inputMode="decimal"
+                    value={valorCheio}
+                    onChange={e => setValorCheio(maskMoneyInput(e.target.value))}
+                    className={inputCls}
+                    placeholder="0,00"
+                  />
+                </Field>
+                <Field label="Peso em toneladas (opcional)">
+                  <input inputMode="decimal" value={pesoToneladas} onChange={e => setPesoToneladas(e.target.value)} className={inputCls} placeholder="Apenas para informação no relatório" />
+                </Field>
+              </>
+            )}
             <Summary rows={[['Valor total', fmtBRL(calc.valorTotal)]]} />
           </>
         )}
