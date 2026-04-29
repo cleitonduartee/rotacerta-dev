@@ -108,6 +108,48 @@ export default function ReportsPage() {
   }
   function placa(tId: number) {
     return trucks.find(t => t.id === tId)?.placa ?? '—';
+
+  async function gerarPDF() {
+    try {
+      const baseInput = {
+        driver: drivers[0],
+        trips: tripsFiltradas,
+        expenses: despesasFiltradas,
+        trucks, contracts, producers, harvests,
+      };
+      let blob: Blob; let nome = 'relatorio';
+      if (modo === 'mes') {
+        blob = await generateAnalyticMonthReport({ ...baseInput, mes });
+        nome = `mensal-${mes}`;
+      } else if (modo === 'safra') {
+        const h = harvests.find(hh => hh.id === Number(harvestId));
+        if (!h) { toast.error('Selecione uma safra'); return; }
+        const cs = contracts.filter(c => c.harvestId === Number(harvestId));
+        blob = await generateAnalyticHarvestReport({
+          ...baseInput, harvest: h, contracts: cs, contractsAbertos: contratosAbertos,
+        });
+        nome = `safra-${h.nome.replace(/\s+/g, '-')}`;
+      } else if (modo === 'contrato') {
+        const c = contracts.find(cc => cc.id === Number(contratoId));
+        if (!c) { toast.error('Selecione um contrato'); return; }
+        blob = await generateAnalyticContractReport({ ...baseInput, contract: c });
+        const p = producers.find(pp => pp.id === c.producerId);
+        nome = `contrato-${(p?.nome ?? 'x').replace(/\s+/g, '-')}`;
+      } else {
+        const t = trips.find(tt => tt.id === Number(tripAvulsaId));
+        if (!t) { toast.error('Selecione uma viagem'); return; }
+        blob = await generateAnalyticFreteReport({ ...baseInput, trip: t });
+        nome = `frete-${t.data}`;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${nome}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF gerado');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao gerar PDF');
+    }
   }
 
   return (
