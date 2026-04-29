@@ -45,7 +45,7 @@ export default function TripForm() {
   const [valorCheio, setValorCheio] = useState<string>('');
 
   const [observacao, setObservacao] = useState('');
-  const [notaProdutor, setNotaProdutor] = useState('');
+  const [numeroNota, setNumeroNota] = useState('');
   const [loaded, setLoaded] = useState(!editingId);
 
   // Modais de cadastro rápido
@@ -82,7 +82,7 @@ export default function TripForm() {
         }
       }
       setObservacao(t.observacao ?? '');
-      setNotaProdutor(t.notaProdutor ?? '');
+      setNumeroNota(t.numeroNota ?? '');
       setLoaded(true);
     });
   }, [editingId, contracts]);
@@ -183,7 +183,7 @@ export default function TripForm() {
         valorPorTonelada: kind === 'frete' && freteModo === 'tonelada' && valorPorTonelada ? parseFloat(valorPorTonelada.replace(',', '.')) : undefined,
         valorTotal: calc.valorTotal,
         observacao,
-        notaProdutor: notaProdutor.trim() || undefined,
+        numeroNota: numeroNota.trim() || undefined,
         ...stamp(),
       };
 
@@ -415,8 +415,8 @@ export default function TripForm() {
           </>
         )}
 
-        <Field label="Nº da nota do produtor (opcional)">
-          <input value={notaProdutor} onChange={e => setNotaProdutor(e.target.value.replace(/\D/g, '').slice(0, 12))} className={inputCls} placeholder="Ex: 12345" inputMode="numeric" maxLength={12} />
+        <Field label={`Nº da nota fiscal${kind === 'safra' ? ' do produtor' : ''} (opcional)`}>
+          <input value={numeroNota} onChange={e => setNumeroNota(e.target.value.replace(/\D/g, '').slice(0, 12))} className={inputCls} placeholder="Ex: 12345" inputMode="numeric" maxLength={12} />
         </Field>
 
         <Field label="Observação">
