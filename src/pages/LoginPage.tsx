@@ -179,7 +179,7 @@ export default function LoginPage() {
           draggable={false}
         />
         <p className="font-display text-4xl text-primary">ROTASAFRA</p>
-        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">Controle total dos seus fretes agrícolas</p>
+        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">CONTROLE DE FRETES AGRÍCOLAS</p>
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated">

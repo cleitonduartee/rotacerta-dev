@@ -58,7 +58,7 @@ export function AppLayout() {
           />
           <div className="leading-tight">
             <p className="font-display text-2xl leading-none text-primary">ROTASAFRA</p>
-            <p className="text-[11px] uppercase tracking-widest text-muted-foreground">Controle total dos seus fretes agrícolas</p>
+            <p className="text-[11px] uppercase tracking-widest text-muted-foreground">CONTROLE DE FRETES AGRÍCOLAS</p>
           </div>
         </NavLink>
         <div className="flex items-center gap-1">
