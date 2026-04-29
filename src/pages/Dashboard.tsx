@@ -9,7 +9,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
-type PeriodMode = 'mes' | 'ano' | 'tudo';
+type PeriodMode = 'mes' | 'ano' | 'safra' | 'tudo';
 
 // Paleta a partir do laranja primário (HSL → variações de matiz)
 const PIE_COLORS = [
@@ -36,6 +36,8 @@ export default function Dashboard() {
   const [mode, setMode] = useState<PeriodMode>('tudo');
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
   const [ano, setAno] = useState<number>(hoje.getFullYear());
+  const [safraId, setSafraId] = useState<string>('');
+  const [contratoId, setContratoId] = useState<string>('');
 
   // Anos disponíveis a partir dos dados
   const anosDisponiveis = useMemo(() => {
@@ -63,8 +65,35 @@ export default function Dashboard() {
         periodoLabel: p,
       };
     }
+    if (mode === 'safra' && safraId) {
+      const safraIdNum = Number(safraId);
+      const contratosSafra = contracts.filter(c => c.harvestId === safraIdNum);
+      const contratoIds = contratoId
+        ? [Number(contratoId)]
+        : contratosSafra.map(c => c.id!).filter(Boolean);
+      const setIds = new Set(contratoIds);
+      const h = harvests.find(hh => hh.id === safraIdNum);
+      let label = h?.nome ?? 'Safra';
+      if (contratoId) {
+        const c = contracts.find(cc => cc.id === Number(contratoId));
+        const p = c ? producers.find(pp => pp.id === c.producerId) : null;
+        if (p) label = `${label} • ${p.nome}`;
+      }
+      return {
+        tripsF: trips.filter(t => t.kind === 'safra' && t.contractId && setIds.has(t.contractId)),
+        expensesF: expenses.filter(e => {
+          if (e.contractId && setIds.has(e.contractId)) return true;
+          if (e.tripId) {
+            const tr = trips.find(tt => tt.id === e.tripId);
+            if (tr?.contractId && setIds.has(tr.contractId)) return true;
+          }
+          return false;
+        }),
+        periodoLabel: label,
+      };
+    }
     return { tripsF: trips, expensesF: expenses, periodoLabel: 'Tudo' };
-  }, [mode, mes, ano, trips, expenses]);
+  }, [mode, mes, ano, safraId, contratoId, trips, expenses, contracts, harvests, producers]);
 
   const totalReceita = tripsF.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = expensesF.reduce((s, e) => s + e.valor, 0);
@@ -163,16 +192,16 @@ export default function Dashboard() {
       {/* Filtro de período */}
       <div className="rounded-xl border border-border bg-card p-3 shadow-card">
         <div className="flex gap-1.5 mb-2">
-          {(['mes', 'ano', 'tudo'] as PeriodMode[]).map(m => (
+          {(['mes', 'ano', 'safra', 'tudo'] as PeriodMode[]).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={
-                'flex-1 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ' +
+                'flex-1 rounded-lg px-2 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ' +
                 (mode === m ? 'bg-primary text-primary-foreground shadow-elevated' : 'bg-secondary text-muted-foreground')
               }
             >
-              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : 'Tudo'}
+              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : m === 'safra' ? 'Safra' : 'Tudo'}
             </button>
           ))}
         </div>
@@ -192,6 +221,41 @@ export default function Dashboard() {
           >
             {anosDisponiveis.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
+        )}
+        {mode === 'safra' && (
+          <div className="space-y-2">
+            <select
+              value={safraId}
+              onChange={e => { setSafraId(e.target.value); setContratoId(''); }}
+              className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+            >
+              <option value="">Selecione uma safra...</option>
+              {harvests
+                .slice()
+                .sort((a, b) => (b.ano - a.ano) || a.nome.localeCompare(b.nome))
+                .map(h => (
+                  <option key={h.id} value={h.id}>{h.nome} ({h.ano})</option>
+                ))}
+            </select>
+            {safraId && (
+              <select
+                value={contratoId}
+                onChange={e => setContratoId(e.target.value)}
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Todos os contratos da safra</option>
+                {contracts
+                  .filter(c => c.harvestId === Number(safraId))
+                  .map(c => {
+                    const p = producers.find(pp => pp.id === c.producerId);
+                    return <option key={c.id} value={c.id}>{p?.nome ?? 'Produtor'}</option>;
+                  })}
+              </select>
+            )}
+            {!safraId && (
+              <p className="text-[11px] text-muted-foreground px-1">Escolha uma safra para ver o resultado consolidado dos contratos.</p>
+            )}
+          </div>
         )}
       </div>
 
