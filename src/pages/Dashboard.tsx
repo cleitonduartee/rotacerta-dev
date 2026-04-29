@@ -9,7 +9,7 @@ import {
   XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
 
-type PeriodMode = 'mes' | 'ano' | 'safra' | 'tudo';
+type PeriodMode = 'mes' | 'ano' | 'safra' | 'frete' | 'tudo';
 
 // Paleta a partir do laranja primário (HSL → variações de matiz)
 const PIE_COLORS = [
@@ -63,6 +63,15 @@ export default function Dashboard() {
         tripsF: trips.filter(t => t.data?.startsWith(p)),
         expensesF: expenses.filter(e => e.data?.startsWith(p)),
         periodoLabel: p,
+      };
+    }
+    if (mode === 'frete') {
+      const fretes = trips.filter(t => t.kind === 'frete');
+      const freteIds = new Set(fretes.map(t => t.id!).filter(Boolean));
+      return {
+        tripsF: fretes,
+        expensesF: expenses.filter(e => e.tipo === 'avulsa' || (e.tripId && freteIds.has(e.tripId))),
+        periodoLabel: 'Fretes avulsos',
       };
     }
     if (mode === 'safra' && safraId) {
@@ -195,16 +204,16 @@ export default function Dashboard() {
       {/* Filtro de período */}
       <div className="rounded-xl border border-border bg-card p-3 shadow-card">
         <div className="flex gap-1.5 mb-2">
-          {(['mes', 'ano', 'safra', 'tudo'] as PeriodMode[]).map(m => (
+          {(['mes', 'ano', 'safra', 'frete', 'tudo'] as PeriodMode[]).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={
-                'flex-1 rounded-lg px-2 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ' +
+                'flex-1 rounded-lg px-1.5 py-1.5 text-[11px] font-bold uppercase tracking-wider transition-all ' +
                 (mode === m ? 'bg-primary text-primary-foreground shadow-elevated' : 'bg-secondary text-muted-foreground')
               }
             >
-              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : m === 'safra' ? 'Safra' : 'Tudo'}
+              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : m === 'safra' ? 'Safra' : m === 'frete' ? 'Frete' : 'Tudo'}
             </button>
           ))}
         </div>
@@ -387,7 +396,6 @@ export default function Dashboard() {
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
         <QuickLink to="/viagens/nova" label="Nova viagem" icon={Truck} primary />
-        <QuickLink to="/viagens/nova?kind=frete" label="Frete avulso" icon={Building2} />
         <QuickLink to="/despesas/nova" label="Nova despesa" icon={Receipt} />
         <QuickLink to="/relatorios" label="Relatórios" icon={FileBarChart} />
         <QuickLink to="/contratos" label="Contratos" icon={Wheat} />
