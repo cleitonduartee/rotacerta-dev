@@ -416,7 +416,7 @@ export default function TripForm() {
         )}
 
         <Field label="Nº da nota do produtor (opcional)">
-          <input value={notaProdutor} onChange={e => setNotaProdutor(e.target.value)} className={inputCls} placeholder="Ex: 12345" />
+          <input value={notaProdutor} onChange={e => setNotaProdutor(e.target.value.replace(/\D/g, '').slice(0, 12))} className={inputCls} placeholder="Ex: 12345" inputMode="numeric" maxLength={12} />
         </Field>
 
         <Field label="Observação">
