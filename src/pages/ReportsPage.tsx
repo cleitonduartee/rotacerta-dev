@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
 import { FileDown, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/auth';
 import {
   generateAnalyticHarvestReport,
   generateAnalyticContractReport,
