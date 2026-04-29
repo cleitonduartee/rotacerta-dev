@@ -107,7 +107,7 @@ export default function ReportsPage() {
     <div className="animate-fade-in">
       <PageHeader title="Relatórios" subtitle="Extrato detalhado para impressão" />
       <div className="space-y-4 px-4 pb-6 print:hidden">
-        <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-input p-1 text-xs font-bold">
+        <div className="grid grid-cols-4 gap-1 rounded-lg border border-border bg-input p-1 text-[11px] font-bold">
           <button onClick={() => setModo('mes')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'mes' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
             <Calendar className="h-4 w-4" /> Mensal
           </button>
@@ -116,6 +116,9 @@ export default function ReportsPage() {
           </button>
           <button onClick={() => setModo('contrato')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'contrato' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
             <FileText className="h-4 w-4" /> Contrato
+          </button>
+          <button onClick={() => setModo('frete')} className={'flex items-center justify-center gap-1 rounded-md py-2 ' + (modo === 'frete' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+            <TruckIcon className="h-4 w-4" /> Frete
           </button>
         </div>
 
@@ -126,7 +129,7 @@ export default function ReportsPage() {
             <option value="">Selecione uma safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} — {h.tipo} {h.ano}</option>)}
           </select>
-        ) : (
+        ) : modo === 'contrato' ? (
           <select value={contratoId} onChange={e => setContratoId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
             <option value="">Selecione um contrato…</option>
             {contracts.map(c => {
@@ -134,6 +137,13 @@ export default function ReportsPage() {
               const h = harvests.find(hh => hh.id === c.harvestId);
               return <option key={c.id} value={c.id}>{p?.nome ?? '?'} / {h?.nome ?? '?'}{c.fechado ? ' — fechado' : ''}</option>;
             })}
+          </select>
+        ) : (
+          <select value={tripAvulsaId} onChange={e => setTripAvulsaId(e.target.value === '' ? '' : Number(e.target.value))} className="w-full rounded-lg border border-border bg-input px-3 py-3 text-base">
+            <option value="">Selecione uma viagem avulsa…</option>
+            {trips.filter(t => t.kind === 'frete').sort((a, b) => b.data.localeCompare(a.data)).map(t => (
+              <option key={t.id} value={t.id}>{fmtDate(t.data)} • {t.origem}→{t.destino} • {fmtBRL(t.valorTotal)}</option>
+            ))}
           </select>
         )}
 
