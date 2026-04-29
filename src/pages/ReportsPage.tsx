@@ -16,6 +16,7 @@ import {
 type Modo = 'mes' | 'safra' | 'contrato' | 'frete';
 
 export default function ReportsPage() {
+  const { profile } = useAuth();
   const [modo, setModo] = useState<Modo>('mes');
   const hoje = new Date();
   const [mes, setMes] = useState<string>(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`);
