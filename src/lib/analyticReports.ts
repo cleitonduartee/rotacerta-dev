@@ -455,7 +455,9 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
       headStyles: { fillColor: COLORS.danger, textColor: 255, fontSize: 8 },
       footStyles: { fillColor: COLORS.light, textColor: COLORS.ink, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8 },
-      columnStyles: { 3: { halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 90 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 70, halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      styles: { overflow: 'linebreak', cellWidth: 'wrap' },
+      tableWidth: 'auto',
       margin: { left: 40, right: 40 },
     });
   }
@@ -581,7 +583,9 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
       headStyles: { fillColor: COLORS.danger, textColor: 255, fontSize: 8 },
       footStyles: { fillColor: COLORS.light, textColor: COLORS.ink, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8 },
-      columnStyles: { 3: { halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 90 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 70, halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      styles: { overflow: 'linebreak', cellWidth: 'wrap' },
+      tableWidth: 'auto',
       margin: { left: 40, right: 40 },
     });
   }
@@ -721,7 +725,9 @@ export async function generateAnalyticMonthReport(input: MonthReportInput): Prom
       headStyles: { fillColor: COLORS.danger, textColor: 255, fontSize: 8 },
       footStyles: { fillColor: COLORS.light, textColor: COLORS.ink, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8 },
-      columnStyles: { 3: { halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 90 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 70, halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      styles: { overflow: 'linebreak', cellWidth: 'wrap' },
+      tableWidth: 'auto',
       margin: { left: 40, right: 40 },
     });
   }
@@ -816,7 +822,9 @@ export async function generateAnalyticFreteReport(input: FreteReportInput): Prom
       headStyles: { fillColor: COLORS.danger, textColor: 255, fontSize: 8 },
       footStyles: { fillColor: COLORS.light, textColor: COLORS.ink, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8 },
-      columnStyles: { 3: { halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 90 }, 2: { cellWidth: 'auto' }, 3: { cellWidth: 70, halign: 'right', textColor: COLORS.danger, fontStyle: 'bold' } },
+      styles: { overflow: 'linebreak', cellWidth: 'wrap' },
+      tableWidth: 'auto',
       margin: { left: 40, right: 40 },
     });
   }
