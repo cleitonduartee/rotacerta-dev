@@ -1,0 +1,1 @@
+ALTER TABLE public.trips RENAME COLUMN nota_produtor TO numero_nota;

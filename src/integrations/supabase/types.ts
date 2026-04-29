@@ -290,7 +290,7 @@ export type Database = {
           destino: string | null
           id: string
           kind: string
-          nota_produtor: string | null
+          numero_nota: string | null
           observacao: string | null
           origem: string | null
           peso_kg: number | null
@@ -311,7 +311,7 @@ export type Database = {
           destino?: string | null
           id?: string
           kind: string
-          nota_produtor?: string | null
+          numero_nota?: string | null
           observacao?: string | null
           origem?: string | null
           peso_kg?: number | null
@@ -332,7 +332,7 @@ export type Database = {
           destino?: string | null
           id?: string
           kind?: string
-          nota_produtor?: string | null
+          numero_nota?: string | null
           observacao?: string | null
           origem?: string | null
           peso_kg?: number | null
