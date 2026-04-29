@@ -154,7 +154,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.text((tr?.placa ?? '—').slice(0, 12), 95, y);
     const od = `${t.origem} -> ${t.destino}`;
     doc.text(od.length > 32 ? od.slice(0, 30) + '...' : od, 165, y);
-    doc.text((t.notaProdutor ?? '—').toString().slice(0, 12), 340, y);
+    doc.text((t.numeroNota ?? '—').toString().slice(0, 12), 340, y);
     doc.text(fmtNum(t.sacos ?? 0, 1), 410, y, { align: 'right' });
     doc.text(fmtBRL(t.valorTotal), W - 50, y, { align: 'right' });
     y += 14;

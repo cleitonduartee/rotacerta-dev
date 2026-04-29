@@ -425,7 +425,7 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
           tr?.placa ?? '—',
           `${t.origem} -> ${t.destino}`,
           p?.nome ?? '—',
-          t.notaProdutor || '—',
+          t.numeroNota || '-',
           t.sacos ? fmtNum(t.sacos, 1) : '—',
           fmtBRL(t.valorTotal),
         ];
@@ -553,7 +553,7 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
         return [
           fmtDate(t.data), tr?.placa ?? '—',
           `${t.origem} -> ${t.destino}`,
-          t.notaProdutor || '—',
+          t.numeroNota || '-',
           t.sacos ? fmtNum(t.sacos, 1) : '—',
           fmtBRL(t.valorTotal),
         ];

@@ -75,7 +75,7 @@ export interface Trip {
   pesoToneladas?: number;
   valorPorTonelada?: number;
 
-  notaProdutor?: string;   // número da nota do produtor (opcional)
+  numeroNota?: string;     // número da nota fiscal (produtor para safra, transportadora para frete)
   valorTotal: number;
   observacao?: string;
   syncStatus: SyncStatus;

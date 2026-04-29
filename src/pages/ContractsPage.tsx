@@ -169,7 +169,7 @@ export default function ContractsPage() {
     const tripsOrd = [...r.trips].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     const linhasViagens = tripsOrd.map((t, i) => {
       const sacos = t.sacos ?? 0;
-      const nota = t.notaProdutor ? ` • Nota ${t.notaProdutor}` : '';
+      const nota = t.numeroNota ? ` • Nota ${t.numeroNota}` : '';
       const peso = t.pesoKg ? ` • ${fmtNum(t.pesoKg / 1000, 2)}t` : '';
       return `${i + 1}. ${fmtDate(t.data)}${peso} • ${fmtNum(sacos, 2)} sc • ${fmtBRL(t.valorTotal)}${nota}`;
     }).join('\n');
