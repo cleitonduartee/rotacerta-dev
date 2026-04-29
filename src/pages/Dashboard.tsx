@@ -192,16 +192,16 @@ export default function Dashboard() {
       {/* Filtro de período */}
       <div className="rounded-xl border border-border bg-card p-3 shadow-card">
         <div className="flex gap-1.5 mb-2">
-          {(['mes', 'ano', 'tudo'] as PeriodMode[]).map(m => (
+          {(['mes', 'ano', 'safra', 'tudo'] as PeriodMode[]).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={
-                'flex-1 rounded-lg px-3 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ' +
+                'flex-1 rounded-lg px-2 py-1.5 text-xs font-bold uppercase tracking-wider transition-all ' +
                 (mode === m ? 'bg-primary text-primary-foreground shadow-elevated' : 'bg-secondary text-muted-foreground')
               }
             >
-              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : 'Tudo'}
+              {m === 'mes' ? 'Mês' : m === 'ano' ? 'Ano' : m === 'safra' ? 'Safra' : 'Tudo'}
             </button>
           ))}
         </div>
@@ -221,6 +221,41 @@ export default function Dashboard() {
           >
             {anosDisponiveis.map(a => <option key={a} value={a}>{a}</option>)}
           </select>
+        )}
+        {mode === 'safra' && (
+          <div className="space-y-2">
+            <select
+              value={safraId}
+              onChange={e => { setSafraId(e.target.value); setContratoId(''); }}
+              className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+            >
+              <option value="">Selecione uma safra...</option>
+              {harvests
+                .slice()
+                .sort((a, b) => (b.ano - a.ano) || a.nome.localeCompare(b.nome))
+                .map(h => (
+                  <option key={h.id} value={h.id}>{h.nome} ({h.ano})</option>
+                ))}
+            </select>
+            {safraId && (
+              <select
+                value={contratoId}
+                onChange={e => setContratoId(e.target.value)}
+                className="w-full rounded-lg border border-border bg-input px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Todos os contratos da safra</option>
+                {contracts
+                  .filter(c => c.harvestId === Number(safraId))
+                  .map(c => {
+                    const p = producers.find(pp => pp.id === c.producerId);
+                    return <option key={c.id} value={c.id}>{p?.nome ?? 'Produtor'}</option>;
+                  })}
+              </select>
+            )}
+            {!safraId && (
+              <p className="text-[11px] text-muted-foreground px-1">Escolha uma safra para ver o resultado consolidado dos contratos.</p>
+            )}
+          </div>
         )}
       </div>
 
