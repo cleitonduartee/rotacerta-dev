@@ -467,8 +467,137 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 }
 
 // ============================================================================
-// RELATÓRIO: CONTRATO
+// RELATÓRIO: CONTRATO (moderno)
 // ============================================================================
+function drawContractHero(
+  doc: jsPDF,
+  y: number,
+  receita: number,
+  despesas: number,
+  liquido: number,
+  margem: number,
+  fechado: boolean
+): number {
+  const W = doc.internal.pageSize.getWidth();
+  const x = 40;
+  const w = W - 80;
+  const h = 150;
+
+  // Painel principal escuro
+  doc.setFillColor(...COLORS.ink);
+  doc.roundedRect(x, y, w, h, 10, 10, 'F');
+
+  // Faixa lateral colorida (status do líquido)
+  const accent = liquido >= 0 ? COLORS.primary : COLORS.danger;
+  doc.setFillColor(...accent);
+  doc.roundedRect(x, y, 6, h, 3, 3, 'F');
+
+  // Status pill
+  const pillW = 86;
+  doc.setFillColor(...(fechado ? COLORS.success : COLORS.warning));
+  doc.roundedRect(x + w - pillW - 16, y + 16, pillW, 18, 9, 9, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8);
+  doc.setTextColor(255, 255, 255);
+  doc.text(fechado ? 'CONTRATO FECHADO' : 'EM ABERTO', x + w - pillW / 2 - 16, y + 28, { align: 'center' });
+
+  // Label líquido
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(180, 180, 180);
+  doc.text('RESULTADO LÍQUIDO', x + 22, y + 32);
+
+  // Valor líquido grande
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(34);
+  doc.setTextColor(...accent);
+  doc.text(fmtBRL(liquido), x + 22, y + 70);
+
+  // Margem
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(180, 180, 180);
+  doc.text(`Margem ${margem.toFixed(1)}% sobre a receita`, x + 22, y + 86);
+
+  // Linha divisória
+  doc.setDrawColor(60, 60, 60);
+  doc.setLineWidth(0.5);
+  doc.line(x + 22, y + 100, x + w - 22, y + 100);
+
+  // Receita / Despesas lado a lado
+  const colW = (w - 44) / 2;
+  // Receita
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('RECEITA BRUTA', x + 22, y + 118);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...COLORS.success);
+  doc.text(fmtBRL(receita), x + 22, y + 138);
+
+  // Despesas
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(150, 150, 150);
+  doc.text('DESPESAS TOTAIS', x + 22 + colW, y + 118);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(...COLORS.danger);
+  doc.text(`- ${fmtBRL(despesas)}`, x + 22 + colW, y + 138);
+
+  doc.setTextColor(...COLORS.ink);
+  return y + h + 16;
+}
+
+function drawContractInfoCard(
+  doc: jsPDF,
+  y: number,
+  produtor: string,
+  safra: string,
+  rPorSaco: number,
+  totalSacos: number,
+  totalTon: number,
+  viagens: number
+): number {
+  const W = doc.internal.pageSize.getWidth();
+  const x = 40;
+  const w = W - 80;
+  const h = 78;
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(...COLORS.border);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(x, y, w, h, 8, 8, 'FD');
+
+  const items = [
+    { label: 'PRODUTOR', value: produtor },
+    { label: 'SAFRA', value: safra },
+    { label: 'R$/SACO', value: fmtBRL(rPorSaco) },
+    { label: 'VIAGENS', value: String(viagens) },
+    { label: 'SACOS', value: fmtNum(totalSacos, 1) },
+    { label: 'TONELADAS', value: fmtNum(totalTon, 2) },
+  ];
+  const colW = w / items.length;
+  items.forEach((it, i) => {
+    const cx = x + colW * i + colW / 2;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...COLORS.muted);
+    doc.text(it.label, cx, y + 22, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...COLORS.ink);
+    const txt = it.value.length > 18 ? it.value.slice(0, 17) + '…' : it.value;
+    doc.text(txt, cx, y + 46, { align: 'center' });
+    if (i < items.length - 1) {
+      doc.setDrawColor(...COLORS.border);
+      doc.setLineWidth(0.3);
+      doc.line(x + colW * (i + 1), y + 14, x + colW * (i + 1), y + h - 14);
+    }
+  });
+  return y + h + 16;
+}
+
 export async function generateAnalyticContractReport(input: ContractReportInput): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const c = input.contract;
@@ -477,8 +606,8 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
 
   drawHeader(
     doc,
-    `Contrato — ${p?.nome ?? '?'}`,
-    `${h?.nome ?? '?'} • ${h?.tipo ?? ''} ${h?.ano ?? ''} • R$ ${fmtNum(c.valorPorSaco, 2)}/saco • ${c.fechado ? 'FECHADO' : 'EM ABERTO'}`,
+    `Fechamento de Contrato`,
+    `${p?.nome ?? '?'} • ${h?.nome ?? '?'} ${h?.ano ?? ''}`,
     input.driver
   );
 
@@ -493,15 +622,32 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
   const receita = input.trips.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const despesas = input.expenses.reduce((s, e) => s + (e.valor || 0), 0);
   const liquido = receita - despesas;
+  const margem = receita > 0 ? (liquido / receita) * 100 : 0;
+  const custoPorSaco = totalSacos > 0 ? despesas / totalSacos : 0;
+  const liquidoPorSaco = totalSacos > 0 ? liquido / totalSacos : 0;
+  const ticketMedio = input.trips.length > 0 ? receita / input.trips.length : 0;
 
+  // HERO
+  y = drawContractHero(doc, y, receita, despesas, liquido, margem, !!c.fechado);
+
+  // INFO CARD
+  y = drawContractInfoCard(
+    doc, y,
+    p?.nome ?? '—',
+    `${h?.nome ?? '—'}`,
+    c.valorPorSaco,
+    totalSacos,
+    totalTon,
+    input.trips.length,
+  );
+
+  // KPIs secundários (indicadores)
   y = drawKPIs(doc, y, [
-    { label: 'Viagens', value: String(input.trips.length) },
-    { label: 'Sacos', value: fmtNum(totalSacos, 1) },
-    { label: 'Toneladas', value: fmtNum(totalTon, 2) },
-    { label: 'R$/saco', value: fmtBRL(c.valorPorSaco) },
+    { label: 'Ticket médio/viagem', value: fmtBRL(ticketMedio) },
+    { label: 'Custo por saco', value: fmtBRL(custoPorSaco), tone: 'danger' },
+    { label: 'Líquido por saco', value: fmtBRL(liquidoPorSaco), tone: liquidoPorSaco >= 0 ? 'highlight' : 'danger' },
+    { label: 'Margem líquida', value: `${margem.toFixed(1)}%`, tone: margem >= 0 ? 'success' : 'danger' },
   ]);
-
-  y = drawResultBox(doc, y, receita, despesas, liquido);
 
   // Por caminhão
   const trucksAgg = aggByTruck(input.trips, input.trucks);
