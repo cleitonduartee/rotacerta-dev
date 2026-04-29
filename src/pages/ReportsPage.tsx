@@ -108,6 +108,7 @@ export default function ReportsPage() {
   }
   function placa(tId: number) {
     return trucks.find(t => t.id === tId)?.placa ?? '—';
+  }
 
   async function gerarPDF() {
     try {
