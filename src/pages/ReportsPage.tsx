@@ -3,7 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
-import { Printer, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
+import { FileDown, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
+import {
+  generateAnalyticHarvestReport,
+  generateAnalyticContractReport,
+  generateAnalyticMonthReport,
+  generateAnalyticFreteReport,
+} from '@/lib/analyticReports';
 
 type Modo = 'mes' | 'safra' | 'contrato' | 'frete';
 
@@ -103,6 +110,49 @@ export default function ReportsPage() {
     return trucks.find(t => t.id === tId)?.placa ?? '—';
   }
 
+  async function gerarPDF() {
+    try {
+      const baseInput = {
+        driver: drivers[0],
+        trips: tripsFiltradas,
+        expenses: despesasFiltradas,
+        trucks, contracts, producers, harvests,
+      };
+      let blob: Blob; let nome = 'relatorio';
+      if (modo === 'mes') {
+        blob = await generateAnalyticMonthReport({ ...baseInput, mes });
+        nome = `mensal-${mes}`;
+      } else if (modo === 'safra') {
+        const h = harvests.find(hh => hh.id === Number(harvestId));
+        if (!h) { toast.error('Selecione uma safra'); return; }
+        const cs = contracts.filter(c => c.harvestId === Number(harvestId));
+        blob = await generateAnalyticHarvestReport({
+          ...baseInput, harvest: h, contracts: cs, contractsAbertos: contratosAbertos,
+        });
+        nome = `safra-${h.nome.replace(/\s+/g, '-')}`;
+      } else if (modo === 'contrato') {
+        const c = contracts.find(cc => cc.id === Number(contratoId));
+        if (!c) { toast.error('Selecione um contrato'); return; }
+        blob = await generateAnalyticContractReport({ ...baseInput, contract: c });
+        const p = producers.find(pp => pp.id === c.producerId);
+        nome = `contrato-${(p?.nome ?? 'x').replace(/\s+/g, '-')}`;
+      } else {
+        const t = trips.find(tt => tt.id === Number(tripAvulsaId));
+        if (!t) { toast.error('Selecione uma viagem'); return; }
+        blob = await generateAnalyticFreteReport({ ...baseInput, trip: t });
+        nome = `frete-${t.data}`;
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `${nome}.pdf`; a.click();
+      URL.revokeObjectURL(url);
+      toast.success('PDF gerado');
+    } catch (err: any) {
+      console.error(err);
+      toast.error('Erro ao gerar PDF');
+    }
+  }
+
   return (
     <div className="animate-fade-in">
       <PageHeader title="Relatórios" subtitle="Extrato detalhado para impressão" />
@@ -147,8 +197,8 @@ export default function ReportsPage() {
           </select>
         )}
 
-        <button onClick={() => window.print()} className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated">
-          <Printer className="h-5 w-5" /> Imprimir / Salvar PDF
+        <button onClick={gerarPDF} className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated">
+          <FileDown className="h-5 w-5" /> Gerar PDF analítico
         </button>
       </div>
 
