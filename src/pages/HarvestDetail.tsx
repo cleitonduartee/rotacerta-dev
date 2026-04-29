@@ -40,13 +40,20 @@ export default function HarvestDetail() {
   // Fechamento agora é por contrato — veja seção "Contratos" abaixo.
 
   async function pdf() {
-    const blob = await generateHarvestReport({
-      driver: driver[0], harvest, contracts, producers, trips: harvestTrips, expenses, trucks,
-      totals: { totalSacos, totalToneladas, receita, despesas, liquido },
+    const contractsAbertos = contracts.filter(c => !c.fechado);
+    const tripIds = new Set(harvestTrips.map(t => t.id));
+    const expensesAll = expenses.filter(e =>
+      (e.contractId && contractIds.has(e.contractId)) ||
+      e.harvestId === harvestId ||
+      (e.tripId && tripIds.has(e.tripId))
+    );
+    const blob = await generateAnalyticHarvestReport({
+      driver: driver[0], harvest, contracts, producers, harvests: [harvest],
+      trips: harvestTrips, expenses: expensesAll, trucks, contractsAbertos,
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `relatorio-${harvest.nome.replace(/\s+/g, '-')}.pdf`; a.click();
+    a.href = url; a.download = `safra-${harvest.nome.replace(/\s+/g, '-')}.pdf`; a.click();
     URL.revokeObjectURL(url);
   }
 
