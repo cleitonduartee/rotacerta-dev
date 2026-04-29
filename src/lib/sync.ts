@@ -345,6 +345,7 @@ export async function pushAll(uid: string) {
       peso_toneladas: r.pesoToneladas ?? null,
       valor_por_tonelada: r.valorPorTonelada ?? null,
       observacao: r.observacao ?? null,
+      nota_produtor: r.notaProdutor ?? null,
       valor_total: r.valorTotal ?? 0,
       updated_at: toIso(r.updatedAt),
     };
