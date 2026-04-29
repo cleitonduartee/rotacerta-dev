@@ -14,6 +14,7 @@ export default function ReportsPage() {
   const [harvestId, setHarvestId] = useState<number | ''>('');
   const [harvestTouched, setHarvestTouched] = useState(false);
   const [contratoId, setContratoId] = useState<number | ''>('');
+  const [tripAvulsaId, setTripAvulsaId] = useState<number | ''>('');
 
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
