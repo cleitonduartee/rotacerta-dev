@@ -150,6 +150,7 @@ class TruckTripDB extends Dexie {
 export const db = new TruckTripDB();
 
 export const stamp = () => ({ syncStatus: 'pending' as SyncStatus, updatedAt: Date.now() });
+export const LOCAL_RESET_PULL_ONLY_KEY = 'rotasafra:localResetPullOnlyOnce';
 
 export function calcSafra(pesoKg: number, valorPorSaco: number) {
   const sacos = pesoKg / 60;
@@ -180,15 +181,28 @@ export async function deleteWithTombstone(table: SyncTable, localId: number) {
  * Útil para reiniciar testes garantindo paridade com o servidor.
  */
 export async function wipeLocalData() {
-  await Promise.all([
-    db.trucks.clear(),
-    db.producers.clear(),
-    db.harvests.clear(),
-    db.contracts.clear(),
-    db.trips.clear(),
-    db.expenses.clear(),
-    db.tombstones.clear(),
-    db.drivers.clear(),
-  ]);
+  await db.transaction(
+    'rw',
+    db.trucks,
+    db.producers,
+    db.harvests,
+    db.contracts,
+    db.trips,
+    db.expenses,
+    db.tombstones,
+    db.drivers,
+    async () => {
+      await Promise.all([
+        db.trucks.clear(),
+        db.producers.clear(),
+        db.harvests.clear(),
+        db.contracts.clear(),
+        db.trips.clear(),
+        db.expenses.clear(),
+        db.tombstones.clear(),
+        db.drivers.clear(),
+      ]);
+    },
+  );
 }
 
