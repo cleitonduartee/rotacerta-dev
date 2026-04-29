@@ -1,13 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, LOCAL_RESET_PULL_ONLY_KEY, stamp, deleteWithTombstone, wipeLocalData } from '@/lib/db';
+import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { useState, useEffect } from 'react';
-import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Pencil, Info, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, User, Truck as TruckIcon, Wheat, Pencil, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
 import { supabase } from '@/integrations/supabase/client';
-import { pullAll } from '@/lib/sync';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -145,7 +144,6 @@ export default function CadastrosPage() {
           </ul>
         </Section>
 
-        <ResetDataSection />
       </div>
 
       <ConfirmDeleteDialog
