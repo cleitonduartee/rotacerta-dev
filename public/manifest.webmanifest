@@ -1,7 +1,7 @@
 {
-  "name": "RotaCerta — Gestão de Viagens",
-  "short_name": "RotaCerta",
-  "description": "Gestão offline de viagens, safras e fretes para caminhoneiros",
+  "name": "RotaSafra — Fretes Agrícolas",
+  "short_name": "RotaSafra",
+  "description": "Controle total dos seus fretes agrícolas. Gestão offline de viagens, safras e fretes para caminhoneiros.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

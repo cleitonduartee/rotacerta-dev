@@ -14,7 +14,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
       <SheetContent side="right" className="w-full max-w-md overflow-y-auto p-0">
         <SheetHeader className="border-b border-border bg-gradient-to-br from-primary/10 to-transparent p-5 text-left">
           <SheetTitle className="font-display text-2xl">Central de Ajuda</SheetTitle>
-          <SheetDescription>Aprenda a usar o RotaCerta em poucos minutos.</SheetDescription>
+          <SheetDescription>Aprenda a usar o RotaSafra em poucos minutos.</SheetDescription>
         </SheetHeader>
 
         <div className="space-y-6 p-5">
@@ -46,7 +46,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
                 Já a <strong>safra</strong> é cadastrada <strong>a cada novo período</strong>: se está na colheita do milho, cadastre a safra do milho daquele ano (ex.: <em>Milho 2025</em>); quando começar a soja, cadastre a safra da soja, e assim por diante.
               </GuideStep>
               <GuideStep n={2} icon={FileSignature} title="Contratos — o pulmão do sistema">
-                O <strong>contrato</strong> é o coração do RotaCerta: é ele que confirma que você fechou para <strong>puxar a lavoura do produtor</strong> e organiza todas as viagens daquela safra.
+                O <strong>contrato</strong> é o coração do RotaSafra: é ele que confirma que você fechou para <strong>puxar a lavoura do produtor</strong> e organiza todas as viagens daquela safra.
                 <br /><br />
                 <strong>Importante:</strong> a cada nova <strong>safra</strong>, é preciso lançar um novo contrato com o produtor para conseguir registrar viagens e gerar o fechamento no final.
                 <br /><br />
@@ -137,7 +137,7 @@ export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
           </section>
 
           <p className="pt-2 text-center text-[10px] text-muted-foreground/60">
-            RotaCerta • Estrada na palma da mão
+            RotaSafra • Controle total dos seus fretes agrícolas
           </p>
         </div>
       </SheetContent>

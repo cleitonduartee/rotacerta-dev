@@ -66,7 +66,7 @@ function drawHeader(doc: jsPDF, titulo: string, subtitulo: string, driver?: Driv
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
-  doc.text('ROTACERTA', 40, 28);
+  doc.text('ROTASAFRA', 40, 28);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.text('Relatório analítico', 40, 42);
@@ -242,7 +242,7 @@ function drawFooter(doc: jsPDF) {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(50);
     doc.setTextColor(...COLORS.primary);
-    doc.text('ROTACERTA', W / 2, H / 2, { align: 'center', angle: 30 });
+    doc.text('ROTASAFRA', W / 2, H / 2, { align: 'center', angle: 30 });
     doc.restoreGraphicsState();
 
     // rodapé
@@ -250,7 +250,7 @@ function drawFooter(doc: jsPDF) {
     doc.setFontSize(7);
     doc.setTextColor(...COLORS.muted);
     doc.text(
-      `Gerado em ${new Date().toLocaleString('pt-BR')} • RotaCerta © ${year}`,
+      `Gerado em ${new Date().toLocaleString('pt-BR')} • RotaSafra © ${year}`,
       40, H - 18
     );
     doc.text(`Página ${i} / ${totalPages}`, W - 40, H - 18, { align: 'right' });
