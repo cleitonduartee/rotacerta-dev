@@ -387,6 +387,7 @@ export default function Dashboard() {
       {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
         <QuickLink to="/viagens/nova" label="Nova viagem" icon={Truck} primary />
+        <QuickLink to="/viagens/nova?kind=frete" label="Frete avulso" icon={Building2} />
         <QuickLink to="/despesas/nova" label="Nova despesa" icon={Receipt} />
         <QuickLink to="/relatorios" label="Relatórios" icon={FileBarChart} />
         <QuickLink to="/contratos" label="Contratos" icon={Wheat} />
