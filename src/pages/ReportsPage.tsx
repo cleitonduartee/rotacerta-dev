@@ -160,6 +160,24 @@ export default function ReportsPage() {
           {drivers[0] && <p className="text-xs text-muted-foreground">{drivers[0].nome}{drivers[0].cpf ? ` • ${drivers[0].cpf}` : ''}</p>}
         </div>
 
+        {modo === 'safra' && contratosAbertos.length > 0 && (
+          <div className="mb-4 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-warning flex items-start gap-2">
+            <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Atenção: existem {contratosAbertos.length} contrato{contratosAbertos.length > 1 ? 's' : ''} ainda em aberto nesta safra.</p>
+              <p className="text-xs mt-1">
+                O faturamento abaixo pode mudar até que todos os contratos sejam fechados:
+              </p>
+              <ul className="text-xs mt-1 list-disc pl-4">
+                {contratosAbertos.map(c => {
+                  const p = producers.find(pp => pp.id === c.producerId);
+                  return <li key={c.id}>{p?.nome ?? '?'}</li>;
+                })}
+              </ul>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-2 mb-4 sm:grid-cols-4">
           <Card label="Receita" value={fmtBRL(receita)} />
           <Card label="Despesas" value={fmtBRL(totalDespesas)} danger />
