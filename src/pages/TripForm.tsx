@@ -145,10 +145,13 @@ export default function TripForm() {
 
   const calc = useMemo(() => {
     if (kind === 'safra') return calcSafra(pesoKgNum, valorPorSacoUsado);
+    if (freteModo === 'cheio') {
+      return { sacos: 0, valorTotal: parseMoney(valorCheio) };
+    }
     const pt = parseFloat(pesoToneladas.replace(',', '.')) || 0;
     const vt = parseFloat(valorPorTonelada.replace(',', '.')) || 0;
     return { sacos: 0, valorTotal: calcFrete(pt, vt) };
-  }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada]);
+  }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada, freteModo, valorCheio]);
 
   const contratoFechado = contract?.fechado;
 
@@ -159,6 +162,8 @@ export default function TripForm() {
       if (!contract) return toast.error('Cadastre um contrato para este produtor + lavoura');
       if (contratoFechado) return toast.error('Contrato fechado — não é possível cadastrar viagens');
       if (pesoKgNum <= 0) return toast.error('Informe o peso');
+    } else if (freteModo === 'cheio') {
+      if (!parseMoney(valorCheio)) return toast.error('Informe o valor cheio do frete');
     } else {
       if (!parseFloat(pesoToneladas) || !parseFloat(valorPorTonelada))
         return toast.error('Informe peso e valor por tonelada');
