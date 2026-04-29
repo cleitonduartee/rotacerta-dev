@@ -6,6 +6,7 @@ import { fmtBRL, fmtNum } from '@/lib/format';
 import { Lock, Unlock, FileDown, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
+import { generateAnalyticHarvestReport } from '@/lib/analyticReports';
 
 export default function HarvestDetail() {
   const { id } = useParams();
