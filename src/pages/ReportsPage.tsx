@@ -217,7 +217,7 @@ export default function ReportsPage() {
         <div className="mb-3 border-b border-border pb-2">
           <p className="font-display text-2xl text-primary">RotaCerta — Extrato</p>
           <p className="text-sm text-muted-foreground">{titulo}</p>
-          {drivers[0] && <p className="text-xs text-muted-foreground">{drivers[0].nome}{drivers[0].cpf ? ` • ${drivers[0].cpf}` : ''}</p>}
+          {effectiveDriver?.nome && <p className="text-xs text-muted-foreground">{effectiveDriver.nome}{effectiveDriver.cpf ? ` • ${effectiveDriver.cpf}` : ''}</p>}
         </div>
 
         {modo === 'safra' && contratosAbertos.length > 0 && (
