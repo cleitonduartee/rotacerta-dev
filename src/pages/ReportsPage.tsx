@@ -3,9 +3,9 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, fmtNum } from '@/lib/format';
-import { Printer, Calendar, Wheat, FileText } from 'lucide-react';
+import { Printer, Calendar, Wheat, FileText, Truck as TruckIcon, AlertTriangle } from 'lucide-react';
 
-type Modo = 'mes' | 'safra' | 'contrato';
+type Modo = 'mes' | 'safra' | 'contrato' | 'frete';
 
 export default function ReportsPage() {
   const [modo, setModo] = useState<Modo>('mes');
