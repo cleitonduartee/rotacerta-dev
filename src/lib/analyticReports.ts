@@ -181,13 +181,13 @@ function drawResultBox(
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.muted);
   doc.text('Receita bruta', x + 18, y + 22);
-  doc.text('(−) Despesas', x + 18, y + 40);
+  doc.text('(-) Despesas', x + 18, y + 40);
 
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...COLORS.success);
   doc.text(fmtBRL(receita), x + w - 18, y + 22, { align: 'right' });
   doc.setTextColor(...COLORS.danger);
-  doc.text(`− ${fmtBRL(despesas)}`, x + w - 18, y + 40, { align: 'right' });
+  doc.text(`- ${fmtBRL(despesas)}`, x + w - 18, y + 40, { align: 'right' });
 
   // divisor
   doc.setDrawColor(...COLORS.primary);
@@ -218,7 +218,7 @@ function drawWarning(doc: jsPDF, y: number, lines: string[]): number {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.warning);
-  doc.text('⚠ Atenção', x + 12, y + 16);
+  doc.text('! Atencao', x + 12, y + 16);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.ink);
@@ -345,7 +345,7 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
       String(ts.length),
       fmtNum(sacos, 1),
       fmtBRL(rec),
-      `− ${fmtBRL(desp)}`,
+      `- ${fmtBRL(desp)}`,
       fmtBRL(rec - desp),
     ];
   });
@@ -415,7 +415,7 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
     const tripsSorted = [...input.trips].sort((a, b) => a.data.localeCompare(b.data));
     autoTable(doc, {
       startY: y,
-      head: [['Data', 'Caminhão', 'Origem → Destino', 'Produtor', 'Nota', 'Sacos', 'Valor']],
+      head: [['Data', 'Caminhão', 'Origem -> Destino', 'Produtor', 'Nota', 'Sacos', 'Valor']],
       body: tripsSorted.map(t => {
         const c = input.contracts.find(cc => cc.id === t.contractId);
         const p = c ? input.producers.find(pp => pp.id === c.producerId) : null;
@@ -423,7 +423,7 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
         return [
           fmtDate(t.data),
           tr?.placa ?? '—',
-          `${t.origem} → ${t.destino}`,
+          `${t.origem} -> ${t.destino}`,
           p?.nome ?? '—',
           t.notaProdutor || '—',
           t.sacos ? fmtNum(t.sacos, 1) : '—',
@@ -545,12 +545,12 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
     const tripsSorted = [...input.trips].sort((a, b) => a.data.localeCompare(b.data));
     autoTable(doc, {
       startY: y,
-      head: [['Data', 'Caminhão', 'Origem → Destino', 'Nota', 'Sacos', 'Valor']],
+      head: [['Data', 'Caminhão', 'Origem -> Destino', 'Nota', 'Sacos', 'Valor']],
       body: tripsSorted.map(t => {
         const tr = input.trucks.find(x => x.id === t.truckId);
         return [
           fmtDate(t.data), tr?.placa ?? '—',
-          `${t.origem} → ${t.destino}`,
+          `${t.origem} -> ${t.destino}`,
           t.notaProdutor || '—',
           t.sacos ? fmtNum(t.sacos, 1) : '—',
           fmtBRL(t.valorTotal),
@@ -684,14 +684,14 @@ export async function generateAnalyticMonthReport(input: MonthReportInput): Prom
     const tripsSorted = [...input.trips].sort((a, b) => a.data.localeCompare(b.data));
     autoTable(doc, {
       startY: y,
-      head: [['Data', 'Tipo', 'Caminhão', 'Origem → Destino', 'Sacos', 'Valor']],
+      head: [['Data', 'Tipo', 'Caminhão', 'Origem -> Destino', 'Sacos', 'Valor']],
       body: tripsSorted.map(t => {
         const tr = input.trucks.find(x => x.id === t.truckId);
         return [
           fmtDate(t.data),
           t.kind === 'safra' ? 'Safra' : 'Frete',
           tr?.placa ?? '—',
-          `${t.origem} → ${t.destino}`,
+          `${t.origem} -> ${t.destino}`,
           t.sacos ? fmtNum(t.sacos, 1) : '—',
           fmtBRL(t.valorTotal),
         ];
@@ -741,7 +741,7 @@ export async function generateAnalyticFreteReport(input: FreteReportInput): Prom
   drawHeader(
     doc,
     'Frete Avulso',
-    `${fmtDate(t.data)} • ${t.origem} → ${t.destino}`,
+    `${fmtDate(t.data)} • ${t.origem} -> ${t.destino}`,
     input.driver
   );
 
