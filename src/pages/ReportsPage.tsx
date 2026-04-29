@@ -154,8 +154,8 @@ export default function ReportsPage() {
           </select>
         )}
 
-        <button onClick={() => window.print()} className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated">
-          <Printer className="h-5 w-5" /> Imprimir / Salvar PDF
+        <button onClick={gerarPDF} className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated">
+          <FileDown className="h-5 w-5" /> Gerar PDF analítico
         </button>
       </div>
 
