@@ -178,7 +178,7 @@ export default function Dashboard() {
       .sort((a, b) => b.value - a.value);
   }, [expensesF]);
 
-  const last5 = [...trips].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
+  const last5 = [...tripsF].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
 
   return (
     <div className="space-y-5 px-4 pt-3 pb-6 animate-fade-in">
@@ -315,8 +315,8 @@ export default function Dashboard() {
       </ChartCard>
       )}
 
-      {/* Gráfico — Receita por Safra */}
-      {pizzaSafra.length > 0 && (
+      {/* Gráfico — Receita por Safra (oculto quando filtro já é específico de um tipo) */}
+      {pizzaSafra.length > 1 && mode !== 'safra' && mode !== 'frete' && (
       <ChartCard title="Receita por Tipo de Frete" subtitle={periodoLabel}>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
@@ -404,12 +404,15 @@ export default function Dashboard() {
       {/* Últimas viagens */}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h2 className="font-display text-xl">Últimas viagens</h2>
+          <div>
+            <h2 className="font-display text-xl">Últimas viagens</h2>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground mt-0.5">{periodoLabel}</p>
+          </div>
           <Link to="/viagens" className="text-xs font-semibold uppercase tracking-wide text-primary">Ver todas</Link>
         </div>
         {last5.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center text-sm text-muted-foreground">
-            Nenhuma viagem registrada ainda. Toque no <span className="font-bold text-primary">+</span> para começar.
+            Nenhuma viagem encontrada para o filtro selecionado.
           </div>
         ) : (
           <ul className="space-y-2">
