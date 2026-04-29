@@ -65,8 +65,35 @@ export default function Dashboard() {
         periodoLabel: p,
       };
     }
+    if (mode === 'safra' && safraId) {
+      const safraIdNum = Number(safraId);
+      const contratosSafra = contracts.filter(c => c.harvestId === safraIdNum);
+      const contratoIds = contratoId
+        ? [Number(contratoId)]
+        : contratosSafra.map(c => c.id!).filter(Boolean);
+      const setIds = new Set(contratoIds);
+      const h = harvests.find(hh => hh.id === safraIdNum);
+      let label = h?.nome ?? 'Safra';
+      if (contratoId) {
+        const c = contracts.find(cc => cc.id === Number(contratoId));
+        const p = c ? producers.find(pp => pp.id === c.producerId) : null;
+        if (p) label = `${label} • ${p.nome}`;
+      }
+      return {
+        tripsF: trips.filter(t => t.kind === 'safra' && t.contractId && setIds.has(t.contractId)),
+        expensesF: expenses.filter(e => {
+          if (e.contractId && setIds.has(e.contractId)) return true;
+          if (e.tripId) {
+            const tr = trips.find(tt => tt.id === e.tripId);
+            if (tr?.contractId && setIds.has(tr.contractId)) return true;
+          }
+          return false;
+        }),
+        periodoLabel: label,
+      };
+    }
     return { tripsF: trips, expensesF: expenses, periodoLabel: 'Tudo' };
-  }, [mode, mes, ano, trips, expenses]);
+  }, [mode, mes, ano, safraId, contratoId, trips, expenses, contracts, harvests, producers]);
 
   const totalReceita = tripsF.reduce((s, t) => s + (t.valorTotal || 0), 0);
   const totalDespesas = expensesF.reduce((s, e) => s + e.valor, 0);
