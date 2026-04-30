@@ -34,7 +34,7 @@ export default function TripsList() {
       <PageHeader title="Viagens" subtitle={`${trips.length} registrada${trips.length !== 1 ? 's' : ''}`} />
       <div className="px-4 pb-6 md:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {trips.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+          <div className="col-span-full rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
             <TruckIcon className="mx-auto h-10 w-10 text-muted-foreground/50" />
             <p className="mt-3 text-sm text-muted-foreground">Nenhuma viagem ainda.</p>
             <Link to="/viagens/nova" className="mt-4 inline-flex items-center gap-2 rounded-full gradient-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-elevated">
