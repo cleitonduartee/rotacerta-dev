@@ -144,6 +144,7 @@ export default function CadastrosPage() {
             {harvests.length === 0 && <Empty>Cadastre sua primeira safra.</Empty>}
           </ul>
         </Section>
+        </div>
 
       </div>
 
