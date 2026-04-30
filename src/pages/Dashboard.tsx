@@ -284,6 +284,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Gráfico — Receita vs Despesa */}
       {barsData.some(b => b.receita || b.despesa) && (
       <ChartCard title="Receita × Despesa" subtitle="Últimos 6 meses">
