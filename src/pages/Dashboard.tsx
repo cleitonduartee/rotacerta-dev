@@ -272,7 +272,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat icon={Truck} value={tripsF.length} label="Viagens" />
         <Stat icon={Package} value={fmtNum(totalSacos, 0)} label="Sacos" />
       </div>
