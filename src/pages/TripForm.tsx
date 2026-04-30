@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
+import { DatePicker } from '@/components/DatePicker';
 
 export default function TripForm() {
   const { id } = useParams();
@@ -240,7 +241,7 @@ export default function TripForm() {
         </div>
 
         <Field label="Data">
-          <input type="date" value={data} onChange={e => setData(e.target.value)} className={inputCls} />
+          <DatePicker value={data} onChange={setData} />
         </Field>
 
         <Field
