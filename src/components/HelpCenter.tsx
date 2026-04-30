@@ -11,7 +11,7 @@ interface Props {
 export function HelpCenter({ open, onOpenChange, onStartTour }: Props) {
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full max-w-md overflow-y-auto p-0">
+      <SheetContent side="right" className="w-full max-w-md md:max-w-xl overflow-y-auto p-0">
         <SheetHeader className="border-b border-border bg-gradient-to-br from-primary/10 to-transparent p-5 text-left">
           <SheetTitle className="font-display text-2xl">Central de Ajuda</SheetTitle>
           <SheetDescription>Aprenda a usar o RotaSafra em poucos minutos.</SheetDescription>

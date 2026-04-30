@@ -181,7 +181,7 @@ export default function Dashboard() {
   const last5 = [...tripsF].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
 
   return (
-    <div className="space-y-5 px-4 pt-3 pb-6 animate-fade-in">
+    <div className="space-y-5 px-4 pt-3 pb-6 md:px-6 animate-fade-in">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl gradient-primary p-5 shadow-elevated">
         <div className="flex items-baseline justify-between">
@@ -272,7 +272,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Stat icon={Truck} value={tripsF.length} label="Viagens" />
         <Stat icon={Package} value={fmtNum(totalSacos, 0)} label="Sacos" />
       </div>
@@ -284,6 +284,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       {/* Gráfico — Receita vs Despesa */}
       {barsData.some(b => b.receita || b.despesa) && (
       <ChartCard title="Receita × Despesa" subtitle="Últimos 6 meses">
@@ -392,9 +393,10 @@ export default function Dashboard() {
           </ResponsiveContainer>
       </ChartCard>
       )}
+      </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <QuickLink to="/viagens/nova" label="Nova viagem" icon={Truck} primary />
         <QuickLink to="/despesas/nova" label="Nova despesa" icon={Receipt} />
         <QuickLink to="/relatorios" label="Relatórios" icon={FileBarChart} />

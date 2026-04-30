@@ -65,15 +65,16 @@ export function ExpensesList() {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Despesas" subtitle={fmtBRL(total)} />
-      <div className="px-4 pb-6 space-y-3">
+      <div className="px-4 pb-6 md:px-6 space-y-3">
         <button
           onClick={() => navigate('/despesas/nova')}
-          className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated"
+          className="flex w-full items-center justify-center gap-2 rounded-xl gradient-primary py-3 font-bold text-primary-foreground shadow-elevated md:w-auto md:px-8"
         >
           <Plus className="h-5 w-5" /> Nova despesa
         </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {expenses.length === 0 && (
-          <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
+          <div className="col-span-full rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
             <Wallet className="mx-auto h-10 w-10 text-muted-foreground/50" />
             <p className="mt-3 text-sm font-semibold text-foreground">Nenhuma despesa registrada</p>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -112,6 +113,7 @@ export function ExpensesList() {
             </div>
           );
         })}
+        </div>
       </div>
 
       <ConfirmDeleteDialog

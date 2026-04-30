@@ -235,8 +235,9 @@ export default function ContractsPage() {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Contratos" subtitle="Valor por saco (60kg) — feche por contrato" />
-      <div className="space-y-4 px-4 pb-6">
-        <div className="space-y-2 rounded-xl border border-border bg-card p-3">
+      <div className="space-y-4 px-4 pb-6 md:px-6">
+        <div className="space-y-2 rounded-xl border border-border bg-card p-3 md:p-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <select className={inputCls} value={producerId} onChange={e => setProducerId(Number(e.target.value))}>
             <option value="">Produtor…</option>
             {producers.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -245,6 +246,7 @@ export default function ContractsPage() {
             <option value="">Safra…</option>
             {harvests.map(h => <option key={h.id} value={h.id}>{h.nome}</option>)}
           </select>
+          </div>
           <input
             className={inputCls}
             inputMode="decimal"
@@ -252,12 +254,12 @@ export default function ContractsPage() {
             value={valor}
             onChange={e => setValor(maskMoneyInput(e.target.value))}
           />
-          <button onClick={add} className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground">
+          <button onClick={add} className="flex w-full items-center justify-center gap-2 rounded-lg gradient-primary py-2.5 font-bold text-primary-foreground md:w-auto md:px-8">
             <Plus className="h-4 w-4" /> Adicionar contrato
           </button>
         </div>
 
-        <ul className="space-y-3">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {contracts.map(c => {
             const p = producers.find(p => p.id === c.producerId);
             const h = harvests.find(h => h.id === c.harvestId);

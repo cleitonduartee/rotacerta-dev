@@ -170,19 +170,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-md flex-col bg-background px-6 py-10">
-      <div className="mb-8 flex flex-col items-center text-center">
-        <img
-          src="/logo-mark.png"
-          alt="RotaSafra"
-          className="mb-3 h-20 w-auto sm:h-24"
-          draggable={false}
-        />
-        <p className="font-display text-4xl text-primary">ROTASAFRA</p>
-        <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">CONTROLE DE FRETES AGRÍCOLAS</p>
-      </div>
+    <div className="min-h-screen bg-background lg:grid lg:grid-cols-2">
+      {/* Painel decorativo (somente desktop) */}
+      <aside className="hidden lg:flex relative flex-col justify-between overflow-hidden gradient-primary p-12 text-primary-foreground">
+        <div className="flex items-center gap-3">
+          <img src="/logo-mark.png" alt="" aria-hidden="true" className="h-14 w-auto" draggable={false} />
+          <div className="leading-tight">
+            <p className="font-display text-4xl leading-none">ROTASAFRA</p>
+            <p className="mt-1 text-[11px] uppercase tracking-widest opacity-90">CONTROLE DE FRETES AGRÍCOLAS</p>
+          </div>
+        </div>
+        <div className="relative z-10">
+          <h2 className="font-display text-6xl leading-none">Controle total dos seus fretes agrícolas.</h2>
+          <p className="mt-4 max-w-md text-base opacity-90">
+            Registre viagens, contratos e despesas em qualquer lugar — funciona online e offline, no celular e no computador.
+          </p>
+        </div>
+        <p className="text-xs uppercase tracking-widest opacity-70">Desenvolvido por Cleiton Duarte</p>
+        {/* Ilustração decorativa */}
+        <svg aria-hidden="true" viewBox="0 0 600 400" className="pointer-events-none absolute -right-20 -bottom-10 h-[500px] w-auto opacity-10">
+          <path fill="currentColor" d="M40 280h380l40-60h60v80c0 22-18 40-40 40h-40a40 40 0 1 1-80 0H180a40 40 0 1 1-80 0H60c-11 0-20-9-20-20v-40zm60-120h220l40 80H40l60-80z"/>
+        </svg>
+      </aside>
 
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated">
+      {/* Área de formulário */}
+      <div className="mx-auto flex min-h-screen w-full max-w-md flex-col justify-center px-6 py-10 lg:min-h-screen lg:max-w-lg">
+        <div className="mb-8 flex flex-col items-center text-center lg:hidden">
+          <img
+            src="/logo-mark.png"
+            alt="RotaSafra"
+            className="mb-3 h-20 w-auto sm:h-24"
+            draggable={false}
+          />
+          <p className="font-display text-4xl text-primary">ROTASAFRA</p>
+          <p className="mt-1 text-xs uppercase tracking-widest text-muted-foreground">CONTROLE DE FRETES AGRÍCOLAS</p>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-elevated">
         {step === 'phone' && (
           <>
             <h1 className="mb-2 font-display text-2xl">Entrar</h1>
@@ -294,6 +318,7 @@ export default function LoginPage() {
         {step === 'recovery' && (
           <RecoverFlow onBack={() => setStep('phone')} onDone={() => { setStep('phone'); }} />
         )}
+        </div>
       </div>
 
       <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
