@@ -32,7 +32,7 @@ export default function TripsList() {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Viagens" subtitle={`${trips.length} registrada${trips.length !== 1 ? 's' : ''}`} />
-      <div className="px-4 pb-6 space-y-3">
+      <div className="px-4 pb-6 md:px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {trips.length === 0 && (
           <div className="rounded-xl border border-dashed border-border bg-card/50 p-8 text-center">
             <TruckIcon className="mx-auto h-10 w-10 text-muted-foreground/50" />
