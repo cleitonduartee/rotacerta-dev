@@ -241,7 +241,7 @@ export default function TripForm() {
         </div>
 
         <Field label="Data">
-          <input type="date" value={data} onChange={e => setData(e.target.value)} className={inputCls} />
+          <DatePicker value={data} onChange={setData} />
         </Field>
 
         <Field
