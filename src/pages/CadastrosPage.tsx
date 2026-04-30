@@ -95,9 +95,10 @@ export default function CadastrosPage() {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Cadastros" subtitle="Motorista, caminhões, produtores e safras" />
-      <div className="space-y-6 px-4 pb-6">
+      <div className="space-y-6 px-4 pb-6 md:px-6">
         <DriverSection driver={driver[0]} />
 
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Section title="Caminhões" icon={TruckIcon}>
           <AddTruck />
           <ul className="space-y-2 mt-3">
