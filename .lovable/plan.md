@@ -1,72 +1,110 @@
 
-# Tutorial de uso dentro do RotaCerta
+# Tornar o RotaSafra responsivo (mobile + PWA + desktop)
 
-## Recomendação
+## Diagnóstico
 
-Para um app mobile usado por motoristas e produtores no campo, **um único formato não resolve**. Sugiro combinar **3 camadas leves** que se complementam — todas opcionais, sem travar o usuário:
+Hoje o app força `max-w-md` (384px) em TODO lugar — no celular fica ótimo, mas em tablet/desktop aparece uma "coluna estreita" no centro da tela com enormes bordas vazias. O layout é inteiramente mobile-first:
 
-### 1. Tour guiado no primeiro acesso (obrigatório de mostrar, opcional de seguir)
-Um walkthrough de **5 a 7 passos** que aparece automaticamente após o primeiro login, destacando elementos reais da tela com um spotlight (overlay escurecido + balão explicativo).
+- `AppLayout` limita container a `max-w-md` e usa barra de navegação fixa no rodapé (padrão mobile).
+- `LoginPage` também fica travado em `max-w-md`.
+- `Dashboard`, listas (Viagens, Despesas, Cadastros, Contratos, Safras) e formulários usam grids de 1–2 colunas, pensados para celular.
+- FAB flutuante de "Nova viagem" fica centralizado na coluna estreita.
 
-Fluxo sugerido:
-1. **Boas-vindas** — "Bem-vindo ao RotaCerta! Vamos te mostrar em 1 minuto."
-2. **Cadastros primeiro** — destaca a aba *Cadastros*: "Comece cadastrando produtores, caminhões e safras."
-3. **Contratos** — destaca *Contratos*: "Vincule produtor + safra + valor da saca."
-4. **Nova viagem** — destaca o botão **+** central: "Toque aqui para registrar cada viagem (lavoura ou frete avulso)."
-5. **Despesas** — destaca *Despesas*: "Lance combustível, pedágio, manutenção..."
-6. **Dashboard** — destaca os cards de receita/líquido: "Acompanhe tudo em tempo real."
-7. **Relatórios e WhatsApp** — "Gere PDFs de fechamento e envie ao produtor pelo WhatsApp."
+A meta é: **celular/PWA continua idêntico** (nada muda até 768px); **tablet (≥768px) e desktop (≥1024px)** ganham layout expandido, aproveitando a tela.
 
-Botões em cada passo: **Próximo**, **Pular tour**, **Concluir**. Estado salvo em `localStorage` (`rotacerta:tourDone:{userId}`) para não repetir.
+## O que vai mudar
 
-### 2. Central de Ajuda permanente (acessível sempre)
-Um ícone de **interrogação (?)** no header, ao lado do botão sair, que abre um Sheet lateral com:
-- **Refazer tour guiado** (botão grande no topo)
-- **Guia rápido** — passo a passo escrito em linguagem simples, dividido por seção (Cadastros, Contratos, Viagens, Despesas, Relatórios)
-- **Perguntas frequentes** — accordion com 6-8 dúvidas comuns ("Por que não consigo excluir uma safra?", "Como funciona o modo offline?", "Como envio o fechamento ao produtor?")
-- **Sobre o app / versão / contato**
+### 1. Shell do app (`src/components/AppLayout.tsx`)
 
-### 3. Dicas contextuais em estados vazios (já existe parcialmente)
-O Dashboard já mostra "Nenhuma viagem registrada ainda. Toque no + para começar." — vamos **expandir esse padrão** para todas as listas vazias:
-- **Cadastros vazio**: "Cadastre seu primeiro produtor/caminhão/motorista para começar."
-- **Contratos vazio**: "Crie um contrato vinculando produtor + safra + valor."
-- **Viagens vazio**: card explicando os 2 tipos (Lavoura vs Frete avulso).
-- **Despesas vazio**: "Lance custos para calcular seu lucro líquido real."
+Transformar em layout adaptativo por breakpoint:
 
-Cada empty state com ícone + 1 linha de explicação + botão de ação direta.
+- **Mobile (<768px)** — mantém tudo como está: header, conteúdo em coluna `max-w-md`, tab bar fixa no rodapé e FAB flutuante.
+- **Tablet/Desktop (≥768px)** — vira layout com **sidebar lateral esquerda** (240–280px) com logo, navegação (as mesmas 5 abas em coluna vertical) e rodapé com créditos; conteúdo principal ocupa o restante até no máximo ~1280px; header fica fixo no topo do conteúdo com SyncIndicator, Ajuda e Sair; tab bar inferior e FAB escondidos (o "Nova viagem" vira botão no sidebar / header).
 
-## Por que esses 3 juntos
+```text
+Mobile                     Desktop
+┌──────────────┐           ┌─────────┬──────────────────────┐
+│  header      │           │         │  header              │
+├──────────────┤           │ sidebar ├──────────────────────┤
+│  conteúdo    │           │  logo   │                      │
+│  (max-w-md)  │           │  abas   │  conteúdo            │
+│              │           │         │  (max-w-6xl)         │
+│   [FAB+]     │           │ + Nova  │                      │
+├──────────────┤           │ rodapé  │                      │
+│  tab bar     │           │         │                      │
+└──────────────┘           └─────────┴──────────────────────┘
+```
 
-| Camada | Quando aparece | Para quem |
-|--------|---------------|-----------|
-| Tour guiado | 1ª vez (auto) | Usuário novo |
-| Central de Ajuda | Sob demanda (sempre) | Quem esqueceu / quer revisar |
-| Empty states | Quando lista vazia | Quem está explorando uma seção nova |
+Implementação: usar classes Tailwind responsivas (`md:` / `lg:`) no mesmo componente — sem duplicar. Sidebar: `hidden md:flex`. Tab bar + FAB: `md:hidden`. Container do conteúdo: `max-w-md mx-auto md:max-w-5xl lg:max-w-6xl`.
 
-Isso cobre todos os perfis sem ser invasivo — quem já sabe usar não é incomodado.
+### 2. Login (`src/pages/LoginPage.tsx`)
+
+Manter o card centralizado, mas em desktop virar um **split-screen**:
+
+- Esquerda (≥lg): painel com gradient-primary, logo grande, slogan e ilustração do ícone de caminhão — puramente decorativo.
+- Direita: o card de login atual (já funciona bem), centralizado verticalmente.
+- Mobile: idêntico ao atual (coluna única `max-w-md`).
+
+### 3. Dashboard (`src/pages/Dashboard.tsx`)
+
+- Hero (card de Líquido) ocupa largura total no mobile; em desktop fica no topo em largura cheia.
+- Filtros de período: mobile = grid atual; desktop = linha única.
+- Stats (Viagens/Sacos): `grid-cols-2` no mobile → `md:grid-cols-4` (para acomodar mais cards futuros).
+- Gráficos: hoje stackados um abaixo do outro. Em desktop: `md:grid-cols-2 gap-4` — dois gráficos por linha.
+
+### 4. Listas (Viagens, Despesas, Contratos, Safras, Cadastros)
+
+- Mobile: cards em coluna única (como está).
+- Tablet: `md:grid-cols-2`.
+- Desktop: `lg:grid-cols-3` para listas de itens pequenos (viagens/despesas/contratos).
+
+### 5. Formulários (`TripForm`, cadastros)
+
+- Mobile: campos empilhados (como está).
+- Desktop: agrupar campos relacionados em `md:grid-cols-2` (ex.: origem/destino lado a lado, placa/motorista lado a lado).
+- Modais/drawers já usam `max-w-md`; ampliar para `sm:max-w-lg md:max-w-2xl` quando contêm muitos campos.
+
+### 6. Centro de Ajuda e Tour
+
+- `HelpCenter.tsx`: sheet lateral já usa `max-w-md` — aumentar para `md:max-w-xl`.
+- `OnboardingTour.tsx`: o cálculo de posicionamento do tooltip já usa `window.innerWidth` e se adapta. Validar que o spotlight continua correto quando o alvo está na sidebar (desktop). Ajustar `TOUR_STEPS` se algum seletor precisar mudar entre mobile (tab bar) e desktop (sidebar).
+
+### 7. Relatórios impressos
+
+Já têm `@media print` dedicado — não mudam.
 
 ## Detalhes técnicos
 
-- **Tour guiado**: componente próprio `OnboardingTour.tsx` (spotlight com overlay SVG + tooltip posicionado). **Não vou usar bibliotecas externas** (driver.js, intro.js, shepherd) para manter o bundle leve e o visual 100% alinhado ao design system. ~200 linhas de código.
-- **Disparo automático**: dentro do `UserDataGate`, após `setReady(true)`, checar `localStorage.getItem('rotacerta:tourDone:' + user.id)` — se ausente, montar `<OnboardingTour />` por cima do app.
-- **Targets**: cada passo recebe um seletor CSS (ex: `[data-tour="tab-cadastros"]`) — adiciono atributos `data-tour` nos elementos do `AppLayout` (tabs, FAB, header).
-- **Central de Ajuda**: novo componente `HelpCenter.tsx` usando `Sheet` (lateral direito) + `Accordion` para FAQ. Botão `?` adicionado ao header em `AppLayout.tsx`.
-- **Empty states**: refatoro os textos existentes nas páginas (`HarvestsList`, `ContractsPage`, `TripsList`, `Expenses`, `CadastrosPage`) para um padrão consistente com ícone + CTA.
-- **Reset do tour**: botão "Refazer tour" na Central de Ajuda apaga a flag e reinicia o tour imediatamente.
-- **Mobile-first**: todos os tooltips do tour respeitam o viewport de 647px (max-w-md), com setas que se reposicionam para caber.
+- **Breakpoints usados**: `md` = 768px (tablet), `lg` = 1024px (desktop). Sem breakpoints customizados.
+- **Estratégia**: mobile-first, aditiva com classes responsivas. **Nenhum arquivo novo**, só edição dos existentes.
+- **Navegação**: um único componente de lista de abas é renderizado de duas formas (horizontal no rodapé mobile, vertical no sidebar desktop) reutilizando o array `tabs` já existente.
+- **FAB "Nova viagem"**: escondido em `md:` e substituído por um botão sólido "Nova viagem" dentro do sidebar, acima das abas.
+- **`data-tour` attributes**: mantidos nos mesmos elementos. Como em desktop as abas viram sidebar, os mesmos atributos funcionam — só muda a posição visual, e o `OnboardingTour` já calcula com base no `getBoundingClientRect`.
+- **Safe areas** (`safe-top`, `safe-bottom`): continuam aplicadas no mobile; no desktop tornam-se no-op (sem impacto).
+- **PWA standalone**: o manifest já tem `display: standalone`; a responsividade não afeta isso — o mesmo build funciona instalado no celular e em janela redimensionável no desktop.
 
 ## Arquivos afetados
 
-- **Novos**: `src/components/OnboardingTour.tsx`, `src/components/HelpCenter.tsx`, `src/lib/tourSteps.ts`
-- **Editados**: `src/components/AppLayout.tsx` (botão ?, atributos `data-tour`), `src/components/UserDataGate.tsx` (auto-disparo do tour), `src/pages/HarvestsList.tsx`, `src/pages/ContractsPage.tsx`, `src/pages/TripsList.tsx`, `src/pages/Expenses.tsx`, `src/pages/CadastrosPage.tsx` (empty states padronizados)
+1. `src/components/AppLayout.tsx` — shell adaptativo (principal mudança)
+2. `src/pages/LoginPage.tsx` — split-screen no desktop
+3. `src/pages/Dashboard.tsx` — grid de gráficos em desktop
+4. `src/pages/TripsList.tsx` — grid de cards responsivo
+5. `src/pages/Expenses.tsx` — idem
+6. `src/pages/ContractsPage.tsx` — idem
+7. `src/pages/HarvestsList.tsx` — idem
+8. `src/pages/CadastrosPage.tsx` — idem
+9. `src/pages/TripForm.tsx` — campos em 2 colunas em desktop
+10. `src/components/HelpCenter.tsx` — sheet mais largo em desktop
+11. `src/components/PageHeader.tsx` — pequeno ajuste de padding em desktop
 
-## Fora do escopo (posso adicionar depois se quiser)
+## Fora de escopo
 
-- Vídeos tutoriais embutidos
-- Tour específico por seção (ex: tour só de "como criar contrato")
-- Tooltip permanente em ícones (badge "novo")
-- Versionamento de tour (mostrar novidades quando atualizar)
+- Não vou mexer em cores, fontes, animações, logos, slogan ou nomes — só layout e tamanhos.
+- Não vou criar nova tela nem mudar fluxos.
+- Não vou tocar em lógica de sync/DB/auth.
 
----
+## Resultado esperado
 
-**Posso seguir com a implementação?** Se quiser, posso também ajustar o número de passos do tour ou trocar a Central de Ajuda por uma página dedicada (`/ajuda`) em vez de um Sheet lateral.
+- Celular e PWA instalado no celular: **exatamente como hoje** (nenhuma regressão visual abaixo de 768px).
+- Tablet na horizontal: aproveita a largura, gráficos em 2 colunas, sidebar aparece.
+- Desktop (Chrome/Edge/Firefox em 1280px+): visual tipo app web profissional, sidebar à esquerda, conteúdo centralizado até 1280px, sem mais a "coluna magrinha" no meio da tela.
