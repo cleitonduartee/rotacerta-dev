@@ -15,10 +15,10 @@ export default function HarvestsList() {
   return (
     <div className="animate-fade-in">
       <PageHeader title="Safras" subtitle="Contratos e fechamentos" />
-      <div className="px-4 pb-6 space-y-4">
+      <div className="px-4 pb-6 md:px-6 space-y-4">
         <NewHarvest />
         <ContractsButton />
-        <ul className="space-y-3">
+        <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {harvests.map(h => {
             const tripsH = trips.filter(t => {
               if (t.kind !== 'safra' || !t.contractId) return false;
