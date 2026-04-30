@@ -318,6 +318,7 @@ export default function LoginPage() {
         {step === 'recovery' && (
           <RecoverFlow onBack={() => setStep('phone')} onDone={() => { setStep('phone'); }} />
         )}
+        </div>
       </div>
 
       <AlertDialog open={showBackConfirm} onOpenChange={setShowBackConfirm}>
