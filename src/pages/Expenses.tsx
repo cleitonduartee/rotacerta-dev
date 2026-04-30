@@ -113,6 +113,7 @@ export function ExpensesList() {
             </div>
           );
         })}
+        </div>
       </div>
 
       <ConfirmDeleteDialog
