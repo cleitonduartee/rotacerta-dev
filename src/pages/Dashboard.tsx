@@ -181,7 +181,7 @@ export default function Dashboard() {
   const last5 = [...tripsF].sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 5);
 
   return (
-    <div className="space-y-5 px-4 pt-3 pb-6 animate-fade-in">
+    <div className="space-y-5 px-4 pt-3 pb-6 md:px-6 animate-fade-in">
       {/* Hero */}
       <div className="relative overflow-hidden rounded-2xl gradient-primary p-5 shadow-elevated">
         <div className="flex items-baseline justify-between">
