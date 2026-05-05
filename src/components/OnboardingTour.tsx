@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Download } from 'lucide-react';
 import { TOUR_STEPS, type TourStep } from '@/lib/tourSteps';
+import { downloadUserGuidePdf } from '@/lib/guidePdf';
 
 type Rect = { top: number; left: number; width: number; height: number };
 
@@ -150,6 +152,15 @@ export function OnboardingTour({ open, onClose }: Props) {
         </div>
         <h3 className="font-display text-xl leading-tight text-foreground">{step.title}</h3>
         <p className="mt-1.5 text-sm text-muted-foreground">{step.body}</p>
+
+        {/* Botão de download do guia em PDF */}
+        <button
+          onClick={() => downloadUserGuidePdf()}
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/15 active:scale-[0.98] transition-all"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Baixar guia completo em PDF
+        </button>
 
         {/* progresso */}
         <div className="mt-3 flex gap-1">
