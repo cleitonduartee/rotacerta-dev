@@ -155,7 +155,7 @@ export function AppLayout() {
         <button
           onClick={() => navigate('/viagens/nova')}
           aria-label="Nova viagem"
-          data-tour="fab-nova-viagem-mobile"
+          data-tour="fab-nova-viagem"
           className="md:hidden fixed bottom-24 left-1/2 z-40 flex h-16 w-16 -translate-x-1/2 items-center justify-center rounded-full gradient-primary text-primary-foreground shadow-elevated active:scale-95 transition-transform"
         >
           <Plus className="h-7 w-7" strokeWidth={3} />
@@ -165,7 +165,7 @@ export function AppLayout() {
         <nav className="md:hidden safe-bottom fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 border-t border-border/60 bg-card/95 backdrop-blur">
           <ul className="grid grid-cols-5">
             {tabs.map((t) => (
-              <li key={t.to} data-tour={`${t.tourKey}-mobile`}>
+              <li key={t.to} data-tour={t.tourKey}>
                 <NavLink
                   to={t.to}
                   end={t.to === '/'}

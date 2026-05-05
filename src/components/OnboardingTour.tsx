@@ -15,11 +15,14 @@ const TOOLTIP_GAP = 14;
 
 function getRect(selector?: string): Rect | null {
   if (!selector) return null;
-  const el = document.querySelector(selector) as HTMLElement | null;
-  if (!el) return null;
-  const r = el.getBoundingClientRect();
-  if (r.width === 0 && r.height === 0) return null;
-  return { top: r.top, left: r.left, width: r.width, height: r.height };
+  const els = Array.from(document.querySelectorAll(selector)) as HTMLElement[];
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) {
+      return { top: r.top, left: r.left, width: r.width, height: r.height };
+    }
+  }
+  return null;
 }
 
 function computeTooltipPos(rect: Rect | null, placement: TourStep['placement'], vw: number, vh: number) {
