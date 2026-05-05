@@ -1,6 +1,8 @@
 import { useEffect, useLayoutEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { Download } from 'lucide-react';
 import { TOUR_STEPS, type TourStep } from '@/lib/tourSteps';
+import { downloadUserGuidePdf } from '@/lib/guidePdf';
 
 type Rect = { top: number; left: number; width: number; height: number };
 
