@@ -1,445 +1,447 @@
 import jsPDF from 'jspdf';
+import dashboardImg from '@/assets/guide/dashboard.png';
+import viagensImg from '@/assets/guide/viagens.png';
+import novaViagemImg from '@/assets/guide/nova-viagem.png';
+import contratosImg from '@/assets/guide/contratos.png';
+import despesasImg from '@/assets/guide/despesas.png';
+import cadastrosImg from '@/assets/guide/cadastros.png';
+import safrasImg from '@/assets/guide/safras.png';
 
-// Cores (RGB)
-const PRIMARY: [number, number, number] = [249, 115, 22]; // laranja RotaSafra
+// ===== Paleta moderna =====
+const PRIMARY: [number, number, number] = [249, 115, 22]; // laranja
+const PRIMARY_DARK: [number, number, number] = [194, 65, 12];
 const PRIMARY_SOFT: [number, number, number] = [255, 237, 213];
-const INK: [number, number, number] = [30, 30, 30];
-const MUTED: [number, number, number] = [115, 115, 115];
-const BORDER: [number, number, number] = [220, 220, 220];
-const BG_CARD: [number, number, number] = [250, 250, 250];
+const DARK_BG: [number, number, number] = [17, 24, 39];
+const INK: [number, number, number] = [24, 24, 27];
+const SUBTLE: [number, number, number] = [113, 113, 122];
+const LINE: [number, number, number] = [228, 228, 231];
+const SOFT_BG: [number, number, number] = [250, 250, 250];
 
-interface ScreenStep {
+interface Step {
   n: number;
+  tag: string;
   title: string;
-  subtitle: string;
-  description: string;
+  intro: string;
   bullets: string[];
-  // mock screen builder
-  draw: (doc: jsPDF, x: number, y: number, w: number, h: number) => void;
+  image: string;
 }
 
-function setFill(doc: jsPDF, c: [number, number, number]) {
-  doc.setFillColor(c[0], c[1], c[2]);
-}
-function setText(doc: jsPDF, c: [number, number, number]) {
-  doc.setTextColor(c[0], c[1], c[2]);
-}
-function setDraw(doc: jsPDF, c: [number, number, number]) {
-  doc.setDrawColor(c[0], c[1], c[2]);
-}
+// ===== Helpers de cor =====
+const fill = (d: jsPDF, c: [number, number, number]) => d.setFillColor(c[0], c[1], c[2]);
+const text = (d: jsPDF, c: [number, number, number]) => d.setTextColor(c[0], c[1], c[2]);
+const draw = (d: jsPDF, c: [number, number, number]) => d.setDrawColor(c[0], c[1], c[2]);
 
-function roundedCard(doc: jsPDF, x: number, y: number, w: number, h: number, fill?: [number, number, number]) {
-  if (fill) setFill(doc, fill);
-  setDraw(doc, BORDER);
-  doc.roundedRect(x, y, w, h, 8, 8, fill ? 'FD' : 'D');
-}
-
-// ----- Mockups das telas -----
-
-function drawPhoneFrame(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  setFill(doc, [245, 245, 247]);
-  setDraw(doc, [200, 200, 205]);
-  doc.roundedRect(x, y, w, h, 14, 14, 'FD');
-  // notch
-  setFill(doc, [200, 200, 205]);
-  doc.roundedRect(x + w / 2 - 18, y + 6, 36, 4, 2, 2, 'F');
-}
-
-function drawDashboardScreen(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  drawPhoneFrame(doc, x, y, w, h);
-  const px = x + 10, py = y + 18, pw = w - 20;
-  // header
-  setFill(doc, PRIMARY);
-  doc.roundedRect(px, py, pw, 38, 6, 6, 'F');
-  setText(doc, [255, 255, 255]);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-  doc.text('LÍQUIDO DA SAFRA', px + 8, py + 12);
-  doc.setFontSize(14);
-  doc.text('R$ 24.580,00', px + 8, py + 28);
-  // stats
-  let cy = py + 46;
-  for (let i = 0; i < 2; i++) {
-    setFill(doc, BG_CARD); setDraw(doc, BORDER);
-    doc.roundedRect(px, cy, pw / 2 - 3, 26, 4, 4, 'FD');
-    doc.roundedRect(px + pw / 2 + 3, cy, pw / 2 - 3, 26, 4, 4, 'FD');
-    cy += 30;
-  }
-  // chart bars
-  setFill(doc, BG_CARD); setDraw(doc, BORDER);
-  doc.roundedRect(px, cy, pw, h - (cy - y) - 30, 4, 4, 'FD');
-  setFill(doc, PRIMARY);
-  for (let i = 0; i < 5; i++) {
-    const bh = 8 + i * 4;
-    doc.rect(px + 8 + i * 14, cy + (h - (cy - y) - 30) - bh - 4, 8, bh, 'F');
-  }
-  // tab bar
-  setFill(doc, [255, 255, 255]); setDraw(doc, BORDER);
-  doc.roundedRect(px, y + h - 22, pw, 16, 4, 4, 'FD');
-  setFill(doc, PRIMARY);
-  doc.circle(px + 10, y + h - 14, 2, 'F');
-  setFill(doc, [200, 200, 200]);
-  for (let i = 1; i < 5; i++) doc.circle(px + 10 + i * (pw / 5), y + h - 14, 2, 'F');
-}
-
-function drawCadastrosScreen(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  drawPhoneFrame(doc, x, y, w, h);
-  const px = x + 10, py = y + 18, pw = w - 20;
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-  doc.text('Cadastros', px, py + 8);
-  let cy = py + 16;
-  const items = ['Caminhões', 'Produtores', 'Safras'];
-  items.forEach((it) => {
-    setFill(doc, BG_CARD); setDraw(doc, BORDER);
-    doc.roundedRect(px, cy, pw, 28, 6, 6, 'FD');
-    setFill(doc, PRIMARY_SOFT);
-    doc.roundedRect(px + 6, cy + 6, 16, 16, 3, 3, 'F');
-    setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text(it, px + 28, cy + 13);
-    setText(doc, MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.text('Toque para gerenciar', px + 28, cy + 21);
-    cy += 32;
+// ===== Carrega imagens como HTMLImageElement =====
+async function loadImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
   });
 }
 
-function drawContractsScreen(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  drawPhoneFrame(doc, x, y, w, h);
-  const px = x + 10, py = y + 18, pw = w - 20;
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-  doc.text('Contratos', px, py + 8);
-  let cy = py + 16;
-  for (let i = 0; i < 3; i++) {
-    setFill(doc, BG_CARD); setDraw(doc, BORDER);
-    doc.roundedRect(px, cy, pw, 36, 6, 6, 'FD');
-    setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text(`Produtor ${i + 1}`, px + 6, cy + 10);
-    setText(doc, MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.text('Soja 2025 • R$ 95/saco', px + 6, cy + 18);
-    setFill(doc, PRIMARY);
-    doc.roundedRect(px + pw - 38, cy + 8, 32, 14, 3, 3, 'F');
-    setText(doc, [255, 255, 255]); doc.setFontSize(6);
-    doc.text('ABERTO', px + pw - 34, cy + 17);
-    cy += 40;
-  }
-}
-
-function drawTripFormScreen(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  drawPhoneFrame(doc, x, y, w, h);
-  const px = x + 10, py = y + 18, pw = w - 20;
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-  doc.text('Nova Viagem', px, py + 8);
-  let cy = py + 16;
-  const fields = ['Data', 'Caminhão', 'Origem', 'Destino', 'Sacos'];
-  fields.forEach((f) => {
-    setText(doc, MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.text(f, px, cy + 4);
-    setFill(doc, BG_CARD); setDraw(doc, BORDER);
-    doc.roundedRect(px, cy + 6, pw, 14, 3, 3, 'FD');
-    cy += 24;
-  });
-  setFill(doc, PRIMARY);
-  doc.roundedRect(px, y + h - 28, pw, 18, 4, 4, 'F');
-  setText(doc, [255, 255, 255]); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-  doc.text('SALVAR VIAGEM', px + pw / 2, y + h - 17, { align: 'center' });
-}
-
-function drawExpensesScreen(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  drawPhoneFrame(doc, x, y, w, h);
-  const px = x + 10, py = y + 18, pw = w - 20;
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-  doc.text('Despesas', px, py + 8);
-  let cy = py + 16;
-  const items = [
-    ['Combustível', 'R$ 480,00', 'Por viagem'],
-    ['Manutenção', 'R$ 1.200,00', 'Avulsa'],
-    ['Abastecimento fazenda', 'R$ 350,00', 'Por contrato'],
-  ];
-  items.forEach(([t, v, k]) => {
-    setFill(doc, BG_CARD); setDraw(doc, BORDER);
-    doc.roundedRect(px, cy, pw, 30, 6, 6, 'FD');
-    setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text(t, px + 6, cy + 11);
-    setText(doc, MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.text(k, px + 6, cy + 20);
-    setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text(v, px + pw - 6, cy + 16, { align: 'right' });
-    cy += 34;
-  });
-}
-
-function drawHarvestsScreen(doc: jsPDF, x: number, y: number, w: number, h: number) {
-  drawPhoneFrame(doc, x, y, w, h);
-  const px = x + 10, py = y + 18, pw = w - 20;
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-  doc.text('Safras', px, py + 8);
-  let cy = py + 16;
-  const items = ['Soja 2025', 'Milho 2025', 'Sorgo 2024'];
-  items.forEach((it) => {
-    setFill(doc, BG_CARD); setDraw(doc, BORDER);
-    doc.roundedRect(px, cy, pw, 30, 6, 6, 'FD');
-    setFill(doc, PRIMARY_SOFT);
-    doc.roundedRect(px + 6, cy + 6, 18, 18, 3, 3, 'F');
-    setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
-    doc.text(it, px + 30, cy + 13);
-    setText(doc, MUTED); doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.text('3 contratos • 12 viagens', px + 30, cy + 21);
-    cy += 34;
-  });
-}
-
-const STEPS: ScreenStep[] = [
+// ===== Conteúdo dos passos =====
+const STEPS: Step[] = [
   {
     n: 1,
+    tag: 'Comece pelo basico',
     title: 'Cadastros',
-    subtitle: 'Comece pelo básico',
-    description:
-      'Cadastre uma única vez seus caminhões e produtores. As safras você cadastra a cada novo período (ex.: Soja 2025, Milho 2025).',
+    intro:
+      'O ponto de partida do RotaSafra. Cadastre uma unica vez seus caminhoes (placa) e produtores. Ja a safra voce cadastra a cada novo periodo de colheita (ex.: Soja 2026, Milho 2026).',
     bullets: [
-      'Caminhão: cadastre a placa apenas uma vez',
-      'Produtor: nome e dados de contato',
-      'Safra: criada a cada novo período de colheita',
+      'Caminhao: cadastrado uma unica vez pela placa.',
+      'Produtor: nome e dados de contato.',
+      'Safra: nova entrada a cada novo periodo (ano + cultura).',
+      'Acesse pelo menu inferior em "Cadastros".',
     ],
-    draw: drawCadastrosScreen,
+    image: cadastrosImg,
   },
   {
     n: 2,
+    tag: 'O pulmao do sistema',
     title: 'Contratos',
-    subtitle: 'O pulmão do sistema',
-    description:
-      'O contrato confirma que você fechou para puxar a lavoura do produtor. Vincula produtor + safra + valor por saco. Toda viagem de lavoura precisa de um contrato.',
+    intro:
+      'O contrato confirma que voce fechou para puxar a lavoura do produtor. Ele liga produtor + safra + valor por saco e e obrigatorio para registrar viagens de lavoura.',
     bullets: [
-      'Crie um contrato por safra/produtor',
-      'Defina o valor padrão por saco',
-      'Acompanhe lucro e número de viagens no card',
+      'Crie um contrato por produtor a cada nova safra.',
+      'Defina o valor padrao por saco (60 kg).',
+      'Acompanhe viagens, sacos e lucro liquido no card.',
+      'Ao fim, gere o PDF de fechamento e envie pelo WhatsApp.',
     ],
-    draw: drawContractsScreen,
+    image: contratosImg,
   },
   {
     n: 3,
-    title: 'Viagens',
-    subtitle: 'Lance no botão + central',
-    description:
-      'Toque no + para registrar uma viagem de Lavoura (vinculada a um contrato) ou Frete avulso. O sistema pré-preenche os campos da viagem anterior para agilizar.',
+    tag: 'Lance pelo botao + central',
+    title: 'Nova Viagem',
+    intro:
+      'Toque no botao + central para registrar uma viagem. Escolha entre Lavoura (vinculada a um contrato) ou Frete avulso. O sistema reaproveita os dados da viagem anterior para agilizar.',
     bullets: [
-      'Pré-preenchimento inteligente da viagem anterior',
-      'Valor por saco flexível mesmo com contrato fechado',
-      'Funciona offline — sincroniza depois',
+      'Pre-preenchimento inteligente da viagem anterior.',
+      'Valor por saco flexivel mesmo com contrato ativo.',
+      'Suporta peso em KG ou Toneladas.',
+      'Funciona offline: sincroniza quando voltar a internet.',
     ],
-    draw: drawTripFormScreen,
+    image: novaViagemImg,
   },
   {
     n: 4,
-    title: 'Despesas',
-    subtitle: '3 tipos para controle total',
-    description:
-      'Despesa por viagem (custos da rota), avulsa (gastos gerais, ex.: manutenção) e por contrato (ex.: abastecimento na fazenda — abate no fechamento com o produtor).',
+    tag: 'Historico completo',
+    title: 'Lista de Viagens',
+    intro:
+      'Visualize todas as viagens registradas com data, rota, contrato, sacos e valor. Toque em uma viagem para editar ou excluir.',
     bullets: [
-      'Por viagem: deduz do lucro bruto',
-      'Avulsa: gastos gerais de operação',
-      'Por contrato: abate no fechamento do produtor',
+      'Filtra automaticamente por safra e periodo.',
+      'Mostra valor total da viagem em destaque.',
+      'Toque para editar; exclusao bloqueada se houver despesas.',
     ],
-    draw: drawExpensesScreen,
+    image: viagensImg,
   },
   {
     n: 5,
-    title: 'Safras & Fechamento',
-    subtitle: 'Relatórios e WhatsApp',
-    description:
-      'Acompanhe o desempenho de cada safra e gere o PDF de fechamento para enviar direto ao produtor pelo WhatsApp.',
+    tag: '3 tipos para controle total',
+    title: 'Despesas',
+    intro:
+      'Existem tres tipos de despesa, cada uma com uma finalidade diferente: por viagem, avulsa e por contrato. Saber a diferenca e essencial para o fechamento correto.',
     bullets: [
-      'Relatórios consolidados por safra',
-      'PDF de fechamento profissional',
-      'Compartilhamento direto pelo WhatsApp',
+      'Por viagem: custos da rota (combustivel, pedagio). Deduz do lucro bruto.',
+      'Avulsa: gastos gerais (manutencao, pecas). Deduz do lucro bruto.',
+      'Por contrato: ex. abastecimento na fazenda. Abate no fechamento com o produtor.',
     ],
-    draw: drawHarvestsScreen,
+    image: despesasImg,
   },
   {
     n: 6,
-    title: 'Dashboard',
-    subtitle: 'Visão geral do seu negócio',
-    description:
-      'O painel principal traz líquido da safra, número de viagens, sacos transportados e gráficos comparativos para você decidir com dados.',
+    tag: 'Relatorios e fechamento',
+    title: 'Safras',
+    intro:
+      'Acompanhe o desempenho de cada safra com viagens, sacos e liquido consolidados. Acesse os contratos vinculados e gere o relatorio final para envio pelo WhatsApp.',
     bullets: [
-      'Líquido em destaque no topo',
-      'Filtros por período',
-      'Gráficos de desempenho',
+      'Resumo consolidado por safra.',
+      'Acesso direto aos contratos vinculados.',
+      'PDF de fechamento profissional para o produtor.',
     ],
-    draw: drawDashboardScreen,
+    image: safrasImg,
+  },
+  {
+    n: 7,
+    tag: 'Visao geral do negocio',
+    title: 'Dashboard',
+    intro:
+      'O painel inicial traz o liquido em destaque, receita, despesas, total de viagens, sacos transportados e graficos comparativos por mes. Ideal para decidir com dados.',
+    bullets: [
+      'Liquido da safra em destaque no topo.',
+      'Filtros por mes, ano, safra ou frete.',
+      'Grafico Receita x Despesa nos ultimos 6 meses.',
+    ],
+    image: dashboardImg,
   },
 ];
 
-export function generateUserGuidePdf(): Blob {
+// ===== Layout helpers =====
+function drawHeader(doc: jsPDF, W: number) {
+  fill(doc, PRIMARY);
+  doc.rect(0, 0, W, 60, 'F');
+  fill(doc, PRIMARY_DARK);
+  doc.rect(0, 58, W, 2, 'F');
+  text(doc, [255, 255, 255]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.text('ROTASAFRA', 40, 26);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.text('CONTROLE DE FRETES AGRICOLAS', 40, 40);
+}
+
+function drawFooter(doc: jsPDF, W: number, H: number, page: number, total: number) {
+  draw(doc, LINE);
+  doc.setLineWidth(0.5);
+  doc.line(40, H - 36, W - 40, H - 36);
+  text(doc, SUBTLE);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('RotaSafra - Guia de Uso', 40, H - 22);
+  doc.text(`Pagina ${page} de ${total}`, W - 40, H - 22, { align: 'right' });
+}
+
+export async function generateUserGuidePdf(): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
 
+  // Carrega todas as imagens em paralelo
+  const images = await Promise.all(STEPS.map((s) => loadImage(s.image)));
+
+  const totalPages = 2 + STEPS.length + 1; // capa + sumario + passos + fim
+
   // ============ CAPA ============
-  setFill(doc, PRIMARY);
+  fill(doc, DARK_BG);
   doc.rect(0, 0, W, H, 'F');
 
-  setText(doc, [255, 255, 255]);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(48);
-  doc.text('RotaSafra', 40, 180);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(16);
-  doc.text('Guia completo de uso do aplicativo', 40, 210);
+  // Faixa lateral laranja
+  fill(doc, PRIMARY);
+  doc.rect(0, 0, 8, H, 'F');
 
-  // box info
-  setFill(doc, [255, 255, 255]);
-  doc.roundedRect(40, 280, W - 80, 220, 12, 12, 'F');
-  setText(doc, INK);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(18);
-  doc.text('Para que serve o RotaSafra?', 60, 320);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(12);
-  setText(doc, [60, 60, 60]);
-  const intro = doc.splitTextToSize(
-    'O RotaSafra é o aplicativo que organiza, do começo ao fim, a operação de quem trabalha com fretes agrícolas. Ele controla caminhões, produtores, safras, contratos, viagens e despesas — e ainda gera o PDF de fechamento pronto para enviar ao produtor pelo WhatsApp. Tudo funciona offline no campo e sincroniza automaticamente quando você volta a ter internet.',
-    W - 120,
+  // Logo/marca
+  text(doc, PRIMARY);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('ROTASAFRA', 50, 90);
+
+  text(doc, [200, 200, 210]);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('CONTROLE DE FRETES AGRICOLAS', 50, 108);
+
+  // Titulo principal
+  text(doc, [255, 255, 255]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(56);
+  doc.text('Guia', 50, 280);
+  doc.text('de uso.', 50, 340);
+
+  // Sublinhado decorativo
+  fill(doc, PRIMARY);
+  doc.rect(50, 358, 80, 4, 'F');
+
+  // Resumo
+  text(doc, [220, 220, 225]);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(13);
+  const resumo = doc.splitTextToSize(
+    'Tudo o que voce precisa para organizar sua operacao de fretes agricolas: caminhoes, produtores, safras, contratos, viagens, despesas e fechamento direto pelo WhatsApp. Este manual mostra cada tela do app e o que ela faz.',
+    W - 100,
   );
-  doc.text(intro, 60, 350);
+  doc.text(resumo, 50, 410);
 
-  setText(doc, PRIMARY);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-  doc.text('CONTROLE DE FRETES AGRÍCOLAS', 60, 480);
+  // Card "Para que serve"
+  fill(doc, [30, 41, 59]);
+  doc.roundedRect(50, H - 220, W - 100, 140, 14, 14, 'F');
+  text(doc, PRIMARY);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('PARA QUE SERVE O ROTASAFRA', 70, H - 190);
+  text(doc, [240, 240, 245]);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  const proposito = doc.splitTextToSize(
+    'O RotaSafra e o aplicativo do caminhoneiro e do transportador agricola. Controla do primeiro cadastro ao fechamento da safra: lanca viagens em segundos, separa as despesas por tipo, calcula o lucro liquido e gera o relatorio em PDF para enviar ao produtor pelo WhatsApp. Funciona offline no campo e sincroniza quando voltar a internet.',
+    W - 140,
+  );
+  doc.text(proposito, 70, H - 168);
 
-  setText(doc, [255, 255, 255]); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  doc.text('Manual oficial • v1.0', 40, H - 40);
-  doc.text('rotasafra-dev.lovable.app', W - 40, H - 40, { align: 'right' });
+  // Rodape capa
+  text(doc, [150, 150, 160]);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Manual oficial - v1.0', 50, H - 40);
+  doc.text('rotasafra-dev.lovable.app', W - 50, H - 40, { align: 'right' });
 
-  // ============ ÍNDICE ============
+  // ============ SUMARIO ============
   doc.addPage();
-  setFill(doc, PRIMARY);
-  doc.rect(0, 0, W, 70, 'F');
-  setText(doc, [255, 255, 255]);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
-  doc.text('Sumário', 40, 45);
+  drawHeader(doc, W);
 
-  setText(doc, INK);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(13);
-  let yIdx = 110;
+  text(doc, INK);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.text('Sumario', 40, 110);
+
+  text(doc, SUBTLE);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text('Cada secao traz a tela real do aplicativo e os principais pontos de uso.', 40, 130);
+
+  let y = 170;
   STEPS.forEach((s) => {
-    setText(doc, PRIMARY);
+    // numero grande em laranja claro
+    text(doc, PRIMARY);
     doc.setFont('helvetica', 'bold');
-    doc.text(`${String(s.n).padStart(2, '0')}`, 40, yIdx);
-    setText(doc, INK);
+    doc.setFontSize(28);
+    doc.text(String(s.n).padStart(2, '0'), 40, y);
+
+    // titulo
+    text(doc, INK);
     doc.setFont('helvetica', 'bold');
-    doc.text(s.title, 80, yIdx);
-    setText(doc, MUTED);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-    doc.text(s.subtitle, 80, yIdx + 14);
-    doc.setFontSize(13);
-    yIdx += 38;
+    doc.setFontSize(14);
+    doc.text(s.title, 90, y - 8);
+
+    // tag
+    text(doc, SUBTLE);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text(s.tag, 90, y + 8);
+
+    // linha pontilhada (simulada com underscore)
+    draw(doc, LINE);
+    doc.setLineDashPattern([1, 2], 0);
+    doc.line(90, y + 16, W - 70, y + 16);
+    doc.setLineDashPattern([], 0);
+
+    // numero da pagina
+    text(doc, SUBTLE);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.text(String(s.n + 2), W - 50, y + 4, { align: 'right' });
+
+    y += 56;
   });
 
-  // dica
-  setFill(doc, PRIMARY_SOFT);
-  doc.roundedRect(40, yIdx + 20, W - 80, 80, 10, 10, 'F');
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-  doc.text('Dica de leitura', 56, yIdx + 42);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-  setText(doc, [60, 60, 60]);
-  const tip = doc.splitTextToSize(
-    'Cada seção mostra a tela do aplicativo, o que ela faz e os principais pontos para você executar a tarefa em poucos toques. Siga a ordem dos cadastros → contratos → viagens → fechamento para um fluxo sem travamentos.',
-    W - 110,
-  );
-  doc.text(tip, 56, yIdx + 60);
+  drawFooter(doc, W, H, 2, totalPages);
 
-  // ============ PASSOS ============
-  STEPS.forEach((step) => {
+  // ============ PASSOS (1 por pagina) ============
+  STEPS.forEach((step, idx) => {
     doc.addPage();
+    drawHeader(doc, W);
 
-    // header da página
-    setFill(doc, PRIMARY);
-    doc.rect(0, 0, W, 70, 'F');
-    setText(doc, [255, 255, 255]);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-    doc.text(`PASSO ${String(step.n).padStart(2, '0')} DE ${STEPS.length}`, 40, 28);
-    doc.setFontSize(22);
-    doc.text(step.title, 40, 52);
+    // Tag
+    fill(doc, PRIMARY_SOFT);
+    doc.roundedRect(40, 90, doc.getTextWidth(`PASSO ${step.n} / ${STEPS.length}`) + 22, 22, 11, 11, 'F');
+    text(doc, PRIMARY_DARK);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text(`PASSO ${step.n} / ${STEPS.length}`, 51, 105);
 
-    // ----- coluna esquerda: tela -----
-    const screenW = 200;
-    const screenH = 380;
-    const screenX = 40;
-    const screenY = 100;
-    step.draw(doc, screenX, screenY, screenW, screenH);
+    // Titulo
+    text(doc, INK);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(34);
+    doc.text(step.title, 40, 150);
 
-    setText(doc, MUTED);
-    doc.setFont('helvetica', 'italic'); doc.setFontSize(9);
-    doc.text(`Tela: ${step.title}`, screenX + screenW / 2, screenY + screenH + 16, { align: 'center' });
+    // Subtag
+    text(doc, PRIMARY);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text(step.tag.toUpperCase(), 40, 172);
 
-    // ----- coluna direita: conteúdo -----
+    // ===== Coluna esquerda: imagem real do app =====
+    const img = images[idx];
+    const maxImgW = 200;
+    const maxImgH = 420;
+    const ratio = img.width / img.height;
+    let imgW = maxImgW;
+    let imgH = imgW / ratio;
+    if (imgH > maxImgH) {
+      imgH = maxImgH;
+      imgW = imgH * ratio;
+    }
+    const imgX = 40;
+    const imgY = 200;
+
+    // sombra
+    fill(doc, [0, 0, 0]);
+    doc.setGState(new (doc as any).GState({ opacity: 0.12 }));
+    doc.roundedRect(imgX + 4, imgY + 6, imgW, imgH, 12, 12, 'F');
+    doc.setGState(new (doc as any).GState({ opacity: 1 }));
+
+    // moldura
+    fill(doc, [255, 255, 255]);
+    draw(doc, LINE);
+    doc.setLineWidth(0.8);
+    doc.roundedRect(imgX, imgY, imgW, imgH, 12, 12, 'FD');
+
+    // imagem
+    doc.addImage(img, 'PNG', imgX + 4, imgY + 4, imgW - 8, imgH - 8);
+
+    // Legenda
+    text(doc, SUBTLE);
+    doc.setFont('helvetica', 'italic');
+    doc.setFontSize(9);
+    doc.text(`Tela real do app: ${step.title}`, imgX + imgW / 2, imgY + imgH + 18, { align: 'center' });
+
+    // ===== Coluna direita: conteudo =====
     const cx = 270;
     const cw = W - cx - 40;
-    let cy = 110;
+    let cy = 210;
 
-    setText(doc, PRIMARY);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-    doc.text(step.subtitle.toUpperCase(), cx, cy);
+    // Descricao
+    text(doc, INK);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('Como funciona', cx, cy);
     cy += 18;
 
-    setText(doc, INK);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(20);
-    doc.text(step.title, cx, cy);
-    cy += 24;
+    text(doc, [60, 60, 70]);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(11);
+    const intro = doc.splitTextToSize(step.intro, cw);
+    doc.text(intro, cx, cy);
+    cy += intro.length * 14 + 18;
 
-    setText(doc, [60, 60, 60]);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
-    const desc = doc.splitTextToSize(step.description, cw);
-    doc.text(desc, cx, cy);
-    cy += desc.length * 14 + 12;
+    // Pontos-chave
+    text(doc, INK);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.text('Pontos-chave', cx, cy);
+    cy += 16;
 
-    // bullets card
-    setFill(doc, PRIMARY_SOFT);
-    setDraw(doc, PRIMARY_SOFT);
-    const cardH = step.bullets.length * 22 + 30;
-    doc.roundedRect(cx, cy, cw, cardH, 8, 8, 'F');
-
-    setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(10);
-    doc.text('PONTOS-CHAVE', cx + 14, cy + 18);
-
-    let by = cy + 36;
     step.bullets.forEach((b) => {
-      setFill(doc, PRIMARY);
-      doc.circle(cx + 18, by - 3, 2.5, 'F');
-      setText(doc, INK); doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
-      const lines = doc.splitTextToSize(b, cw - 36);
-      doc.text(lines, cx + 28, by);
-      by += 22;
+      // marcador laranja
+      fill(doc, PRIMARY);
+      doc.roundedRect(cx, cy - 7, 3, 12, 1, 1, 'F');
+      text(doc, [50, 50, 60]);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10.5);
+      const lines = doc.splitTextToSize(b, cw - 12);
+      doc.text(lines, cx + 10, cy);
+      cy += lines.length * 14 + 6;
     });
 
-    // footer
-    setText(doc, MUTED);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-    doc.text(`RotaSafra • Guia de uso`, 40, H - 24);
-    doc.text(`${step.n} / ${STEPS.length}`, W - 40, H - 24, { align: 'right' });
+    drawFooter(doc, W, H, step.n + 2, totalPages);
   });
 
   // ============ ENCERRAMENTO ============
   doc.addPage();
-  setFill(doc, PRIMARY);
+  fill(doc, DARK_BG);
   doc.rect(0, 0, W, H, 'F');
-  setText(doc, [255, 255, 255]);
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(34);
-  doc.text('Pronto para começar!', 40, 200);
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(13);
-  const out = doc.splitTextToSize(
-    'Agora você conhece todas as telas e o fluxo do RotaSafra. Lembre-se: o app funciona no campo mesmo sem internet, e tudo sincroniza assim que voltar a ter sinal. Bom trabalho e boas estradas!',
-    W - 80,
-  );
-  doc.text(out, 40, 240);
+  fill(doc, PRIMARY);
+  doc.rect(0, 0, 8, H, 'F');
 
-  setFill(doc, [255, 255, 255]);
-  doc.roundedRect(40, 380, W - 80, 110, 12, 12, 'F');
-  setText(doc, INK); doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
-  doc.text('Precisa de ajuda novamente?', 60, 414);
-  setText(doc, [60, 60, 60]); doc.setFont('helvetica', 'normal'); doc.setFontSize(11);
-  doc.text('Toque no ícone de interrogação no topo do aplicativo para abrir', 60, 438);
-  doc.text('a Central de Ajuda, refazer o tour guiado ou baixar este guia novamente.', 60, 454);
+  text(doc, [255, 255, 255]);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(40);
+  doc.text('Pronto para', 50, 220);
+  doc.text('comecar.', 50, 270);
+
+  fill(doc, PRIMARY);
+  doc.rect(50, 290, 80, 4, 'F');
+
+  text(doc, [220, 220, 225]);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(13);
+  const fim = doc.splitTextToSize(
+    'Voce ja conhece o fluxo completo do RotaSafra. Lembre-se da ordem ideal: Cadastros -> Contratos -> Viagens -> Despesas -> Fechamento. O app funciona offline no campo e sincroniza assim que voltar o sinal.',
+    W - 100,
+  );
+  doc.text(fim, 50, 340);
+
+  // Card ajuda
+  fill(doc, [30, 41, 59]);
+  doc.roundedRect(50, H - 240, W - 100, 140, 14, 14, 'F');
+  text(doc, PRIMARY);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.text('PRECISA DE AJUDA NOVAMENTE?', 70, H - 210);
+  text(doc, [240, 240, 245]);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  const help = doc.splitTextToSize(
+    'Toque no icone de interrogacao no topo do aplicativo para abrir a Central de Ajuda, refazer o tour guiado ou baixar este guia em PDF novamente. Voce tambem encontra perguntas frequentes e dicas de uso por la.',
+    W - 140,
+  );
+  doc.text(help, 70, H - 188);
+
+  text(doc, [150, 150, 160]);
+  doc.setFontSize(9);
+  doc.text('RotaSafra - Bom trabalho e boas estradas!', 50, H - 40);
+  doc.text(`Pagina ${totalPages} de ${totalPages}`, W - 50, H - 40, { align: 'right' });
 
   return doc.output('blob');
 }
 
-export function downloadUserGuidePdf() {
-  const blob = generateUserGuidePdf();
+export async function downloadUserGuidePdf() {
+  const blob = await generateUserGuidePdf();
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;

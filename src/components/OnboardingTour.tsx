@@ -155,7 +155,7 @@ export function OnboardingTour({ open, onClose }: Props) {
 
         {/* Botão de download do guia em PDF */}
         <button
-          onClick={() => downloadUserGuidePdf()}
+          onClick={async () => { await downloadUserGuidePdf(); }}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/15 active:scale-[0.98] transition-all"
         >
           <Download className="h-3.5 w-3.5" />
