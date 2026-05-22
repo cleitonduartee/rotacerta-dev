@@ -329,8 +329,6 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
   iy += 26;
 
   // Valor omitido — o card TOTAIS GERAIS já exibe o valor líquido
-
-
   doc.setTextColor(20, 20, 20);
   return y + cardH + 12;
 }
