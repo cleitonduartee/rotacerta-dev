@@ -275,11 +275,14 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
     cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
   };
 
-  // Card compacto — altura fixa enxuta (sem valor, pois TOTAIS GERAIS já exibe)
+  // Card compacto — altura suficiente para conter o QR Code + chave destacada
   const cardX = 30;
   const cardW = W - 60;
-  const cardH = 88;
   const padX = 14;
+  const padY = 14;
+  const titleH = 18;
+  const qrSize = 86;
+  const cardH = padY + titleH + qrSize + padY; // ~132pt
 
   if (y + cardH > pageH - 50) { doc.addPage(); y = 40; }
 
@@ -295,12 +298,11 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
   // Título sutil
   doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
   doc.setTextColor(249, 115, 22);
-  doc.text('PAGAMENTO VIA PIX', cardX + padX, y + 16);
+  doc.text('PAGAMENTO VIA PIX', cardX + padX, y + padY + 4);
 
-  // QR à esquerda
-  const qrSize = 78;
+  // QR à esquerda — dentro do card
   const qrX = cardX + padX;
-  const qrY = y + 22;
+  const qrY = y + padY + titleH;
   if (qrDataUrl) doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
 
   // Coluna de dados à direita
@@ -316,19 +318,40 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
   doc.setTextColor(20, 20, 20);
   const benef = doc.splitTextToSize(driver.pixBeneficiario || driver.nome || '—', infoMaxW);
   doc.text(benef[0] ?? '', infoX, iy + 11);
-  iy += 24;
-
-  // Chave PIX destacada (monoespaçada, selecionável p/ copiar)
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-  doc.setTextColor(140, 140, 140);
-  doc.text(`CHAVE PIX (${tipoLabel[driver.pixTipo] ?? driver.pixTipo})`, infoX, iy);
-  doc.setFont('courier', 'bold'); doc.setFontSize(11);
-  doc.setTextColor(20, 20, 20);
-  const chaveLines = doc.splitTextToSize(driver.pixChave, infoMaxW);
-  doc.text(chaveLines[0] ?? '', infoX, iy + 12);
   iy += 26;
 
-  // Valor omitido — o card TOTAIS GERAIS já exibe o valor líquido
+  // Chave PIX destacada — caixa colorida ocupando o espaço restante
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(7);
+  doc.setTextColor(140, 140, 140);
+  doc.text(`CHAVE PIX (${tipoLabel[driver.pixTipo] ?? driver.pixTipo})`, infoX, iy);
+  iy += 6;
+
+  // Box destacado em laranja claro
+  const boxH = qrY + qrSize - iy; // preenche até a base do QR
+  doc.setFillColor(255, 237, 213); // laranja bem claro
+  doc.setDrawColor(249, 115, 22);
+  doc.setLineWidth(0.8);
+  doc.roundedRect(infoX, iy, infoMaxW, boxH, 4, 4, 'FD');
+
+  // Chave em fonte monoespaçada, quebra de linha se necessário, centralizada verticalmente
+  doc.setFont('courier', 'bold');
+  // Escolhe tamanho que caiba em 1 ou 2 linhas
+  let fs = 12;
+  doc.setFontSize(fs);
+  let chaveLines = doc.splitTextToSize(driver.pixChave, infoMaxW - 12);
+  while (chaveLines.length > 2 && fs > 8) {
+    fs -= 1;
+    doc.setFontSize(fs);
+    chaveLines = doc.splitTextToSize(driver.pixChave, infoMaxW - 12);
+  }
+  doc.setTextColor(154, 52, 18); // laranja escuro
+  const lineH = fs + 2;
+  const totalTextH = chaveLines.length * lineH;
+  const startY = iy + (boxH - totalTextH) / 2 + fs - 2;
+  chaveLines.slice(0, 2).forEach((line: string, idx: number) => {
+    doc.text(line, infoX + infoMaxW / 2, startY + idx * lineH, { align: 'center' });
+  });
+
   doc.setTextColor(20, 20, 20);
   return y + cardH + 12;
 }
