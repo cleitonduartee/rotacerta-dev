@@ -318,6 +318,9 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
   const despesas = input.expenses.reduce((s, e) => s + (e.valor || 0), 0);
   const liquido = receita - despesas;
 
+  // ============ PIX (logo abaixo do cabeçalho) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
   y = drawKPIs(doc, y, [
     { label: 'Viagens', value: String(input.trips.length) },
     { label: 'Sacos', value: fmtNum(totalSacos, 1) },
@@ -327,8 +330,7 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 
   y = drawResultBox(doc, y, receita, despesas, liquido);
 
-  // ============ PIX (QR Code + dados bancários) ============
-  y = await drawPixBlock(doc, y, input.driver, liquido);
+
 
 
   // ========== POR CONTRATO ==========
@@ -635,6 +637,9 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
   // HERO
   y = drawContractHero(doc, y, receita, despesas, liquido, margem, !!c.fechado);
 
+  // ============ PIX (logo abaixo do cabeçalho/hero) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
   // INFO CARD
   y = drawContractInfoCard(
     doc, y,
@@ -654,8 +659,8 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
     { label: 'Margem líquida', value: `${margem.toFixed(1)}%`, tone: margem >= 0 ? 'success' : 'danger' },
   ]);
 
-  // ============ PIX (QR Code + dados bancários) ============
-  y = await drawPixBlock(doc, y, input.driver, liquido);
+
+
 
 
   // Por caminhão
