@@ -637,6 +637,9 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
   // HERO
   y = drawContractHero(doc, y, receita, despesas, liquido, margem, !!c.fechado);
 
+  // ============ PIX (logo abaixo do cabeçalho/hero) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
   // INFO CARD
   y = drawContractInfoCard(
     doc, y,
@@ -656,8 +659,8 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
     { label: 'Margem líquida', value: `${margem.toFixed(1)}%`, tone: margem >= 0 ? 'success' : 'danger' },
   ]);
 
-  // ============ PIX (QR Code + dados bancários) ============
-  y = await drawPixBlock(doc, y, input.driver, liquido);
+
+
 
 
   // Por caminhão
