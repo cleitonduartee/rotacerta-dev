@@ -65,8 +65,12 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     }
   }
 
+  // ============ PIX (logo abaixo do cabeçalho) ============
+  y = await drawPixBlock(doc, y, input.driver, input.totals.liquido);
+
   // TOTAIS GERAIS — card moderno
   y += 14;
+
   const cardX = 30;
   const cardW = W - 60;
   const cardH = 150;
