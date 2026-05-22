@@ -275,10 +275,10 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
     cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
   };
 
-  // Card compacto — altura fixa enxuta
+  // Card compacto — altura fixa enxuta (sem valor, pois TOTAIS GERAIS já exibe)
   const cardX = 30;
   const cardW = W - 60;
-  const cardH = 108;
+  const cardH = 88;
   const padX = 14;
 
   if (y + cardH > pageH - 50) { doc.addPage(); y = 40; }
@@ -328,16 +328,7 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
   doc.text(chaveLines[0] ?? '', infoX, iy + 12);
   iy += 26;
 
-  // Valor (se houver)
-  if (valor > 0) {
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.setTextColor(140, 140, 140);
-    doc.text('VALOR', infoX, iy);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-    doc.setTextColor(249, 115, 22);
-    doc.text(fmtBRL(valor), infoX, iy + 12);
-  }
-
+  // Valor omitido — o card TOTAIS GERAIS já exibe o valor líquido
   doc.setTextColor(20, 20, 20);
   return y + cardH + 12;
 }
