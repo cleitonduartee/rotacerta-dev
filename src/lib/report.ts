@@ -328,15 +328,8 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
   doc.text(chaveLines[0] ?? '', infoX, iy + 12);
   iy += 26;
 
-  // Valor (se houver)
-  if (valor > 0) {
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.setTextColor(140, 140, 140);
-    doc.text('VALOR', infoX, iy);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
-    doc.setTextColor(249, 115, 22);
-    doc.text(fmtBRL(valor), infoX, iy + 12);
-  }
+  // Valor omitido — o card TOTAIS GERAIS já exibe o valor líquido
+
 
   doc.setTextColor(20, 20, 20);
   return y + cardH + 12;
