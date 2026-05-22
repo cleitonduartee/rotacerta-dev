@@ -8,6 +8,13 @@ interface Profile {
   nome: string | null;
   cpf: string | null;
   email: string | null;
+  pix_tipo: string | null;
+  pix_chave: string | null;
+  pix_beneficiario: string | null;
+  pix_cidade: string | null;
+  banco: string | null;
+  agencia: string | null;
+  conta: string | null;
 }
 
 interface AuthCtx {
@@ -35,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!uid) { setProfile(null); setProfileLoaded(true); return; }
     const { data } = await supabase
       .from('profiles')
-      .select('user_id, telefone, nome, cpf, email')
+      .select('user_id, telefone, nome, cpf, email, pix_tipo, pix_chave, pix_beneficiario, pix_cidade, banco, agencia, conta')
       .eq('user_id', uid).maybeSingle();
     setProfile((data as Profile) ?? null);
     setProfileLoaded(true);
