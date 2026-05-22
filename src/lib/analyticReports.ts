@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { fmtBRL, fmtDate, fmtNum } from './format';
+import { drawPixBlock } from './report';
 
 // ============================================================================
 // TIPOS
