@@ -269,17 +269,30 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
     return y;
   }
 
+  const tipoLabel: Record<string, string> = {
+    cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
+  };
+
+  // ===== Calcula altura dinamicamente =====
   const cardX = 30;
   const cardW = W - 60;
-  const cardH = valor > 0 ? 175 : 155;
+  const padX = 16;
+  const headerH = 38;                          // título + linha
+  const topRowH = 130;                         // QR + dados (QR=120)
+  const keyBoxH = 50;                          // caixa destaque da chave PIX
+  // Copia e cola: prepara linhas
+  doc.setFont('courier', 'normal'); doc.setFontSize(7);
+  const codeLines = doc.splitTextToSize(copiaECola, cardW - padX * 2);
+  const codeH = 14 /*label*/ + codeLines.length * 8 + 6;
+  const cardH = headerH + topRowH + keyBoxH + codeH + 14;
 
   // Quebra de página se não couber
-  if (y + cardH > pageH - 40) {
+  if (y + cardH > pageH - 50) {
     doc.addPage();
     y = 40;
   }
 
-  // Card
+  // ===== Card =====
   doc.setFillColor(255, 247, 237);
   doc.roundedRect(cardX, y, cardW, cardH, 10, 10, 'F');
   doc.setDrawColor(249, 115, 22);
@@ -289,25 +302,24 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
   // Título
   doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
   doc.setTextColor(249, 115, 22);
-  doc.text('PAGAMENTO VIA PIX', cardX + 16, y + 22);
-
+  doc.text('PAGAMENTO VIA PIX', cardX + padX, y + 22);
   doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.4);
-  doc.line(cardX + 16, y + 30, cardX + cardW - 16, y + 30);
+  doc.line(cardX + padX, y + 30, cardX + cardW - padX, y + 30);
 
-  // QR (esquerda)
-  const qrSize = 110;
-  const qrX = cardX + 16;
-  const qrY = y + 38;
+  // ===== Linha 1: QR (esquerda) + Dados (direita) =====
+  const rowY = y + headeRowStart(headerH);
+  const qrSize = 120;
+  const qrX = cardX + padX;
+  const qrY = rowY;
+  // Fundo branco atrás do QR (melhora leitura)
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 8, 4, 4, 'F');
   if (qrDataUrl) doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
 
-  // Dados (direita do QR)
-  const infoX = qrX + qrSize + 14;
-  const infoMaxW = cardX + cardW - infoX - 16;
-  let iy = qrY + 12;
-
-  const tipoLabel: Record<string, string> = {
-    cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
-  };
+  // Dados à direita
+  const infoX = qrX + qrSize + 18;
+  const infoMaxW = cardX + cardW - infoX - padX;
+  let iy = qrY + 6;
 
   function row(label: string, value: string, bold = false) {
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
@@ -317,14 +329,13 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
     doc.setTextColor(20, 20, 20);
     const lines = doc.splitTextToSize(value, infoMaxW);
     doc.text(lines[0] ?? '', infoX, iy + 12);
-    iy += 26;
+    iy += 28;
   }
 
   row('Beneficiário', driver.pixBeneficiario || driver.nome || '—', true);
-  row(`Chave (${tipoLabel[driver.pixTipo] ?? driver.pixTipo})`, driver.pixChave);
   if (driver.banco || driver.agencia || driver.conta) {
     const bancoLinha = [
-      driver.banco ? `${driver.banco}` : '',
+      driver.banco || '',
       driver.agencia ? `Ag ${driver.agencia}` : '',
       driver.conta ? `Cc ${driver.conta}` : '',
     ].filter(Boolean).join('  •  ');
@@ -334,26 +345,43 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
     doc.setTextColor(110, 110, 110);
     doc.text('VALOR', infoX, iy);
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
     doc.setTextColor(249, 115, 22);
-    doc.text(fmtBRL(valor), infoX, iy + 14);
+    doc.text(fmtBRL(valor), infoX, iy + 16);
   }
 
-  // Copia e Cola — abaixo do bloco principal
-  if (copiaECola) {
-    const cyStart = y + cardH - (valor > 0 ? 36 : 20);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
-    doc.setTextColor(110, 110, 110);
-    doc.text('PIX COPIA E COLA', cardX + 16, cyStart);
-    doc.setFont('courier', 'normal'); doc.setFontSize(6.5);
-    doc.setTextColor(40, 40, 40);
-    const lines = doc.splitTextToSize(copiaECola, cardW - 32);
-    doc.text(lines.slice(0, 2), cardX + 16, cyStart + 10);
-  }
+  // ===== Linha 2: Chave PIX destacada (caixa branca grande) =====
+  const keyY = y + headerH + topRowH;
+  const keyX = cardX + padX;
+  const keyW = cardW - padX * 2;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.8);
+  doc.roundedRect(keyX, keyY, keyW, keyBoxH - 6, 6, 6, 'FD');
+
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+  doc.setTextColor(249, 115, 22);
+  doc.text(`CHAVE PIX (${tipoLabel[driver.pixTipo] ?? driver.pixTipo}) — COPIE E COLE NO SEU BANCO`, keyX + 10, keyY + 13);
+
+  doc.setFont('courier', 'bold'); doc.setFontSize(13);
+  doc.setTextColor(20, 20, 20);
+  const chaveLines = doc.splitTextToSize(driver.pixChave, keyW - 20);
+  doc.text(chaveLines[0] ?? '', keyX + 10, keyY + 32);
+
+  // ===== Linha 3: Copia e Cola completo (BR Code) =====
+  const codeY = keyY + keyBoxH + 4;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+  doc.setTextColor(110, 110, 110);
+  doc.text('PIX COPIA E COLA (BR CODE COMPLETO COM VALOR)', cardX + padX, codeY);
+  doc.setFont('courier', 'normal'); doc.setFontSize(7);
+  doc.setTextColor(40, 40, 40);
+  doc.text(codeLines, cardX + padX, codeY + 10);
 
   doc.setTextColor(20, 20, 20);
   return y + cardH + 14;
 }
+
+// helper trivial para legibilidade
+function headeRowStart(headerH: number) { return headerH + 4; }
 
 
 export function shareWhatsApp(message: string) {
