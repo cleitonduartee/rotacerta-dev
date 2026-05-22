@@ -240,6 +240,122 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   return doc.output('blob');
 }
 
+/**
+ * Bloco "Pagamento via PIX" (QR Code + Copia e Cola + dados bancários).
+ * Não renderiza nada se o caminhoneiro não tiver chave PIX cadastrada.
+ * Retorna o novo `y` para continuar o relatório abaixo.
+ */
+export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiquido: number): Promise<number> {
+  if (!driver?.pixChave || !driver?.pixTipo) return y;
+
+  const W = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const valor = valorLiquido > 0 ? valorLiquido : 0;
+
+  // Gera payload + QR
+  let qrDataUrl = '';
+  let copiaECola = '';
+  try {
+    copiaECola = buildPixPayload({
+      tipo: driver.pixTipo as PixKeyType,
+      chave: driver.pixChave,
+      nome: driver.pixBeneficiario || driver.nome || 'Beneficiario',
+      cidade: driver.pixCidade || 'BRASIL',
+      valor: valor,
+    });
+    qrDataUrl = await QRCode.toDataURL(copiaECola, { margin: 1, width: 320, errorCorrectionLevel: 'M' });
+  } catch (e) {
+    console.warn('[pix] falha ao gerar payload', e);
+    return y;
+  }
+
+  const cardX = 30;
+  const cardW = W - 60;
+  const cardH = valor > 0 ? 175 : 155;
+
+  // Quebra de página se não couber
+  if (y + cardH > pageH - 40) {
+    doc.addPage();
+    y = 40;
+  }
+
+  // Card
+  doc.setFillColor(255, 247, 237);
+  doc.roundedRect(cardX, y, cardW, cardH, 10, 10, 'F');
+  doc.setDrawColor(249, 115, 22);
+  doc.setLineWidth(1.2);
+  doc.roundedRect(cardX, y, cardW, cardH, 10, 10, 'S');
+
+  // Título
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+  doc.setTextColor(249, 115, 22);
+  doc.text('PAGAMENTO VIA PIX', cardX + 16, y + 22);
+
+  doc.setDrawColor(249, 115, 22); doc.setLineWidth(0.4);
+  doc.line(cardX + 16, y + 30, cardX + cardW - 16, y + 30);
+
+  // QR (esquerda)
+  const qrSize = 110;
+  const qrX = cardX + 16;
+  const qrY = y + 38;
+  if (qrDataUrl) doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+  // Dados (direita do QR)
+  const infoX = qrX + qrSize + 14;
+  const infoMaxW = cardX + cardW - infoX - 16;
+  let iy = qrY + 12;
+
+  const tipoLabel: Record<string, string> = {
+    cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
+  };
+
+  function row(label: string, value: string, bold = false) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.setTextColor(110, 110, 110);
+    doc.text(label.toUpperCase(), infoX, iy);
+    doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(10);
+    doc.setTextColor(20, 20, 20);
+    const lines = doc.splitTextToSize(value, infoMaxW);
+    doc.text(lines[0] ?? '', infoX, iy + 12);
+    iy += 26;
+  }
+
+  row('Beneficiário', driver.pixBeneficiario || driver.nome || '—', true);
+  row(`Chave (${tipoLabel[driver.pixTipo] ?? driver.pixTipo})`, driver.pixChave);
+  if (driver.banco || driver.agencia || driver.conta) {
+    const bancoLinha = [
+      driver.banco ? `${driver.banco}` : '',
+      driver.agencia ? `Ag ${driver.agencia}` : '',
+      driver.conta ? `Cc ${driver.conta}` : '',
+    ].filter(Boolean).join('  •  ');
+    row('Banco', bancoLinha);
+  }
+  if (valor > 0) {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.setTextColor(110, 110, 110);
+    doc.text('VALOR', infoX, iy);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+    doc.setTextColor(249, 115, 22);
+    doc.text(fmtBRL(valor), infoX, iy + 14);
+  }
+
+  // Copia e Cola — abaixo do bloco principal
+  if (copiaECola) {
+    const cyStart = y + cardH - (valor > 0 ? 36 : 20);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+    doc.setTextColor(110, 110, 110);
+    doc.text('PIX COPIA E COLA', cardX + 16, cyStart);
+    doc.setFont('courier', 'normal'); doc.setFontSize(6.5);
+    doc.setTextColor(40, 40, 40);
+    const lines = doc.splitTextToSize(copiaECola, cardW - 32);
+    doc.text(lines.slice(0, 2), cardX + 16, cyStart + 10);
+  }
+
+  doc.setTextColor(20, 20, 20);
+  return y + cardH + 14;
+}
+
+
 export function shareWhatsApp(message: string) {
   const url = `https://wa.me/?text=${encodeURIComponent(message)}`;
   window.open(url, '_blank');
