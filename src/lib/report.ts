@@ -275,10 +275,10 @@ export async function drawPixBlock(doc: jsPDF, y: number, driver: any, valorLiqu
     cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
   };
 
-  // Card compacto — altura fixa enxuta
+  // Card compacto — altura fixa enxuta (sem valor, pois TOTAIS GERAIS já exibe)
   const cardX = 30;
   const cardW = W - 60;
-  const cardH = 108;
+  const cardH = 88;
   const padX = 14;
 
   if (y + cardH > pageH - 50) { doc.addPage(); y = 40; }
