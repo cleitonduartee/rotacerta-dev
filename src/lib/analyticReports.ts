@@ -650,6 +650,10 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
     { label: 'Margem líquida', value: `${margem.toFixed(1)}%`, tone: margem >= 0 ? 'success' : 'danger' },
   ]);
 
+  // ============ PIX (QR Code + dados bancários) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
+
   // Por caminhão
   const trucksAgg = aggByTruck(input.trips, input.trucks);
   if (trucksAgg.length > 0) {
