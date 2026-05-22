@@ -122,8 +122,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.setTextColor(20, 20, 20);
   y = y + cardH + 14;
 
-  // ============ PIX ============
-  y = await drawPixBlock(doc, y, input.driver, input.totals.liquido);
+
 
 
   // Por caminhão
