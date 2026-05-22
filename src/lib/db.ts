@@ -10,6 +10,14 @@ export interface Driver {
   cpf?: string;       // mantido para compat — armazena CPF ou CNPJ formatado
   telefone?: string;
   email?: string;     // opcional, útil para recuperação se trocar de número
+  // Dados de recebimento (PIX) — aparecem no relatório de fechamento
+  pixTipo?: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
+  pixChave?: string;
+  pixBeneficiario?: string;
+  pixCidade?: string;
+  banco?: string;
+  agencia?: string;
+  conta?: string;
 }
 
 export interface Truck {
