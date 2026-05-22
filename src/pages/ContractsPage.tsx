@@ -205,9 +205,10 @@ export default function ContractsPage() {
     const title = `Fechamento — ${p?.nome ?? ''} (${harvest?.nome ?? ''})`;
     const resumo = buildResumoMensagem(c);
 
-    // Web Share API com arquivo: abre seletor nativo (WhatsApp, etc.) em mobile
+    // Web Share API com arquivo (mobile): abre seletor nativo com o PDF anexado.
     const nav: any = navigator;
-    if (nav.canShare && nav.canShare({ files: [file] })) {
+    const canShareFiles = typeof nav.canShare === 'function' && nav.canShare({ files: [file] });
+    if (canShareFiles) {
       try {
         await nav.share({ files: [file], title, text: resumo });
         return;
@@ -217,15 +218,14 @@ export default function ContractsPage() {
       }
     }
 
-    // Fallback (desktop / WhatsApp Web não aceita anexo via link):
-    // baixa o PDF e abre o WhatsApp com a mensagem; usuário anexa o arquivo já baixado.
+    // Fallback (desktop / navegador sem suporte): baixa o PDF e abre o WhatsApp Web.
     const url = URL.createObjectURL(out.blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = out.filename;
     a.click();
-    URL.revokeObjectURL(url);
-    toast.info('PDF baixado. No WhatsApp Web, clique no clipe 📎 e anexe o arquivo.', { duration: 6000 });
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast.info('PDF baixado. No WhatsApp, clique no clipe 📎 e anexe o arquivo para enviar ao produtor.', { duration: 8000 });
     shareWhatsApp(resumo);
   }
 
