@@ -327,6 +327,10 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 
   y = drawResultBox(doc, y, receita, despesas, liquido);
 
+  // ============ PIX (QR Code + dados bancários) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
+
   // ========== POR CONTRATO ==========
   y = drawSectionTitle(doc, y, 'Resultado por contrato', `${input.contracts.length} contrato(s)`);
 
