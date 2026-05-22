@@ -318,6 +318,9 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
   const despesas = input.expenses.reduce((s, e) => s + (e.valor || 0), 0);
   const liquido = receita - despesas;
 
+  // ============ PIX (logo abaixo do cabeçalho) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
   y = drawKPIs(doc, y, [
     { label: 'Viagens', value: String(input.trips.length) },
     { label: 'Sacos', value: fmtNum(totalSacos, 1) },
@@ -327,8 +330,7 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 
   y = drawResultBox(doc, y, receita, despesas, liquido);
 
-  // ============ PIX (QR Code + dados bancários) ============
-  y = await drawPixBlock(doc, y, input.driver, liquido);
+
 
 
   // ========== POR CONTRATO ==========
