@@ -221,33 +221,54 @@ export type Database = {
       }
       profiles: {
         Row: {
+          agencia: string | null
+          banco: string | null
+          conta: string | null
           cpf: string | null
           created_at: string
           email: string | null
           id: string
           nome: string | null
+          pix_beneficiario: string | null
+          pix_chave: string | null
+          pix_cidade: string | null
+          pix_tipo: string | null
           recovery_code: string | null
           telefone: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          agencia?: string | null
+          banco?: string | null
+          conta?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
           nome?: string | null
+          pix_beneficiario?: string | null
+          pix_chave?: string | null
+          pix_cidade?: string | null
+          pix_tipo?: string | null
           recovery_code?: string | null
           telefone: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          agencia?: string | null
+          banco?: string | null
+          conta?: string | null
           cpf?: string | null
           created_at?: string
           email?: string | null
           id?: string
           nome?: string | null
+          pix_beneficiario?: string | null
+          pix_chave?: string | null
+          pix_cidade?: string | null
+          pix_tipo?: string | null
           recovery_code?: string | null
           telefone?: string
           updated_at?: string
