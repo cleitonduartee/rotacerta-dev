@@ -170,6 +170,25 @@ export default function CadastrosPage() {
   );
 }
 
+type PixTipo = 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
+
+function maskPixChave(tipo: PixTipo, v: string): string {
+  if (tipo === 'cpf') return maskCPF(v);
+  if (tipo === 'cnpj') return maskCNPJ(v);
+  if (tipo === 'telefone') return maskPhone(v);
+  return v;
+}
+
+function isValidPix(tipo: PixTipo, v: string): boolean {
+  const s = (v || '').trim();
+  if (!s) return false;
+  if (tipo === 'cpf' || tipo === 'cnpj') return isValidCpfCnpj(s);
+  if (tipo === 'email') return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+  if (tipo === 'telefone') return onlyDigits(s).length >= 10;
+  // aleatoria — UUID v4-ish
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+}
+
 function DriverSection({ driver }: { driver?: any }) {
   const { profile, user, refreshProfile } = useAuth();
   const [nome, setNome] = useState('');
@@ -177,6 +196,14 @@ function DriverSection({ driver }: { driver?: any }) {
   const [doc, setDoc] = useState('');
   const [tel, setTel] = useState('');
   const [email, setEmail] = useState('');
+  // PIX
+  const [pixTipo, setPixTipo] = useState<PixTipo>('cpf');
+  const [pixChave, setPixChave] = useState('');
+  const [pixBeneficiario, setPixBeneficiario] = useState('');
+  const [pixCidade, setPixCidade] = useState('');
+  const [banco, setBanco] = useState('');
+  const [agencia, setAgencia] = useState('');
+  const [conta, setConta] = useState('');
   const [editing, setEditing] = useState(false);
   const [seeded, setSeeded] = useState(false);
 
@@ -187,13 +214,21 @@ function DriverSection({ driver }: { driver?: any }) {
     if (!profile) return;
     setSeeded(true);
     const cpfDigits = onlyDigits(profile.cpf ?? '');
-    if (!profile.nome && !cpfDigits && !profile.telefone && !profile.email) return;
+    const hasAny = profile.nome || cpfDigits || profile.telefone || profile.email || (profile as any).pix_chave;
+    if (!hasAny) return;
     db.drivers.add({
       nome: profile.nome ?? '',
       docType: 'cpf',
       cpf: cpfDigits ? maskCPF(cpfDigits) : '',
       telefone: profile.telefone ? maskPhone(profile.telefone) : '',
       email: profile.email ?? '',
+      pixTipo: ((profile as any).pix_tipo as PixTipo) ?? undefined,
+      pixChave: (profile as any).pix_chave ?? undefined,
+      pixBeneficiario: (profile as any).pix_beneficiario ?? undefined,
+      pixCidade: (profile as any).pix_cidade ?? undefined,
+      banco: (profile as any).banco ?? undefined,
+      agencia: (profile as any).agencia ?? undefined,
+      conta: (profile as any).conta ?? undefined,
     });
   }, [profile, driver, seeded]);
 
@@ -205,9 +240,16 @@ function DriverSection({ driver }: { driver?: any }) {
       setDoc(dt === 'cpf' ? maskCPF(driver.cpf ?? '') : maskCNPJ(driver.cpf ?? ''));
       setTel(maskPhone(driver.telefone ?? ''));
       setEmail(driver.email ?? '');
+      const pt: PixTipo = driver.pixTipo ?? 'cpf';
+      setPixTipo(pt);
+      setPixChave(driver.pixChave ? maskPixChave(pt, driver.pixChave) : '');
+      setPixBeneficiario(driver.pixBeneficiario ?? '');
+      setPixCidade(driver.pixCidade ?? '');
+      setBanco(driver.banco ?? '');
+      setAgencia(driver.agencia ?? '');
+      setConta(driver.conta ?? '');
       setEditing(false);
     } else {
-      // pré-preenche a partir do profile (Cloud) quando ainda não há driver local
       if (profile) {
         const cpfDigits = onlyDigits(profile.cpf ?? '');
         setNome(profile.nome ?? '');
@@ -220,19 +262,10 @@ function DriverSection({ driver }: { driver?: any }) {
     }
   }, [driver, profile]);
 
-  const dirty = !driver
-    ? Boolean(nome || doc || tel || email)
-    : (
-        nome !== (driver.nome ?? '') ||
-        doc !== (driver.docType === 'cnpj' ? maskCNPJ(driver.cpf ?? '') : maskCPF(driver.cpf ?? '')) ||
-        tel !== maskPhone(driver.telefone ?? '') ||
-        email !== (driver.email ?? '') ||
-        docType !== (driver.docType ?? (onlyDigits(driver.cpf ?? '').length > 11 ? 'cnpj' : 'cpf'))
-      );
-
   const docValid = !doc || isValidCpfCnpj(doc);
   const emailValid = !email || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const canSave = editing && Boolean(nome) && docValid && emailValid && dirty;
+  const pixValid = !pixChave || isValidPix(pixTipo, pixChave);
+  const canSave = editing && Boolean(nome) && docValid && emailValid && pixValid;
 
   async function save() {
     if (!nome) return toast.error('Informe seu nome');
@@ -240,25 +273,34 @@ function DriverSection({ driver }: { driver?: any }) {
       return toast.error(docType === 'cpf' ? 'CPF inválido' : 'CNPJ inválido');
     }
     if (email && !emailValid) return toast.error('Email inválido');
-    const payload = { nome, docType, cpf: doc, telefone: tel, email: email.trim() };
+    if (pixChave && !pixValid) return toast.error('Chave PIX inválida');
+
+    const payload: any = {
+      nome, docType, cpf: doc, telefone: tel, email: email.trim(),
+      pixTipo: pixChave ? pixTipo : undefined,
+      pixChave: pixChave || undefined,
+      pixBeneficiario: pixBeneficiario.trim() || nome.trim() || undefined,
+      pixCidade: pixCidade.trim() || undefined,
+      banco: banco.trim() || undefined,
+      agencia: agencia.trim() || undefined,
+      conta: conta.trim() || undefined,
+    };
     if (driver) await db.drivers.update(driver.id, payload);
     else await db.drivers.add(payload);
 
-    // Sincroniza com o profile (Cloud) — mantém nome/cpf/telefone/email coerentes
-    // entre o login e o restante do app. Sem isso, alterações aqui ficavam só
-    // no IndexedDB local e o login continuava mostrando o nome antigo.
     if (user) {
-      const cloudPayload: {
-        nome: string | null;
-        telefone: string | null;
-        email: string | null;
-        cpf?: string;
-      } = {
+      const cloudPayload: any = {
         nome: nome.trim() || null,
         telefone: onlyDigits(tel) || null,
         email: email.trim() ? email.trim().toLowerCase() : null,
+        pix_tipo: pixChave ? pixTipo : null,
+        pix_chave: pixChave || null,
+        pix_beneficiario: pixBeneficiario.trim() || nome.trim() || null,
+        pix_cidade: pixCidade.trim() || null,
+        banco: banco.trim() || null,
+        agencia: agencia.trim() || null,
+        conta: conta.trim() || null,
       };
-      // Só envia CPF (não CNPJ) ao profile do Cloud — schema só guarda CPF
       if (docType === 'cpf' && doc) cloudPayload.cpf = onlyDigits(doc);
 
       try {
@@ -267,7 +309,6 @@ function DriverSection({ driver }: { driver?: any }) {
           .update(cloudPayload)
           .eq('user_id', user.id);
         if (upErr) {
-          // erro típico: CPF duplicado em outra conta (constraint unique)
           const msg = /duplicate|unique/i.test(upErr.message)
             ? 'Este CPF já está vinculado a outra conta'
             : 'Salvo localmente, mas houve erro ao sincronizar com a nuvem';
@@ -289,6 +330,10 @@ function DriverSection({ driver }: { driver?: any }) {
     setDocType(t);
     setDoc(t === 'cpf' ? maskCPF(doc) : maskCNPJ(doc));
   }
+  function switchPixTipo(t: PixTipo) {
+    setPixTipo(t);
+    setPixChave(maskPixChave(t, pixChave));
+  }
 
   function cancel() {
     if (driver) {
@@ -298,9 +343,21 @@ function DriverSection({ driver }: { driver?: any }) {
       setDoc(dt === 'cpf' ? maskCPF(driver.cpf ?? '') : maskCNPJ(driver.cpf ?? ''));
       setTel(maskPhone(driver.telefone ?? ''));
       setEmail(driver.email ?? '');
+      const pt: PixTipo = driver.pixTipo ?? 'cpf';
+      setPixTipo(pt);
+      setPixChave(driver.pixChave ? maskPixChave(pt, driver.pixChave) : '');
+      setPixBeneficiario(driver.pixBeneficiario ?? '');
+      setPixCidade(driver.pixCidade ?? '');
+      setBanco(driver.banco ?? '');
+      setAgencia(driver.agencia ?? '');
+      setConta(driver.conta ?? '');
       setEditing(false);
     }
   }
+
+  const pixTipoLabel: Record<PixTipo, string> = {
+    cpf: 'CPF', cnpj: 'CNPJ', email: 'E-mail', telefone: 'Telefone', aleatoria: 'Aleatória',
+  };
 
   // Modo visualização
   if (driver && !editing) {
@@ -312,6 +369,30 @@ function DriverSection({ driver }: { driver?: any }) {
           <InfoRow label="Telefone" value={driver.telefone || '—'} />
           <InfoRow label="Email" value={driver.email || '—'} />
         </div>
+
+        <div className="mt-3 rounded-lg border border-border bg-secondary/40 p-3">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-primary">Recebimento (PIX)</p>
+          {driver.pixChave ? (
+            <div className="space-y-2">
+              <InfoRow label={`PIX (${pixTipoLabel[(driver.pixTipo as PixTipo) ?? 'cpf']})`} value={driver.pixChave} />
+              <InfoRow label="Beneficiário" value={driver.pixBeneficiario || driver.nome || '—'} />
+              <InfoRow label="Cidade" value={driver.pixCidade || '—'} />
+              {driver.banco && <InfoRow label="Banco" value={driver.banco} />}
+              {(driver.agencia || driver.conta) && (
+                <InfoRow label="Ag / Conta" value={`${driver.agencia || '—'} / ${driver.conta || '—'}`} />
+              )}
+              <p className="flex items-start gap-1.5 pt-1 text-[11px] text-muted-foreground">
+                <Info className="mt-0.5 h-3 w-3 flex-shrink-0 text-primary" />
+                <span>Estes dados aparecem com QR Code no PDF de fechamento enviado ao produtor.</span>
+              </p>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Sem chave PIX cadastrada. Edite para gerar QR Code no relatório de fechamento.
+            </p>
+          )}
+        </div>
+
         <button
           onClick={() => setEditing(true)}
           className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 py-2.5 font-bold text-primary hover:bg-primary/20"
@@ -323,6 +404,13 @@ function DriverSection({ driver }: { driver?: any }) {
   }
 
   const fieldCls = inputCls + ' disabled:opacity-60 disabled:cursor-not-allowed';
+  const pixPlaceholder: Record<PixTipo, string> = {
+    cpf: '999.999.999-99',
+    cnpj: '99.999.999/9999-99',
+    email: 'email@exemplo.com',
+    telefone: '(99) 99999-9999',
+    aleatoria: 'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx',
+  };
 
   return (
     <Section title="Seus dados" icon={User}>
@@ -378,6 +466,75 @@ function DriverSection({ driver }: { driver?: any }) {
           {email && !emailValid && (
             <p className="text-xs text-destructive">Email inválido</p>
           )}
+        </div>
+
+        {/* ============ PIX ============ */}
+        <div className="mt-3 space-y-2 rounded-lg border border-border bg-secondary/30 p-3">
+          <p className="text-xs font-bold uppercase tracking-wider text-primary">Recebimento (PIX)</p>
+          <p className="text-[11px] text-muted-foreground">
+            Aparece como QR Code no PDF de fechamento. Opcional — deixe em branco se não quiser.
+          </p>
+
+          <div className="grid grid-cols-5 gap-1 rounded-lg border border-border bg-input p-1 text-[11px] font-bold">
+            {(['cpf', 'cnpj', 'email', 'telefone', 'aleatoria'] as const).map(t => (
+              <button key={t} type="button" onClick={() => switchPixTipo(t)} disabled={!editing}
+                className={'rounded-md py-1.5 disabled:opacity-60 ' + (pixTipo === t ? 'bg-primary text-primary-foreground' : 'text-muted-foreground')}>
+                {pixTipoLabel[t]}
+              </button>
+            ))}
+          </div>
+
+          <input
+            className={fieldCls}
+            placeholder={pixPlaceholder[pixTipo]}
+            value={pixChave}
+            onChange={e => setPixChave(maskPixChave(pixTipo, e.target.value))}
+            disabled={!editing}
+          />
+          {pixChave && !pixValid && (
+            <p className="text-xs text-destructive">Chave PIX inválida para o tipo selecionado</p>
+          )}
+
+          <input
+            className={fieldCls}
+            placeholder="Nome do beneficiário (até 25 caracteres)"
+            value={pixBeneficiario}
+            onChange={e => setPixBeneficiario(e.target.value)}
+            maxLength={25}
+            disabled={!editing}
+          />
+          <input
+            className={fieldCls}
+            placeholder="Cidade do beneficiário (até 15 caracteres)"
+            value={pixCidade}
+            onChange={e => setPixCidade(e.target.value)}
+            maxLength={15}
+            disabled={!editing}
+          />
+
+          <div className="grid grid-cols-3 gap-2">
+            <input
+              className={fieldCls}
+              placeholder="Banco"
+              value={banco}
+              onChange={e => setBanco(e.target.value)}
+              disabled={!editing}
+            />
+            <input
+              className={fieldCls}
+              placeholder="Agência"
+              value={agencia}
+              onChange={e => setAgencia(e.target.value)}
+              disabled={!editing}
+            />
+            <input
+              className={fieldCls}
+              placeholder="Conta"
+              value={conta}
+              onChange={e => setConta(e.target.value)}
+              disabled={!editing}
+            />
+          </div>
         </div>
 
         <div className="flex gap-2 pt-1">

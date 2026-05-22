@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { fmtBRL, fmtDate, fmtNum } from './format';
+import { drawPixBlock } from './report';
 
 // ============================================================================
 // TIPOS
@@ -326,6 +327,10 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 
   y = drawResultBox(doc, y, receita, despesas, liquido);
 
+  // ============ PIX (QR Code + dados bancários) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
+
   // ========== POR CONTRATO ==========
   y = drawSectionTitle(doc, y, 'Resultado por contrato', `${input.contracts.length} contrato(s)`);
 
@@ -648,6 +653,10 @@ export async function generateAnalyticContractReport(input: ContractReportInput)
     { label: 'Líquido por saco', value: fmtBRL(liquidoPorSaco), tone: liquidoPorSaco >= 0 ? 'highlight' : 'danger' },
     { label: 'Margem líquida', value: `${margem.toFixed(1)}%`, tone: margem >= 0 ? 'success' : 'danger' },
   ]);
+
+  // ============ PIX (QR Code + dados bancários) ============
+  y = await drawPixBlock(doc, y, input.driver, liquido);
+
 
   // Por caminhão
   const trucksAgg = aggByTruck(input.trips, input.trucks);
