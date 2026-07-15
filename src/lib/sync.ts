@@ -398,6 +398,23 @@ export async function pushAll(uid: string) {
       updated_at: toIso(r.updatedAt),
     };
   });
+
+  maps = await buildIdMaps();
+
+  await pushTable('maintenances', (r: any) => {
+    const truck_id = r.truckId ? maps.truckLocalToRemote.get(r.truckId) : null;
+    if (!truck_id) return null;
+    return {
+      user_id: uid,
+      truck_id,
+      tipo: r.tipo,
+      tipo_outro: r.tipoOutro ?? null,
+      km: r.km ?? 0,
+      data: r.data,
+      observacao: r.observacao ?? null,
+      updated_at: toIso(r.updatedAt),
+    };
+  });
 }
 
 // ============================================================
