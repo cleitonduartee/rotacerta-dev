@@ -202,7 +202,7 @@ export default function MaintenancePage() {
 
 interface FormProps {
   initial: Maintenance | null;
-  trucks: Awaited<ReturnType<typeof db.trucks.toArray>>;
+  trucks: Array<{ id?: number; placa: string; modelo?: string }>;
   onClose: () => void;
 }
 
