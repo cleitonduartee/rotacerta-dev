@@ -172,7 +172,7 @@ export function AppLayout() {
                   end={t.to === '/'}
                   className={({ isActive }) =>
                     cn(
-                      'flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium uppercase tracking-wide transition-colors',
+                      'flex flex-col items-center gap-0.5 py-2.5 px-1 text-[9px] font-medium uppercase tracking-wide transition-colors',
                       isActive ? 'text-primary' : 'text-muted-foreground'
                     )
                   }
