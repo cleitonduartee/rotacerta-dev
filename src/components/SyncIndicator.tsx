@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { toast } from 'sonner';
 
 const EMPTY: PendingBreakdown = {
-  trucks: 0, producers: 0, harvests: 0, contracts: 0, trips: 0, expenses: 0, deletes: 0, total: 0,
+  trucks: 0, producers: 0, harvests: 0, contracts: 0, trips: 0, expenses: 0, maintenances: 0, deletes: 0, total: 0,
 };
 
 const LABELS: Array<{ key: keyof PendingBreakdown; singular: string; plural: string }> = [
@@ -20,6 +20,7 @@ const LABELS: Array<{ key: keyof PendingBreakdown; singular: string; plural: str
   { key: 'harvests', singular: 'safra', plural: 'safras' },
   { key: 'producers', singular: 'produtor', plural: 'produtores' },
   { key: 'trucks', singular: 'caminhão', plural: 'caminhões' },
+  { key: 'maintenances', singular: 'manutenção', plural: 'manutenções' },
   { key: 'deletes', singular: 'exclusão', plural: 'exclusões' },
 ];
 
