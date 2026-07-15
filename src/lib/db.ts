@@ -1,7 +1,30 @@
 import Dexie, { type Table } from 'dexie';
 
 export type SyncStatus = 'pending' | 'synced';
-export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses';
+export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses' | 'maintenances';
+
+export type MaintenanceTipo =
+  | 'oleo_motor'
+  | 'oleo_cambio'
+  | 'oleo_diferencial'
+  | 'revisao_cubo'
+  | 'troca_pneu'
+  | 'lona_freio'
+  | 'campana'
+  | 'outro';
+
+export interface Maintenance {
+  id?: number;
+  remoteId?: string;
+  truckId: number;
+  tipo: MaintenanceTipo;
+  tipoOutro?: string;    // preenchido quando tipo === 'outro'
+  km: number;
+  data: string;           // ISO yyyy-MM-dd
+  observacao?: string;
+  syncStatus: SyncStatus;
+  updatedAt: number;
+}
 
 export interface Driver {
   id?: number;
