@@ -1,114 +1,43 @@
+## Nova área: Manutenções
 
-# QR Code PIX no relatório de fechamento
+### 1. Banco (Lovable Cloud + IndexedDB)
+**Nova tabela `maintenances`** no Cloud + Dexie local (com sync padrão do app):
+- `truck_id` (FK trucks)
+- `tipo` (enum como texto): `oleo_motor`, `oleo_cambio`, `oleo_diferencial`, `revisao_cubo`, `troca_pneu`, `lona_freio`, `campana`, `outro`
+- `tipo_outro` (texto livre, obrigatório quando tipo=`outro`)
+- `km` (inteiro — km atual do caminhão no momento)
+- `data` (date — padrão `now()`, editável)
+- `observacao` (texto opcional)
+- Campos padrão: `id`, `user_id`, `created_at`, `updated_at`
+- RLS por `user_id` + GRANTs para `authenticated` e `service_role`.
 
-## Objetivo
-Quando o caminhoneiro encaminhar o relatório por WhatsApp, o produtor abre o PDF e já vê: **chave PIX**, **dados bancários** e um **QR Code PIX Copia e Cola** com o **valor líquido** já preenchido. Basta escanear no app do banco e pagar.
+### 2. Frontend
+**`src/lib/db.ts`**: adicionar interface `Maintenance` + store Dexie v4 com índices `truckId, data, tipo, syncStatus, remoteId`.
 
-## O que o usuário precisa cadastrar (uma vez)
-Em **Cadastros → Seus dados (caminhoneiro)**, novos campos opcionais:
+**`src/lib/sync.ts`**: incluir `maintenances` no push/pull (mesmo padrão dos outros).
 
-- **Tipo de chave PIX**: CPF/CNPJ, Telefone, E-mail ou Chave aleatória
-- **Chave PIX** (com máscara conforme o tipo)
-- **Nome do beneficiário** (pré-preenchido com o nome do cadastro)
-- **Cidade do beneficiário** (obrigatório no padrão BR Code, até 15 caracteres)
-- **Banco** (texto livre, ex.: "Sicredi")
-- **Agência** e **Conta** (texto livre, opcional — aparecem só como referência no PDF)
+**`src/pages/MaintenancePage.tsx`** (nova):
+- Header padrão `PageHeader`.
+- Botão "Nova manutenção" abre form (modal ou rota `/manutencoes/nova`).
+- Form:
+  - Select Caminhão (lista de `trucks`).
+  - Select Tipo com as opções fixas em português. Se "Troca de óleo" → segundo select com Motor / Câmbio / Diferencial. Se "Outro" → input texto obrigatório.
+  - Input Data (DatePicker já existente, default hoje).
+  - Input KM atual (numérico, obrigatório).
+  - Textarea Observação (opcional).
+- Listagem abaixo: card por manutenção mostrando placa, tipo formatado, data (dd/MM/yyyy), km e observação. Ordenada por data desc. Filtro rápido por caminhão.
+- Ações: editar/excluir com `deleteWithTombstone`.
 
-Validação por tipo de chave (CPF/CNPJ via dígito verificador, e-mail por regex, telefone +55DDDNUMERO, aleatória UUID).
+**`src/App.tsx`**: rota `/manutencoes`.
 
-## O que aparece no PDF de fechamento
+**`src/components/AppLayout.tsx`**: adicionar item "Manutenção" (ícone `Wrench` do lucide) nas tabs mobile e sidebar desktop. Como já são 5 abas no mobile, vou substituir "Cadastros" por um grupo? Não — para preservar UX, mantenho 5 abas no mobile e adiciono "Manutenção" apenas na sidebar desktop + dentro da página Cadastros como atalho visível, OU trocar tab bar para 6 colunas. **Decisão**: aumentar para 6 colunas no mobile (grid-cols-6, ícones um pouco menores) — assim fica acessível em ambos.
 
-Novo bloco **"Pagamento via PIX"** abaixo do card de TOTAIS GERAIS, só quando o caminhoneiro tiver chave PIX cadastrada:
+### 3. Formatação
+`src/lib/format.ts`: helper `formatMaintenanceType(tipo, tipoOutro?)` → "Troca de óleo (motor)", etc.
 
-```text
-┌─────────────────────────────────────────────┐
-│ PAGAMENTO VIA PIX                           │
-│                                             │
-│  [ QR CODE ]   Beneficiário: João da Silva  │
-│   ~140x140     Chave (CPF): 123.456.789-00  │
-│                Banco: Sicredi               │
-│                Ag: 0001  Conta: 12345-6     │
-│                                             │
-│  Valor: R$ 12.345,67  (já no QR Code)       │
-│                                             │
-│  PIX Copia e Cola:                          │
-│  00020126360014BR.GOV.BCB.PIX0114+5511...   │
-└─────────────────────────────────────────────┘
-```
+### Fora do escopo (não vou fazer)
+- Alertas por km/intervalo — não pedido.
+- Vínculo com despesas — não pedido.
+- Relatório de manutenções — não pedido.
 
-- O QR Code carrega o **payload BR Code (EMV)** já com o valor líquido do fechamento — o produtor escaneia e o app do banco abre com valor pronto.
-- Abaixo do QR vai o **Copia e Cola** em texto, para quem prefere colar manualmente.
-- Se for relatório da **safra inteira** (vários contratos), o QR usa o **valor líquido total**. Se for de **um contrato só**, usa o líquido daquele contrato (comportamento já existente no relatório).
-
-## Quando o bloco PIX NÃO aparece
-- Caminhoneiro sem chave PIX cadastrada → relatório sai como hoje, sem o bloco.
-- Valor líquido ≤ 0 → mostra apenas a chave e os dados bancários, sem QR (PIX não aceita valor zero/negativo).
-
----
-
-## Detalhes técnicos (para referência)
-
-### 1. Schema local (Dexie / IndexedDB)
-Bump da versão do `db.ts` adicionando ao tipo `Driver`:
-```ts
-pixTipo?: 'cpf' | 'cnpj' | 'email' | 'telefone' | 'aleatoria';
-pixChave?: string;
-pixBeneficiario?: string;
-pixCidade?: string;
-banco?: string;
-agencia?: string;
-conta?: string;
-```
-Migração Dexie sem perda de dados (campos opcionais).
-
-### 2. Sincronização Cloud
-Adicionar as mesmas colunas na tabela `profiles` (Supabase) para que o cadastro acompanhe o usuário entre dispositivos. Migração SQL incluindo:
-```
-ALTER TABLE public.profiles
-  ADD COLUMN pix_tipo text,
-  ADD COLUMN pix_chave text,
-  ADD COLUMN pix_beneficiario text,
-  ADD COLUMN pix_cidade text,
-  ADD COLUMN banco text,
-  ADD COLUMN agencia text,
-  ADD COLUMN conta text;
-```
-RLS já existente (`profiles_*_own`) cobre os novos campos. Atualizar `src/lib/sync.ts` para enviar/receber os novos campos junto com o profile.
-
-### 3. UI de cadastro (`src/pages/CadastrosPage.tsx`)
-Nova seção **"Recebimento (PIX)"** dentro do `DriverSection`, com:
-- `Select` para tipo de chave
-- `Input` com máscara dinâmica
-- Campos banco/agência/conta/cidade
-- Mesma lógica de "salvar/cancelar/editar" já usada hoje
-
-### 4. Geração do payload BR Code
-Adicionar dependência `pix-utils` (ou implementação própria em ~80 linhas — preferível para não inflar bundle; o algoritmo é determinístico: TLV + CRC16-CCITT). Função pura em `src/lib/pix.ts`:
-```ts
-buildPixPayload({ chave, nome, cidade, valor, txid }): string
-```
-
-### 5. Geração do QR Code
-Adicionar dependência `qrcode` (já popular, ~20kb gz). No `src/lib/report.ts`:
-```ts
-const dataUrl = await QRCode.toDataURL(payload, { margin: 1, width: 280 });
-doc.addImage(dataUrl, 'PNG', x, y, 110, 110);
-```
-
-### 6. Atualização do relatório (`src/lib/report.ts`)
-- Receber `driver` com os novos campos (já é passado).
-- Tornar `generateHarvestReport` `async` (hoje já é) e gerar o QR antes de desenhar.
-- Renderizar o bloco PIX após o card de TOTAIS, antes de "Resumo por caminhão".
-- Garantir paginação: se faltar espaço, `doc.addPage()`.
-
-### 7. Compartilhamento WhatsApp
-A função `shareWhatsApp` continua igual — o PDF gerado já carrega o QR embutido. Sem mudança em `HarvestDetail.tsx` além de garantir que os novos campos do driver sejam passados (já são, via `driver[0]`).
-
----
-
-## Não está no escopo
-- Cobrança PIX dinâmica com URL/API de banco (exigiria integração bancária).
-- Atualização automática de status "pago/não pago".
-- Múltiplas chaves PIX por caminhoneiro.
-
-Esses ficam como evoluções futuras.
+Prossigo com essa estrutura?

@@ -165,6 +165,53 @@ export type Database = {
         }
         Relationships: []
       }
+      maintenances: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          km: number
+          observacao: string | null
+          tipo: string
+          tipo_outro: string | null
+          truck_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          id?: string
+          km?: number
+          observacao?: string | null
+          tipo: string
+          tipo_outro?: string | null
+          truck_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          km?: number
+          observacao?: string | null
+          tipo?: string
+          tipo_outro?: string | null
+          truck_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenances_truck_id_fkey"
+            columns: ["truck_id"]
+            isOneToOne: false
+            referencedRelation: "trucks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       phone_otps: {
         Row: {
           attempts: number

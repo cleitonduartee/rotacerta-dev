@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 type IdMap = Map<string, number>; // remoteId -> localId
 
-const ORDER: SyncTable[] = ['trucks', 'producers', 'harvests', 'contracts', 'trips', 'expenses'];
+const ORDER: SyncTable[] = ['trucks', 'producers', 'harvests', 'contracts', 'trips', 'expenses', 'maintenances'];
 
 let syncing = false;
 const syncErrors: string[] = [];
@@ -229,6 +229,31 @@ async function pullExpenses(uid: string, maps: Awaited<ReturnType<typeof buildId
   }
 }
 
+async function pullMaintenances(uid: string, maps: Awaited<ReturnType<typeof buildIdMaps>>) {
+  const { data, error } = await supabase.from('maintenances').select('*').eq('user_id', uid);
+  if (error) throw error;
+  for (const r of data ?? []) {
+    const truckLocal = r.truck_id ? maps.trucks.get(r.truck_id) : undefined;
+    if (truckLocal == null) continue;
+    const local = await db.maintenances.where('remoteId').equals(r.id).first();
+    const remoteUpdatedAt = fromIso(r.updated_at);
+    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') continue;
+    const payload: any = {
+      remoteId: r.id,
+      truckId: truckLocal,
+      tipo: r.tipo,
+      tipoOutro: r.tipo_outro ?? undefined,
+      km: Number(r.km ?? 0),
+      data: r.data,
+      observacao: r.observacao ?? undefined,
+      syncStatus: 'synced' as SyncStatus,
+      updatedAt: remoteUpdatedAt,
+    };
+    if (local) await db.maintenances.update(local.id!, payload);
+    else await db.maintenances.add(payload);
+  }
+}
+
 export async function pullAll(uid: string) {
   await pullTrucks(uid);
   await pullProducers(uid);
@@ -239,6 +264,7 @@ export async function pullAll(uid: string) {
   await pullTrips(uid, maps);
   maps = await buildIdMaps();
   await pullExpenses(uid, maps);
+  await pullMaintenances(uid, maps);
 }
 
 // ============================================================
@@ -372,6 +398,23 @@ export async function pushAll(uid: string) {
       updated_at: toIso(r.updatedAt),
     };
   });
+
+  maps = await buildIdMaps();
+
+  await pushTable('maintenances', (r: any) => {
+    const truck_id = r.truckId ? maps.truckLocalToRemote.get(r.truckId) : null;
+    if (!truck_id) return null;
+    return {
+      user_id: uid,
+      truck_id,
+      tipo: r.tipo,
+      tipo_outro: r.tipoOutro ?? null,
+      km: r.km ?? 0,
+      data: r.data,
+      observacao: r.observacao ?? null,
+      updated_at: toIso(r.updatedAt),
+    };
+  });
 }
 
 // ============================================================
@@ -431,22 +474,24 @@ export type PendingBreakdown = {
   contracts: number;
   trips: number;
   expenses: number;
+  maintenances: number;
   deletes: number;
   total: number;
 };
 
 export async function countPendingByTable(): Promise<PendingBreakdown> {
-  const [trucks, producers, harvests, contracts, trips, expenses, deletes] = await Promise.all([
+  const [trucks, producers, harvests, contracts, trips, expenses, maintenances, deletes] = await Promise.all([
     db.trucks.where('syncStatus').equals('pending').count(),
     db.producers.where('syncStatus').equals('pending').count(),
     db.harvests.where('syncStatus').equals('pending').count(),
     db.contracts.where('syncStatus').equals('pending').count(),
     db.trips.where('syncStatus').equals('pending').count(),
     db.expenses.where('syncStatus').equals('pending').count(),
+    db.maintenances.where('syncStatus').equals('pending').count(),
     db.tombstones.count(),
   ]);
   return {
-    trucks, producers, harvests, contracts, trips, expenses, deletes,
-    total: trucks + producers + harvests + contracts + trips + expenses + deletes,
+    trucks, producers, harvests, contracts, trips, expenses, maintenances, deletes,
+    total: trucks + producers + harvests + contracts + trips + expenses + maintenances + deletes,
   };
 }
