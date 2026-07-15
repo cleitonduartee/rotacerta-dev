@@ -164,7 +164,7 @@ export function AppLayout() {
 
         {/* Tab bar — apenas mobile */}
         <nav className="md:hidden safe-bottom fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 border-t border-border/60 bg-card/95 backdrop-blur">
-          <ul className="grid grid-cols-5">
+          <ul className="grid grid-cols-6">
             {tabs.map((t) => (
               <li key={t.to} data-tour={t.tourKey}>
                 <NavLink
