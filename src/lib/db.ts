@@ -147,6 +147,7 @@ class TruckTripDB extends Dexie {
   contracts!: Table<HarvestContract, number>;
   trips!: Table<Trip, number>;
   expenses!: Table<Expense, number>;
+  maintenances!: Table<Maintenance, number>;
   settings!: Table<Setting, string>;
   tombstones!: Table<Tombstone, number>;
 
@@ -174,6 +175,10 @@ class TruckTripDB extends Dexie {
       trips: '++id, remoteId, data, kind, truckId, contractId, syncStatus',
       expenses: '++id, remoteId, data, harvestId, tripId, contractId, syncStatus',
       tombstones: '++id, table, remoteId',
+    });
+    // v4: adiciona manutenções
+    this.version(4).stores({
+      maintenances: '++id, remoteId, truckId, data, tipo, syncStatus',
     });
   }
 }
@@ -214,7 +219,7 @@ export async function deleteWithTombstone(table: SyncTable, localId: number) {
 export async function wipeLocalData() {
   await db.transaction(
     'rw',
-    [db.trucks, db.producers, db.harvests, db.contracts, db.trips, db.expenses, db.tombstones, db.drivers],
+    [db.trucks, db.producers, db.harvests, db.contracts, db.trips, db.expenses, db.maintenances, db.tombstones, db.drivers],
     async () => {
       await Promise.all([
         db.trucks.clear(),
@@ -223,10 +228,28 @@ export async function wipeLocalData() {
         db.contracts.clear(),
         db.trips.clear(),
         db.expenses.clear(),
+        db.maintenances.clear(),
         db.tombstones.clear(),
         db.drivers.clear(),
       ]);
     },
   );
 }
+
+export const MAINTENANCE_TIPO_LABEL: Record<MaintenanceTipo, string> = {
+  oleo_motor: 'Troca de óleo (motor)',
+  oleo_cambio: 'Troca de óleo (câmbio)',
+  oleo_diferencial: 'Troca de óleo (diferencial)',
+  revisao_cubo: 'Revisão de cubo',
+  troca_pneu: 'Troca de pneu',
+  lona_freio: 'Troca de lona de freio',
+  campana: 'Troca de campana',
+  outro: 'Outro',
+};
+
+export function formatMaintenance(tipo: MaintenanceTipo, tipoOutro?: string) {
+  if (tipo === 'outro') return tipoOutro?.trim() || 'Outro';
+  return MAINTENANCE_TIPO_LABEL[tipo] ?? tipo;
+}
+
 
