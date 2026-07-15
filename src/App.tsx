@@ -15,6 +15,7 @@ import ContractsPage from "./pages/ContractsPage";
 import { ExpensesList, ExpenseForm } from "./pages/Expenses";
 import CadastrosPage from "./pages/CadastrosPage";
 import ReportsPage from "./pages/ReportsPage";
+import MaintenancePage from "./pages/MaintenancePage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
