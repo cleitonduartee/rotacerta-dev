@@ -229,6 +229,31 @@ async function pullExpenses(uid: string, maps: Awaited<ReturnType<typeof buildId
   }
 }
 
+async function pullMaintenances(uid: string, maps: Awaited<ReturnType<typeof buildIdMaps>>) {
+  const { data, error } = await supabase.from('maintenances').select('*').eq('user_id', uid);
+  if (error) throw error;
+  for (const r of data ?? []) {
+    const truckLocal = r.truck_id ? maps.trucks.get(r.truck_id) : undefined;
+    if (truckLocal == null) continue;
+    const local = await db.maintenances.where('remoteId').equals(r.id).first();
+    const remoteUpdatedAt = fromIso(r.updated_at);
+    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') continue;
+    const payload: any = {
+      remoteId: r.id,
+      truckId: truckLocal,
+      tipo: r.tipo,
+      tipoOutro: r.tipo_outro ?? undefined,
+      km: Number(r.km ?? 0),
+      data: r.data,
+      observacao: r.observacao ?? undefined,
+      syncStatus: 'synced' as SyncStatus,
+      updatedAt: remoteUpdatedAt,
+    };
+    if (local) await db.maintenances.update(local.id!, payload);
+    else await db.maintenances.add(payload);
+  }
+}
+
 export async function pullAll(uid: string) {
   await pullTrucks(uid);
   await pullProducers(uid);
@@ -239,6 +264,7 @@ export async function pullAll(uid: string) {
   await pullTrips(uid, maps);
   maps = await buildIdMaps();
   await pullExpenses(uid, maps);
+  await pullMaintenances(uid, maps);
 }
 
 // ============================================================
