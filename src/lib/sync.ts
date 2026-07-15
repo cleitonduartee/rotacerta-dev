@@ -174,6 +174,7 @@ async function pullContracts(uid: string, maps: Awaited<ReturnType<typeof buildI
 async function pullTrips(uid: string, maps: Awaited<ReturnType<typeof buildIdMaps>>) {
   const { data, error } = await supabase.from('trips').select('*').eq('user_id', uid);
   if (error) throw error;
+  const remoteIds = new Set((data ?? []).map((r: any) => r.id));
   for (const r of data ?? []) {
     const truckLocal = r.truck_id ? maps.trucks.get(r.truck_id) : undefined;
     const contractLocal = r.contract_id ? maps.contracts.get(r.contract_id) : undefined;
@@ -203,11 +204,15 @@ async function pullTrips(uid: string, maps: Awaited<ReturnType<typeof buildIdMap
     if (local) await db.trips.update(local.id!, payload);
     else await db.trips.add(payload);
   }
+  // Reconcilia deleções feitas no servidor: apaga locais sincronizados ausentes remotamente
+  const stale = await db.trips.where('syncStatus').equals('synced').toArray();
+  for (const t of stale) if (t.remoteId && !remoteIds.has(t.remoteId)) await db.trips.delete(t.id!);
 }
 
 async function pullExpenses(uid: string, maps: Awaited<ReturnType<typeof buildIdMaps>>) {
   const { data, error } = await supabase.from('expenses').select('*').eq('user_id', uid);
   if (error) throw error;
+  const remoteIds = new Set((data ?? []).map((r: any) => r.id));
   for (const r of data ?? []) {
     const local = await db.expenses.where('remoteId').equals(r.id).first();
     const remoteUpdatedAt = fromIso(r.updated_at);
@@ -227,11 +232,14 @@ async function pullExpenses(uid: string, maps: Awaited<ReturnType<typeof buildId
     if (local) await db.expenses.update(local.id!, payload);
     else await db.expenses.add(payload);
   }
+  const stale = await db.expenses.where('syncStatus').equals('synced').toArray();
+  for (const e of stale) if (e.remoteId && !remoteIds.has(e.remoteId)) await db.expenses.delete(e.id!);
 }
 
 async function pullMaintenances(uid: string, maps: Awaited<ReturnType<typeof buildIdMaps>>) {
   const { data, error } = await supabase.from('maintenances').select('*').eq('user_id', uid);
   if (error) throw error;
+  const remoteIds = new Set((data ?? []).map((r: any) => r.id));
   for (const r of data ?? []) {
     const truckLocal = r.truck_id ? maps.trucks.get(r.truck_id) : undefined;
     if (truckLocal == null) continue;
@@ -252,6 +260,8 @@ async function pullMaintenances(uid: string, maps: Awaited<ReturnType<typeof bui
     if (local) await db.maintenances.update(local.id!, payload);
     else await db.maintenances.add(payload);
   }
+  const stale = await db.maintenances.where('syncStatus').equals('synced').toArray();
+  for (const m of stale) if (m.remoteId && !remoteIds.has(m.remoteId)) await db.maintenances.delete(m.id!);
 }
 
 export async function pullAll(uid: string) {
