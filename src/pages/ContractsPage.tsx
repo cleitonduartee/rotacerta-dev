@@ -237,6 +237,79 @@ export default function ContractsPage() {
   // Botão WhatsApp da listagem: mesmo comportamento — tenta anexar PDF, senão fallback.
   const whatsappContrato = shareContractPdf;
 
+  function renderCard(c: any) {
+    const p = producers.find(p => p.id === c.producerId);
+    const h = harvests.find(h => h.id === c.harvestId);
+    const r = calcContrato(c.id!);
+    const tripIds = new Set(r.trips.map(t => t.id));
+    const despesas = expenses
+      .filter(e => e.contractId === c.id || (e.tripId && tripIds.has(e.tripId)))
+      .reduce((s, e) => s + (e.valor || 0), 0);
+    const liquido = r.receita - despesas;
+    return (
+      <li key={c.id} className={'rounded-xl border bg-card p-3 ' + (c.fechado ? 'border-muted opacity-90' : 'border-border')}>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-semibold truncate">{p?.nome ?? '?'}</p>
+            <p className="text-xs text-muted-foreground">{h?.nome ?? '?'} • {h?.tipo}</p>
+          </div>
+          <span className={'flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ' +
+            (c.fechado ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
+            {c.fechado ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+            {c.fechado ? 'Fechado' : 'Aberto'}
+          </span>
+        </div>
+
+        <div className="mt-2 grid grid-cols-3 gap-2 text-center">
+          <Mini label="Viagens" v={r.viagens} />
+          <Mini label="Sacos" v={fmtNum(r.sacos, 1)} />
+          <Mini label="Despesas" v={fmtBRL(despesas)} cls="text-destructive" />
+        </div>
+
+        <div className="mt-2 rounded-lg border border-border bg-secondary/40 p-2 space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Bruto</span>
+            <span className="font-display text-sm">{fmtBRL(r.receita)}</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Despesas</span>
+            <span className="font-display text-sm text-destructive">−{fmtBRL(despesas)}</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-border pt-1">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Líquido</span>
+            <span className="font-display text-base text-primary">{fmtBRL(liquido)}</span>
+          </div>
+        </div>
+
+        <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span>R$ {fmtNum(c.valorPorSaco)} / saco</span>
+          <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <button onClick={() => pdfContrato(c)} className="flex items-center justify-center gap-1 rounded-lg border border-border bg-background py-2 text-xs font-semibold">
+            <FileDown className="h-3.5 w-3.5" /> PDF
+          </button>
+          <button onClick={() => whatsappContrato(c)} className="flex items-center justify-center gap-1 rounded-lg bg-success py-2 text-xs font-bold text-success-foreground">
+            <Share2 className="h-3.5 w-3.5" /> WhatsApp
+          </button>
+        </div>
+
+        {c.fechado ? (
+          <button onClick={() => reabrir(c.id!)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2 text-xs font-semibold">
+            <Unlock className="h-3.5 w-3.5" /> Reabrir contrato
+          </button>
+        ) : (
+          <button onClick={() => askFechar(c)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-warning/40 bg-warning/10 py-2 text-xs font-bold text-warning">
+            <Lock className="h-3.5 w-3.5" /> Fechar contrato
+          </button>
+        )}
+      </li>
+    );
+  }
+
   return (
     <div className="animate-fade-in">
       <PageHeader title="Contratos" subtitle="Valor por saco (60kg) — feche por contrato" />
