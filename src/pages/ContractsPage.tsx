@@ -26,6 +26,11 @@ export default function ContractsPage() {
   const [toClose, setToClose] = useState<{ id: number; produtor: string; safra: string } | null>(null);
   const [askSend, setAskSend] = useState<{ contract: any; produtor: string; safra: string } | null>(null);
   const [blocked, setBlocked] = useState<{ title: string; message: React.ReactNode } | null>(null);
+  const [openExpanded, setOpenExpanded] = useState(false);
+  const [closedExpanded, setClosedExpanded] = useState(false);
+
+  const openContracts = contracts.filter(c => !c.fechado);
+  const closedContracts = contracts.filter(c => c.fechado);
 
   async function add() {
     if (!producerId || !harvestId || !valor) return toast.error('Preencha todos os campos');
