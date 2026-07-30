@@ -373,4 +373,37 @@ function Mini({ label, v, cls }: { label: string; v: any; cls?: string }) {
   );
 }
 
+function ContractSection({ title, count, expanded, onToggle, children }: {
+  title: string;
+  count: number;
+  expanded: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-secondary/40 transition-colors"
+      >
+        <span className="font-semibold text-sm">{title}</span>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <span className="text-xs font-medium">{count}</span>
+          {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </div>
+      </button>
+      {expanded && <div className="border-t border-border p-3 md:p-4">{children}</div>}
+    </div>
+  );
+}
+
+function EmptyContracts() {
+  return (
+    <div className="rounded-xl border border-dashed border-border bg-card/50 p-6 text-center">
+      <FileDown className="mx-auto h-8 w-8 text-muted-foreground/50" />
+      <p className="mt-2 text-sm font-semibold text-foreground">Nenhum contrato aqui</p>
+    </div>
+  );
+}
+
 const inputCls = 'w-full rounded-lg border border-border bg-input px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary';
