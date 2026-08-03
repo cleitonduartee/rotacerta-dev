@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '@/lib/db';
 import { fmtBRL, fmtNum } from '@/lib/format';
-import { Truck, Wheat, Package, Receipt, FileBarChart, User, FileText, Building2 } from 'lucide-react';
+import { Truck, Wheat, Package, Receipt, FileBarChart, User, FileText, Building2, Wallet, CheckCircle2, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import {
   PieChart, Pie, Cell, BarChart, Bar, LineChart, Line,
@@ -108,6 +108,23 @@ export default function Dashboard() {
   const totalDespesas = expensesF.reduce((s, e) => s + e.valor, 0);
   const liquido = totalReceita - totalDespesas;
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
+
+  // Recebido × A receber (contrato recebido para lavoura, flag da viagem para frete avulso)
+  const { recebido, aReceber, qtdRecebidas, qtdAReceber } = useMemo(() => {
+    let recebido = 0, aReceber = 0, qtdRecebidas = 0, qtdAReceber = 0;
+    for (const t of tripsF) {
+      const v = t.valorTotal || 0;
+      const pago = t.kind === 'safra'
+        ? !!contracts.find(c => c.id === t.contractId)?.recebido
+        : !!t.recebido;
+      if (pago) { recebido += v; qtdRecebidas++; } else { aReceber += v; qtdAReceber++; }
+    }
+    return { recebido, aReceber, qtdRecebidas, qtdAReceber };
+  }, [tripsF, contracts]);
+
+  const pctRecebido = totalReceita > 0 ? (recebido / totalReceita) * 100 : 0;
+
+
   
 
   // Gráfico 1 — Receita vs Despesa últimos 6 meses (respeita o filtro de período)
@@ -270,6 +287,47 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Recebido × A receber */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Wallet className="h-4 w-4 text-primary" />
+            <h3 className="font-display text-lg leading-none">Recebimentos</h3>
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{periodoLabel}</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-success/30 bg-success/10 p-3">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-success">Recebido</p>
+            </div>
+            <p className="mt-1 font-display text-2xl leading-none text-success">{fmtBRL(recebido)}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{qtdRecebidas} viagem(ns)</p>
+          </div>
+          <div className="rounded-xl border border-warning/30 bg-warning/10 p-3">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3.5 w-3.5 text-warning" />
+              <p className="text-[10px] font-bold uppercase tracking-wider text-warning">A receber</p>
+            </div>
+            <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceber)}</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">{qtdAReceber} viagem(ns)</p>
+          </div>
+        </div>
+
+        <div className="mt-3">
+          <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-success transition-all" style={{ width: `${Math.min(100, pctRecebido)}%` }} />
+          </div>
+          <div className="mt-1.5 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span>{fmtNum(pctRecebido, 0)}% da receita recebida</span>
+            <span>Total {fmtBRL(totalReceita)}</span>
+          </div>
+        </div>
+      </div>
+
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

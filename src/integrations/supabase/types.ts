@@ -22,6 +22,8 @@ export type Database = {
           harvest_id: string
           id: string
           producer_id: string
+          recebido: boolean
+          recebido_em: string | null
           updated_at: string
           user_id: string
           valor_por_saco: number
@@ -33,6 +35,8 @@ export type Database = {
           harvest_id: string
           id?: string
           producer_id: string
+          recebido?: boolean
+          recebido_em?: string | null
           updated_at?: string
           user_id: string
           valor_por_saco: number
@@ -44,6 +48,8 @@ export type Database = {
           harvest_id?: string
           id?: string
           producer_id?: string
+          recebido?: boolean
+          recebido_em?: string | null
           updated_at?: string
           user_id?: string
           valor_por_saco?: number
@@ -364,6 +370,8 @@ export type Database = {
           origem: string | null
           peso_kg: number | null
           peso_toneladas: number | null
+          recebido: boolean
+          recebido_em: string | null
           sacos: number | null
           transportadora: string | null
           truck_id: string | null
@@ -386,6 +394,8 @@ export type Database = {
           origem?: string | null
           peso_kg?: number | null
           peso_toneladas?: number | null
+          recebido?: boolean
+          recebido_em?: string | null
           sacos?: number | null
           transportadora?: string | null
           truck_id?: string | null
@@ -408,6 +418,8 @@ export type Database = {
           origem?: string | null
           peso_kg?: number | null
           peso_toneladas?: number | null
+          recebido?: boolean
+          recebido_em?: string | null
           sacos?: number | null
           transportadora?: string | null
           truck_id?: string | null

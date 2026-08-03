@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum, fmtDate } from '@/lib/format';
-import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
@@ -105,8 +105,18 @@ export default function ContractsPage() {
   }
 
   async function reabrir(id: number) {
-    await db.contracts.update(id, { fechado: false, fechadoEm: undefined, ...stamp() });
+    await db.contracts.update(id, { fechado: false, fechadoEm: undefined, recebido: false, recebidoEm: undefined, ...stamp() });
     toast.success('Contrato reaberto');
+  }
+
+  async function toggleRecebido(c: any) {
+    const novo = !c.recebido;
+    await db.contracts.update(c.id!, {
+      recebido: novo,
+      recebidoEm: novo ? Date.now() : undefined,
+      ...stamp(),
+    });
+    toast.success(novo ? 'Contrato marcado como recebido' : 'Recebimento desmarcado');
   }
 
   function calcContrato(cId: number) {
@@ -253,11 +263,19 @@ export default function ContractsPage() {
             <p className="font-semibold truncate">{p?.nome ?? '?'}</p>
             <p className="text-xs text-muted-foreground">{h?.nome ?? '?'} • {h?.tipo}</p>
           </div>
-          <span className={'flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ' +
-            (c.fechado ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
-            {c.fechado ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-            {c.fechado ? 'Fechado' : 'Aberto'}
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span className={'flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ' +
+              (c.fechado ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
+              {c.fechado ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+              {c.fechado ? 'Fechado' : 'Aberto'}
+            </span>
+            {c.fechado && (
+              <span className={'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ' +
+                (c.recebido ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning')}>
+                {c.recebido ? 'Recebido' : 'A receber'}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="mt-2 grid grid-cols-3 gap-2 text-center">
@@ -298,9 +316,23 @@ export default function ContractsPage() {
         </div>
 
         {c.fechado ? (
-          <button onClick={() => reabrir(c.id!)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2 text-xs font-semibold">
-            <Unlock className="h-3.5 w-3.5" /> Reabrir contrato
-          </button>
+          <div className="mt-2 space-y-2">
+            <button
+              onClick={() => toggleRecebido(c)}
+              className={
+                'flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold ' +
+                (c.recebido
+                  ? 'bg-success text-success-foreground'
+                  : 'border border-success/40 bg-success/10 text-success')
+              }
+            >
+              {c.recebido ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
+              {c.recebido ? 'Recebido' : 'Marcar como recebido'}
+            </button>
+            <button onClick={() => reabrir(c.id!)} className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2 text-xs font-semibold">
+              <Unlock className="h-3.5 w-3.5" /> Reabrir contrato
+            </button>
+          </div>
         ) : (
           <button onClick={() => askFechar(c)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-warning/40 bg-warning/10 py-2 text-xs font-bold text-warning">
             <Lock className="h-3.5 w-3.5" /> Fechar contrato

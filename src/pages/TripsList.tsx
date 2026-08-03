@@ -1,9 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+import { db, stamp } from '@/lib/db';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate } from '@/lib/format';
-import { Plus, Truck as TruckIcon, User, FileText, Building2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Plus, Truck as TruckIcon, User, FileText, Building2, CheckCircle2, CircleDollarSign } from 'lucide-react';
+
+async function toggleRecebido(t: any) {
+  const novo = !t.recebido;
+  await db.trips.update(t.id!, { recebido: novo, recebidoEm: novo ? Date.now() : undefined, ...stamp() });
+  toast.success(novo ? 'Frete marcado como recebido' : 'Recebimento desmarcado');
+}
 
 export default function TripsList() {
   const trips = useLiveQuery(() => db.trips.orderBy('data').reverse().toArray(), []) ?? [];
@@ -89,6 +96,21 @@ export default function TripsList() {
                     {t.kind === 'safra' && t.sacos != null && <> • {t.sacos.toFixed(1)} sacos</>}
                     {t.kind === 'frete' && t.pesoToneladas != null && <> • {t.pesoToneladas} t</>}
                   </p>
+
+                  {t.kind === 'frete' && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleRecebido(t); }}
+                      className={
+                        'mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ' +
+                        (t.recebido
+                          ? 'bg-success text-success-foreground'
+                          : 'border border-warning/40 bg-warning/10 text-warning')
+                      }
+                    >
+                      {t.recebido ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
+                      {t.recebido ? 'Recebido' : 'Marcar recebido'}
+                    </button>
+                  )}
                 </div>
                 <p className="font-display text-2xl text-primary whitespace-nowrap">{fmtBRL(t.valorTotal)}</p>
               </div>
