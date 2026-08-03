@@ -1,9 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '@/lib/db';
+import { db, stamp } from '@/lib/db';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate } from '@/lib/format';
-import { Plus, Truck as TruckIcon, User, FileText, Building2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { Plus, Truck as TruckIcon, User, FileText, Building2, CheckCircle2, CircleDollarSign } from 'lucide-react';
+
+async function toggleRecebido(t: any) {
+  const novo = !t.recebido;
+  await db.trips.update(t.id!, { recebido: novo, recebidoEm: novo ? Date.now() : undefined, ...stamp() });
+  toast.success(novo ? 'Frete marcado como recebido' : 'Recebimento desmarcado');
+}
 
 export default function TripsList() {
   const trips = useLiveQuery(() => db.trips.orderBy('data').reverse().toArray(), []) ?? [];
