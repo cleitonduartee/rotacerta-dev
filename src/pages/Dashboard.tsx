@@ -108,6 +108,23 @@ export default function Dashboard() {
   const totalDespesas = expensesF.reduce((s, e) => s + e.valor, 0);
   const liquido = totalReceita - totalDespesas;
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
+
+  // Recebido × A receber (contrato recebido para lavoura, flag da viagem para frete avulso)
+  const { recebido, aReceber, qtdRecebidas, qtdAReceber } = useMemo(() => {
+    let recebido = 0, aReceber = 0, qtdRecebidas = 0, qtdAReceber = 0;
+    for (const t of tripsF) {
+      const v = t.valorTotal || 0;
+      const pago = t.kind === 'safra'
+        ? !!contracts.find(c => c.id === t.contractId)?.recebido
+        : !!t.recebido;
+      if (pago) { recebido += v; qtdRecebidas++; } else { aReceber += v; qtdAReceber++; }
+    }
+    return { recebido, aReceber, qtdRecebidas, qtdAReceber };
+  }, [tripsF, contracts]);
+
+  const pctRecebido = totalReceita > 0 ? (recebido / totalReceita) * 100 : 0;
+
+
   
 
   // Gráfico 1 — Receita vs Despesa últimos 6 meses (respeita o filtro de período)
