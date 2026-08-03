@@ -263,7 +263,7 @@ export default function Dashboard() {
                 .slice()
                 .sort((a, b) => (b.ano - a.ano) || a.nome.localeCompare(b.nome))
                 .map(h => (
-                  <option key={h.id} value={h.id}>{h.nome} ({h.ano})</option>
+                  <option key={h.id} value={h.id}>{h.nome}</option>
                 ))}
             </select>
             {safraId && (
