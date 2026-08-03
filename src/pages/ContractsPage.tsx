@@ -298,9 +298,23 @@ export default function ContractsPage() {
         </div>
 
         {c.fechado ? (
-          <button onClick={() => reabrir(c.id!)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2 text-xs font-semibold">
-            <Unlock className="h-3.5 w-3.5" /> Reabrir contrato
-          </button>
+          <div className="mt-2 space-y-2">
+            <button
+              onClick={() => toggleRecebido(c)}
+              className={
+                'flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold ' +
+                (c.recebido
+                  ? 'bg-success text-success-foreground'
+                  : 'border border-success/40 bg-success/10 text-success')
+              }
+            >
+              {c.recebido ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
+              {c.recebido ? 'Recebido' : 'Marcar como recebido'}
+            </button>
+            <button onClick={() => reabrir(c.id!)} className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-2 text-xs font-semibold">
+              <Unlock className="h-3.5 w-3.5" /> Reabrir contrato
+            </button>
+          </div>
         ) : (
           <button onClick={() => askFechar(c)} className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-warning/40 bg-warning/10 py-2 text-xs font-bold text-warning">
             <Lock className="h-3.5 w-3.5" /> Fechar contrato
