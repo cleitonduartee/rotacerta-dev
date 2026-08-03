@@ -354,6 +354,7 @@ export type Database = {
         Row: {
           contract_id: string | null
           created_at: string
+          cultura: string | null
           data: string
           destino: string | null
           id: string
@@ -375,6 +376,7 @@ export type Database = {
         Insert: {
           contract_id?: string | null
           created_at?: string
+          cultura?: string | null
           data: string
           destino?: string | null
           id?: string
@@ -396,6 +398,7 @@ export type Database = {
         Update: {
           contract_id?: string | null
           created_at?: string
+          cultura?: string | null
           data?: string
           destino?: string | null
           id?: string
