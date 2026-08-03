@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { fmtBRL, fmtDate, fmtNum } from './format';
+import { fmtBRL, fmtDate, fmtNum, fmtHarvestName, fmtCultura } from './format';
 import { drawPixBlock } from './report';
 
 // ============================================================================
@@ -292,8 +292,8 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 
   drawHeader(
     doc,
-    `Safra ${input.harvest.nome}`,
-    `${input.harvest.tipo} • ${input.harvest.ano}`,
+    `Safra ${fmtHarvestName(input.harvest)}`,
+    'Relatório analítico de fechamento',
     input.driver
   );
 
@@ -419,10 +419,15 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
   if (input.trips.length > 0) {
     if (y > 680) { doc.addPage(); y = 40; }
     y = drawSectionTitle(doc, y, 'Viagens detalhadas', `${input.trips.length} viagem(ns)`);
+    const showCultura = input.harvest?.tipo === 'milho_sorgo';
     const tripsSorted = [...input.trips].sort((a, b) => a.data.localeCompare(b.data));
     autoTable(doc, {
       startY: y,
-      head: [['Data', 'Caminhão', 'Origem -> Destino', 'Produtor', 'Nota', 'Sacos', 'Valor']],
+      head: [[
+        'Data', 'Caminhão', 'Origem -> Destino', 'Produtor',
+        ...(showCultura ? ['Cultura'] : []),
+        'Nota', 'Sacos', 'Valor',
+      ]],
       body: tripsSorted.map(t => {
         const c = input.contracts.find(cc => cc.id === t.contractId);
         const p = c ? input.producers.find(pp => pp.id === c.producerId) : null;
@@ -432,17 +437,20 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
           tr?.placa ?? '—',
           `${t.origem} -> ${t.destino}`,
           p?.nome ?? '—',
+          ...(showCultura ? [fmtCultura((t as any).cultura) || '—'] : []),
           t.numeroNota || '-',
           t.sacos ? fmtNum(t.sacos, 1) : '—',
           fmtBRL(t.valorTotal),
         ];
       }),
-      foot: [['', '', '', '', '', 'Total', fmtBRL(receita)]],
+      foot: [[...Array(showCultura ? 6 : 5).fill(''), 'Total', fmtBRL(receita)]],
       theme: 'striped',
       headStyles: { fillColor: COLORS.primary, textColor: 255, fontSize: 8 },
       footStyles: { fillColor: COLORS.primarySoft, textColor: COLORS.primary, fontStyle: 'bold' },
       bodyStyles: { fontSize: 8 },
-      columnStyles: { 5: { halign: 'right' }, 6: { halign: 'right', fontStyle: 'bold' } },
+      columnStyles: showCultura
+        ? { 6: { halign: 'right' }, 7: { halign: 'right', fontStyle: 'bold' } }
+        : { 5: { halign: 'right' }, 6: { halign: 'right', fontStyle: 'bold' } },
       margin: { left: 40, right: 40 },
     });
     y = (doc as any).lastAutoTable.finalY + 18;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
-import { fmtBRL, fmtNum, fmtDate } from '@/lib/format';
+import { fmtBRL, fmtNum, fmtDate, fmtHarvestName } from '@/lib/format';
 import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
@@ -199,7 +199,7 @@ export default function ContractsPage() {
       },
     });
     const p = producers.find(p => p.id === c.producerId);
-    const filename = `contrato-${p?.nome ?? 'produtor'}-${harvest.nome}.pdf`.replace(/\s+/g, '-');
+    const filename = `contrato-${p?.nome ?? 'produtor'}-${fmtHarvestName(harvest)}.pdf`.replace(/\s+/g, '-');
     return { blob, filename };
   }
 
@@ -226,12 +226,14 @@ export default function ContractsPage() {
     const despesas = exps.reduce((s, e) => s + e.valor, 0);
     const liquido = r.receita - despesas;
 
+    const showCultura = harvest?.tipo === 'milho_sorgo';
     const tripsOrd = [...r.trips].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
     const linhasViagens = tripsOrd.map((t, i) => {
       const sacos = t.sacos ?? 0;
       const nota = t.numeroNota ? ` • Nota ${t.numeroNota}` : '';
       const peso = t.pesoKg ? ` • ${fmtNum(t.pesoKg / 1000, 2)}t` : '';
-      return `${i + 1}. ${fmtDate(t.data)}${peso} • ${fmtNum(sacos, 2)} sc • ${fmtBRL(t.valorTotal)}${nota}`;
+      const cult = showCultura ? ` • ${t.cultura === 'sorgo' ? 'Sorgo' : 'Milho'}` : '';
+      return `${i + 1}. ${fmtDate(t.data)}${cult}${peso} • ${fmtNum(sacos, 2)} sc • ${fmtBRL(t.valorTotal)}${nota}`;
     }).join('\n');
 
     const porTipo = new Map<string, number>();
@@ -244,7 +246,7 @@ export default function ContractsPage() {
     return (
       `*Fechamento de contrato*\n` +
       `Produtor: ${p?.nome}\n` +
-      `Safra: ${harvest?.nome} (${harvest?.tipo})\n` +
+      `Safra: ${fmtHarvestName(harvest)}\n` +
       `Valor / saco: ${fmtBRL(c.valorPorSaco)}\n` +
       `\n*Viagens (${r.viagens})*\n${linhasViagens || '—'}\n` +
       `\nTotal sacos (60kg): ${fmtNum(r.sacos, 2)}\n` +

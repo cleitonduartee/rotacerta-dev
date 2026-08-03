@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
-import { fmtBRL, fmtDate, fmtNum } from './format';
+import { fmtBRL, fmtDate, fmtNum, fmtHarvestName, fmtCultura } from './format';
 import { buildPixPayload, type PixKeyType } from './pix';
 
 export interface ReportInput {
@@ -34,7 +34,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.text('ROTASAFRA — Fechamento de Safra', 40, 35);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${input.harvest.nome} • ${input.harvest.tipo} • ${input.harvest.ano}`, 40, 55);
+  doc.text(fmtHarvestName(input.harvest), 40, 55);
   if (singleProducer) {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
     doc.text(`Produtor: ${singleProducer.nome}  •  R$ ${fmtNum(singleContract!.valorPorSaco)} / saco`, 40, 75);
@@ -147,12 +147,14 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   y += 10;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
   doc.text('Viagens', 40, y); y += 16;
+  const showCultura = input.harvest?.tipo === 'milho_sorgo';
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
   doc.text('Data', 40, y);
   doc.text('Caminhão', 95, y);
   doc.text('Origem -> Destino', 165, y);
-  doc.text('Nota', 340, y);
-  doc.text('Sacos', 410, y, { align: 'right' });
+  if (showCultura) doc.text('Cultura', 315, y);
+  doc.text('Nota', 370, y);
+  doc.text('Sacos', 430, y, { align: 'right' });
   doc.text('Valor', W - 50, y, { align: 'right' });
   y += 4; doc.line(40, y, W - 40, y); y += 12;
 
@@ -162,12 +164,14 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.text(fmtDate(t.data), 40, y);
     doc.text((tr?.placa ?? '—').slice(0, 12), 95, y);
     const od = `${t.origem} -> ${t.destino}`;
-    doc.text(od.length > 32 ? od.slice(0, 30) + '...' : od, 165, y);
-    doc.text((t.numeroNota ?? '—').toString().slice(0, 12), 340, y);
-    doc.text(fmtNum(t.sacos ?? 0, 1), 410, y, { align: 'right' });
+    doc.text(od.length > 26 ? od.slice(0, 24) + '...' : od, 165, y);
+    if (showCultura) doc.text(fmtCultura(t.cultura) || '—', 315, y);
+    doc.text((t.numeroNota ?? '—').toString().slice(0, 12), 370, y);
+    doc.text(fmtNum(t.sacos ?? 0, 1), 430, y, { align: 'right' });
     doc.text(fmtBRL(t.valorTotal), W - 50, y, { align: 'right' });
     y += 14;
   }
+
 
   // Despesas por tipo
   if (input.expenses && input.expenses.length > 0) {
