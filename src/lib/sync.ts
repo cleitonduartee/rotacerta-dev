@@ -163,6 +163,8 @@ async function pullContracts(uid: string, maps: Awaited<ReturnType<typeof buildI
       valorPorSaco: Number(r.valor_por_saco),
       fechado: r.fechado,
       fechadoEm: r.fechado_em ? fromIso(r.fechado_em) : undefined,
+      recebido: !!r.recebido,
+      recebidoEm: r.recebido_em ? fromIso(r.recebido_em) : undefined,
       syncStatus: 'synced' as SyncStatus,
       updatedAt: remoteUpdatedAt,
     };
@@ -198,6 +200,8 @@ async function pullTrips(uid: string, maps: Awaited<ReturnType<typeof buildIdMap
       observacao: r.observacao ?? undefined,
       numeroNota: r.numero_nota ?? undefined,
       cultura: r.cultura ?? undefined,
+      recebido: !!r.recebido,
+      recebidoEm: r.recebido_em ? fromIso(r.recebido_em) : undefined,
       valorTotal: Number(r.valor_total ?? 0),
       syncStatus: 'synced' as SyncStatus,
       updatedAt: remoteUpdatedAt,
@@ -356,6 +360,8 @@ export async function pushAll(uid: string) {
       valor_por_saco: r.valorPorSaco,
       fechado: !!r.fechado,
       fechado_em: r.fechadoEm ? toIso(r.fechadoEm) : null,
+      recebido: !!r.recebido,
+      recebido_em: r.recebidoEm ? toIso(r.recebidoEm) : null,
       updated_at: toIso(r.updatedAt),
     };
   });
@@ -384,6 +390,8 @@ export async function pushAll(uid: string) {
       observacao: r.observacao ?? null,
       numero_nota: r.numeroNota ?? null,
       cultura: r.cultura ?? null,
+      recebido: !!r.recebido,
+      recebido_em: r.recebidoEm ? toIso(r.recebidoEm) : null,
       valor_total: r.valorTotal ?? 0,
       updated_at: toIso(r.updatedAt),
     };
