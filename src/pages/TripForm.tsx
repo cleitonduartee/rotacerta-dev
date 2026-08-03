@@ -37,6 +37,7 @@ export default function TripForm() {
   const [pesoKg, setPesoKg] = useState<string>('');
   const [unidadePeso, setUnidadePeso] = useState<'kg' | 't'>('t');
   const [valorPorSacoOverride, setValorPorSacoOverride] = useState<string>('');
+  const [cultura, setCultura] = useState<'milho' | 'sorgo'>('milho');
 
   // frete
   const [transportadora, setTransportadora] = useState('');
@@ -72,6 +73,7 @@ export default function TripForm() {
         if (c) { setProducerId(c.producerId); setHarvestId(c.harvestId); }
         setPesoKg(t.pesoKg?.toString() ?? '');
         setValorPorSacoOverride(t.valorPorSacoOverride?.toString() ?? '');
+        setCultura(t.cultura === 'sorgo' ? 'sorgo' : 'milho');
       } else {
         setTransportadora(t.transportadora ?? '');
         setPesoToneladas(t.pesoToneladas?.toString() ?? '');
@@ -154,6 +156,11 @@ export default function TripForm() {
     return { sacos: 0, valorTotal: calcFrete(pt, vt) };
   }, [kind, pesoKgNum, valorPorSacoUsado, pesoToneladas, valorPorTonelada, freteModo, valorCheio]);
 
+  const isMilhoSorgo = useMemo(() => {
+    if (kind !== 'safra' || harvestId === '') return false;
+    return harvests.find(h => h.id === harvestId)?.tipo === 'milho_sorgo';
+  }, [kind, harvestId, harvests]);
+
   const contratoFechado = contract?.fechado;
 
   async function save() {
@@ -178,6 +185,7 @@ export default function TripForm() {
         contractId: kind === 'safra' ? contract!.id : undefined,
         pesoKg: kind === 'safra' ? pesoKgNum : undefined,
         sacos: kind === 'safra' ? calc.sacos : undefined,
+        cultura: kind === 'safra' && isMilhoSorgo ? cultura : undefined,
         valorPorSacoOverride: kind === 'safra' && valorPorSacoOverride ? parseFloat(valorPorSacoOverride.replace(',', '.')) : undefined,
         transportadora: kind === 'frete' ? transportadora : undefined,
         pesoToneladas: kind === 'frete' && pesoToneladas ? parseFloat(pesoToneladas.replace(',', '.')) : undefined,
@@ -285,6 +293,24 @@ export default function TripForm() {
                 {harvests.map(h => <option key={h.id} value={h.id}>{h.nome} ({h.tipo})</option>)}
               </select>
             </Field>
+
+            {isMilhoSorgo && (
+              <Field label="Cultura">
+                <div className="grid grid-cols-2 gap-2 rounded-xl border border-border bg-card p-1">
+                  {(['milho', 'sorgo'] as const).map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setCultura(c)}
+                      className={'rounded-lg py-2.5 text-sm font-bold uppercase tracking-wide transition ' +
+                        (cultura === c ? 'gradient-primary text-primary-foreground shadow-elevated' : 'text-muted-foreground')}
+                    >
+                      {c === 'milho' ? 'Milho' : 'Sorgo'}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            )}
 
             {producerId !== '' && harvestId !== '' && !contract && (
               <div className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
