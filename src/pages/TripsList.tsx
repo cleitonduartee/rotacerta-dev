@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { db, stamp } from '@/lib/db';
+import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { Link } from 'react-router-dom';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate } from '@/lib/format';
 import { toast } from 'sonner';
-import { Plus, Truck as TruckIcon, User, FileText, Building2, CheckCircle2, CircleDollarSign } from 'lucide-react';
+import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
+import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
+import { Plus, Truck as TruckIcon, User, FileText, Building2, CheckCircle2, CircleDollarSign, Trash2 } from 'lucide-react';
 
 async function toggleRecebido(t: any) {
   const novo = !t.recebido;
@@ -18,7 +21,11 @@ export default function TripsList() {
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
+  const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
   const truckMap = new Map(trucks.map(t => [t.id!, t] as const));
+
+  const [toDelete, setToDelete] = useState<any | null>(null);
+  const [blocked, setBlocked] = useState<{ open: boolean; description: React.ReactNode }>({ open: false, description: null });
 
   function ownerInfo(t: any) {
     if (t.kind === 'safra' && t.contractId) {
@@ -34,6 +41,57 @@ export default function TripsList() {
       return { owner: t.transportadora || 'Frete avulso', detail: null as string | null };
     }
     return null;
+  }
+
+  function askRemove(t: any) {
+    if (t.kind === 'safra' && t.contractId) {
+      const c = contracts.find(cc => cc.id === t.contractId);
+      if (c?.fechado) {
+        setBlocked({
+          open: true,
+          description: (
+            <>
+              Esta viagem pertence a um <strong>contrato já fechado</strong> e não pode ser excluída.
+              Reabra o contrato em <strong>Contratos</strong> se precisar alterá-la.
+            </>
+          ),
+        });
+        return;
+      }
+    }
+    if (t.kind === 'frete' && t.recebido) {
+      setBlocked({
+        open: true,
+        description: (
+          <>
+            Este frete avulso já foi marcado como <strong>recebido</strong> e não pode ser excluído.
+            Desmarque o recebimento antes de excluir.
+          </>
+        ),
+      });
+      return;
+    }
+    const vinculadas = expenses.filter(e => e.tripId === t.id).length;
+    if (vinculadas > 0) {
+      setBlocked({
+        open: true,
+        description: (
+          <>
+            Existem <strong>{vinculadas}</strong> despesa{vinculadas !== 1 ? 's' : ''} vinculada
+            {vinculadas !== 1 ? 's' : ''} a esta viagem. Exclua-as primeiro.
+          </>
+        ),
+      });
+      return;
+    }
+    setToDelete(t);
+  }
+
+  async function confirmRemove() {
+    if (!toDelete) return;
+    await deleteWithTombstone('trips', toDelete.id!);
+    setToDelete(null);
+    toast.success('Viagem excluída');
   }
 
   return (
@@ -112,13 +170,42 @@ export default function TripsList() {
                     </button>
                   )}
                 </div>
-                <p className="font-display text-2xl text-primary whitespace-nowrap">{fmtBRL(t.valorTotal)}</p>
+                <div className="flex flex-col items-end gap-2">
+                  <p className="font-display text-2xl text-primary whitespace-nowrap">{fmtBRL(t.valorTotal)}</p>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); askRemove(t); }}
+                    className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
+                    aria-label="Excluir viagem"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             </Link>
           );
         })}
       </div>
+
+      <ConfirmDeleteDialog
+        open={!!toDelete}
+        onOpenChange={(o) => !o && setToDelete(null)}
+        description={
+          toDelete ? (
+            <>
+              Excluir a viagem <strong>{toDelete.origem} → {toDelete.destino}</strong> de{' '}
+              {fmtDate(toDelete.data)}? Esta ação não pode ser desfeita.
+            </>
+          ) : null
+        }
+        onConfirm={confirmRemove}
+      />
+
+      <BlockedDeleteDialog
+        open={blocked.open}
+        onOpenChange={(o) => setBlocked(b => ({ ...b, open: o }))}
+        title="Não é possível excluir a viagem"
+        description={blocked.description}
+      />
     </div>
   );
 }
-
