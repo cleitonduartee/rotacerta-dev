@@ -3,12 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum, fmtDate } from '@/lib/format';
-import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign } from 'lucide-react';
+import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
@@ -28,6 +30,9 @@ export default function ContractsPage() {
   const [blocked, setBlocked] = useState<{ title: string; message: React.ReactNode } | null>(null);
   const [openExpanded, setOpenExpanded] = useState(false);
   const [closedExpanded, setClosedExpanded] = useState(false);
+  const [toEdit, setToEdit] = useState<{ id: number; produtor: string; safra: string; valor: string } | null>(null);
+  const [askRecalc, setAskRecalc] = useState<{ id: number; novoValor: number; nViagens: number } | null>(null);
+
 
   const openContracts = contracts.filter(c => !c.fechado);
   const closedContracts = contracts.filter(c => c.fechado);
@@ -86,6 +91,46 @@ export default function ContractsPage() {
     toast.success('Contrato excluído');
     setToDelete(null);
   }
+
+  function askEdit(c: any) {
+    const p = producers.find(pp => pp.id === c.producerId);
+    const h = harvests.find(hh => hh.id === c.harvestId);
+    setToEdit({
+      id: c.id,
+      produtor: p?.nome ?? '?',
+      safra: h?.nome ?? '?',
+      valor: maskMoneyInput(String(Math.round((c.valorPorSaco || 0) * 100))),
+    });
+  }
+
+  async function saveEdit() {
+    if (!toEdit) return;
+    const v = parseMoney(toEdit.valor);
+    if (!v) return toast.error('Valor inválido');
+    await db.contracts.update(toEdit.id, { valorPorSaco: v, ...stamp() });
+    const ts = trips.filter(t => t.kind === 'safra' && t.contractId === toEdit.id);
+    toast.success('Contrato atualizado');
+    const id = toEdit.id;
+    setToEdit(null);
+    if (ts.length > 0) setAskRecalc({ id, novoValor: v, nViagens: ts.length });
+  }
+
+  async function confirmRecalc() {
+    if (!askRecalc) return;
+    const { id, novoValor } = askRecalc;
+    const ts = trips.filter(t => t.kind === 'safra' && t.contractId === id);
+    for (const t of ts) {
+      const sacos = t.sacos ?? 0;
+      await db.trips.update(t.id!, {
+        valorPorSacoOverride: undefined,
+        valorTotal: sacos * novoValor,
+        ...stamp(),
+      });
+    }
+    setAskRecalc(null);
+    toast.success(`${ts.length} ${ts.length === 1 ? 'viagem atualizada' : 'viagens atualizadas'}`);
+  }
+
 
   function askFechar(c: any) {
     const p = producers.find(pp => pp.id === c.producerId);
@@ -301,10 +346,16 @@ export default function ContractsPage() {
 
         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
           <span>R$ {fmtNum(c.valorPorSaco)} / saco</span>
-          <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => askEdit(c)} className="rounded-lg p-2 text-primary hover:bg-primary/10" aria-label="Editar contrato">
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10" aria-label="Excluir contrato">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
 
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button onClick={() => pdfContrato(c)} className="flex items-center justify-center gap-1 rounded-lg border border-border bg-background py-2 text-xs font-semibold">
@@ -434,6 +485,56 @@ export default function ContractsPage() {
         confirmLabel="Sim, fechar"
         onConfirm={confirmFechar}
       />
+
+      <Dialog open={!!toEdit} onOpenChange={(open) => !open && setToEdit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar contrato</DialogTitle>
+          </DialogHeader>
+          {toEdit && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                <strong>{toEdit.produtor}</strong> — {toEdit.safra}
+              </p>
+              <input
+                className={inputCls}
+                inputMode="decimal"
+                placeholder="R$ por saco (60 kg) — ex: 3,50"
+                value={toEdit.valor}
+                onChange={e => setToEdit({ ...toEdit, valor: maskMoneyInput(e.target.value) })}
+              />
+            </div>
+          )}
+          <DialogFooter>
+            <button onClick={() => setToEdit(null)} className="rounded-lg border border-border px-4 py-2 text-sm font-semibold">
+              Cancelar
+            </button>
+            <button onClick={saveEdit} className="rounded-lg gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+              Salvar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDeleteDialog
+        open={!!askRecalc}
+        onOpenChange={(open) => !open && setAskRecalc(null)}
+        title="Atualizar viagens já lançadas?"
+        description={
+          askRecalc && (
+            <>
+              Este contrato possui{' '}
+              <strong>{askRecalc.nViagens} {askRecalc.nViagens === 1 ? 'viagem lançada' : 'viagens lançadas'}</strong>.
+              Deseja recalcular {askRecalc.nViagens === 1 ? 'ela' : 'elas'} com o novo valor de{' '}
+              <strong>{fmtBRL(askRecalc.novoValor)} / saco</strong>? Valores manuais informados nas viagens serão substituídos.
+            </>
+          )
+        }
+        confirmLabel="Sim, atualizar"
+        cancelLabel="Não, manter"
+        onConfirm={confirmRecalc}
+      />
+
 
       <BlockedDeleteDialog
         open={!!blocked}
