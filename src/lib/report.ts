@@ -34,7 +34,7 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   doc.text('ROTASAFRA — Fechamento de Safra', 40, 35);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${input.harvest.nome} • ${input.harvest.tipo} • ${input.harvest.ano}`, 40, 55);
+  doc.text(fmtHarvestName(input.harvest), 40, 55);
   if (singleProducer) {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
     doc.text(`Produtor: ${singleProducer.nome}  •  R$ ${fmtNum(singleContract!.valorPorSaco)} / saco`, 40, 75);
