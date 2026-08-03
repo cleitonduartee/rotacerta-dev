@@ -71,7 +71,9 @@ export default function TripForm() {
       if (t.kind === 'safra') {
         const c = t.contractId ? contracts.find(c => c.id === t.contractId) : undefined;
         if (c) { setProducerId(c.producerId); setHarvestId(c.harvestId); }
-        setPesoKg(t.pesoKg?.toString() ?? '');
+        // pesoKg é sempre armazenado em kg; a UI inicia em toneladas
+        setUnidadePeso('t');
+        setPesoKg(t.pesoKg ? String(t.pesoKg / 1000).replace('.', ',') : '');
         setValorPorSacoOverride(t.valorPorSacoOverride?.toString() ?? '');
         setCultura(t.cultura === 'sorgo' ? 'sorgo' : 'milho');
       } else {
