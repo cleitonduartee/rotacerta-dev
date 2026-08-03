@@ -1,0 +1,1 @@
+UPDATE public.harvests SET nome = 'Milho/sorgo - 2026', updated_at = now() WHERE id = '642f9019-3364-4849-8fe3-7eccb0384b25';
