@@ -263,11 +263,19 @@ export default function ContractsPage() {
             <p className="font-semibold truncate">{p?.nome ?? '?'}</p>
             <p className="text-xs text-muted-foreground">{h?.nome ?? '?'} • {h?.tipo}</p>
           </div>
-          <span className={'flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ' +
-            (c.fechado ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
-            {c.fechado ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
-            {c.fechado ? 'Fechado' : 'Aberto'}
-          </span>
+          <div className="flex flex-col items-end gap-1">
+            <span className={'flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider ' +
+              (c.fechado ? 'bg-muted text-muted-foreground' : 'bg-success/20 text-success')}>
+              {c.fechado ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+              {c.fechado ? 'Fechado' : 'Aberto'}
+            </span>
+            {c.fechado && (
+              <span className={'rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ' +
+                (c.recebido ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning')}>
+                {c.recebido ? 'Recebido' : 'A receber'}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="mt-2 grid grid-cols-3 gap-2 text-center">
