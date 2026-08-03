@@ -33,3 +33,12 @@ export const fmtHarvestName = (harvest?: { nome?: string; tipo?: string; ano?: n
 
 export const fmtCultura = (c?: string) =>
   c === 'sorgo' ? 'Sorgo' : c === 'milho' ? 'Milho' : '';
+
+/** Cria um slug seguro para nomes de arquivo: remove acentos, troca espaços por hífen e preserva '/' */
+export const slugFileName = (text: string) =>
+  text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9\-\/]/g, '')
+    .replace(/-+/g, '-');
