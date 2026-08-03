@@ -30,6 +30,9 @@ export default function ContractsPage() {
   const [blocked, setBlocked] = useState<{ title: string; message: React.ReactNode } | null>(null);
   const [openExpanded, setOpenExpanded] = useState(false);
   const [closedExpanded, setClosedExpanded] = useState(false);
+  const [toEdit, setToEdit] = useState<{ id: number; produtor: string; safra: string; valor: string } | null>(null);
+  const [askRecalc, setAskRecalc] = useState<{ id: number; novoValor: number; nViagens: number } | null>(null);
+
 
   const openContracts = contracts.filter(c => !c.fechado);
   const closedContracts = contracts.filter(c => c.fechado);
