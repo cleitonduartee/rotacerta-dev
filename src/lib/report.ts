@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import QRCode from 'qrcode';
-import { fmtBRL, fmtDate, fmtNum } from './format';
+import { fmtBRL, fmtDate, fmtNum, fmtHarvestName, fmtCultura } from './format';
 import { buildPixPayload, type PixKeyType } from './pix';
 
 export interface ReportInput {
