@@ -346,10 +346,16 @@ export default function ContractsPage() {
 
         <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
           <span>R$ {fmtNum(c.valorPorSaco)} / saco</span>
-          <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10">
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button onClick={() => askEdit(c)} className="rounded-lg p-2 text-primary hover:bg-primary/10" aria-label="Editar contrato">
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button onClick={() => askRemove(c)} className="rounded-lg p-2 text-destructive hover:bg-destructive/10" aria-label="Excluir contrato">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </div>
+
 
         <div className="mt-2 grid grid-cols-2 gap-2">
           <button onClick={() => pdfContrato(c)} className="flex items-center justify-center gap-1 rounded-lg border border-border bg-background py-2 text-xs font-semibold">
