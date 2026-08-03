@@ -105,8 +105,18 @@ export default function ContractsPage() {
   }
 
   async function reabrir(id: number) {
-    await db.contracts.update(id, { fechado: false, fechadoEm: undefined, ...stamp() });
+    await db.contracts.update(id, { fechado: false, fechadoEm: undefined, recebido: false, recebidoEm: undefined, ...stamp() });
     toast.success('Contrato reaberto');
+  }
+
+  async function toggleRecebido(c: any) {
+    const novo = !c.recebido;
+    await db.contracts.update(c.id!, {
+      recebido: novo,
+      recebidoEm: novo ? Date.now() : undefined,
+      ...stamp(),
+    });
+    toast.success(novo ? 'Contrato marcado como recebido' : 'Recebimento desmarcado');
   }
 
   function calcContrato(cId: number) {
