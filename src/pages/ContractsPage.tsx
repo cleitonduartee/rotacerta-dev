@@ -3,12 +3,14 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum, fmtDate } from '@/lib/format';
-import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign } from 'lucide-react';
+import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
 import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+
 
 export default function ContractsPage() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
