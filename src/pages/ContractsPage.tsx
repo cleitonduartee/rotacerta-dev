@@ -92,6 +92,46 @@ export default function ContractsPage() {
     setToDelete(null);
   }
 
+  function askEdit(c: any) {
+    const p = producers.find(pp => pp.id === c.producerId);
+    const h = harvests.find(hh => hh.id === c.harvestId);
+    setToEdit({
+      id: c.id,
+      produtor: p?.nome ?? '?',
+      safra: h?.nome ?? '?',
+      valor: maskMoneyInput(String(Math.round((c.valorPorSaco || 0) * 100))),
+    });
+  }
+
+  async function saveEdit() {
+    if (!toEdit) return;
+    const v = parseMoney(toEdit.valor);
+    if (!v) return toast.error('Valor inválido');
+    await db.contracts.update(toEdit.id, { valorPorSaco: v, ...stamp() });
+    const ts = trips.filter(t => t.kind === 'safra' && t.contractId === toEdit.id);
+    toast.success('Contrato atualizado');
+    const id = toEdit.id;
+    setToEdit(null);
+    if (ts.length > 0) setAskRecalc({ id, novoValor: v, nViagens: ts.length });
+  }
+
+  async function confirmRecalc() {
+    if (!askRecalc) return;
+    const { id, novoValor } = askRecalc;
+    const ts = trips.filter(t => t.kind === 'safra' && t.contractId === id);
+    for (const t of ts) {
+      const sacos = t.sacos ?? 0;
+      await db.trips.update(t.id!, {
+        valorPorSacoOverride: undefined,
+        valorTotal: sacos * novoValor,
+        ...stamp(),
+      });
+    }
+    setAskRecalc(null);
+    toast.success(`${ts.length} ${ts.length === 1 ? 'viagem atualizada' : 'viagens atualizadas'}`);
+  }
+
+
   function askFechar(c: any) {
     const p = producers.find(pp => pp.id === c.producerId);
     const h = harvests.find(hh => hh.id === c.harvestId);
