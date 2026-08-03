@@ -292,8 +292,8 @@ export async function generateAnalyticHarvestReport(input: HarvestReportInput): 
 
   drawHeader(
     doc,
-    `Safra ${input.harvest.nome}`,
-    `${input.harvest.tipo} • ${input.harvest.ano}`,
+    `Safra ${fmtHarvestName(input.harvest)}`,
+    'Relatório analítico de fechamento',
     input.driver
   );
 
