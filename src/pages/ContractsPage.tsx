@@ -486,6 +486,56 @@ export default function ContractsPage() {
         onConfirm={confirmFechar}
       />
 
+      <Dialog open={!!toEdit} onOpenChange={(open) => !open && setToEdit(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar contrato</DialogTitle>
+          </DialogHeader>
+          {toEdit && (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                <strong>{toEdit.produtor}</strong> — {toEdit.safra}
+              </p>
+              <input
+                className={inputCls}
+                inputMode="decimal"
+                placeholder="R$ por saco (60 kg) — ex: 3,50"
+                value={toEdit.valor}
+                onChange={e => setToEdit({ ...toEdit, valor: maskMoneyInput(e.target.value) })}
+              />
+            </div>
+          )}
+          <DialogFooter>
+            <button onClick={() => setToEdit(null)} className="rounded-lg border border-border px-4 py-2 text-sm font-semibold">
+              Cancelar
+            </button>
+            <button onClick={saveEdit} className="rounded-lg gradient-primary px-4 py-2 text-sm font-bold text-primary-foreground">
+              Salvar
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDeleteDialog
+        open={!!askRecalc}
+        onOpenChange={(open) => !open && setAskRecalc(null)}
+        title="Atualizar viagens já lançadas?"
+        description={
+          askRecalc && (
+            <>
+              Este contrato possui{' '}
+              <strong>{askRecalc.nViagens} {askRecalc.nViagens === 1 ? 'viagem lançada' : 'viagens lançadas'}</strong>.
+              Deseja recalcular {askRecalc.nViagens === 1 ? 'ela' : 'elas'} com o novo valor de{' '}
+              <strong>{fmtBRL(askRecalc.novoValor)} / saco</strong>? Valores manuais informados nas viagens serão substituídos.
+            </>
+          )
+        }
+        confirmLabel="Sim, atualizar"
+        cancelLabel="Não, manter"
+        onConfirm={confirmRecalc}
+      />
+
+
       <BlockedDeleteDialog
         open={!!blocked}
         onOpenChange={(open) => !open && setBlocked(null)}
