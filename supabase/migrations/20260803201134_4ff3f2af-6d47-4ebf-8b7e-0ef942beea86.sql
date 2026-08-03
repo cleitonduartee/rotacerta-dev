@@ -1,0 +1,3 @@
+ALTER TABLE public.contracts ADD COLUMN IF NOT EXISTS recebido boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS recebido_em timestamp with time zone;
+ALTER TABLE public.trips ADD COLUMN IF NOT EXISTS recebido boolean NOT NULL DEFAULT false, ADD COLUMN IF NOT EXISTS recebido_em timestamp with time zone;
+UPDATE public.contracts SET recebido = true, recebido_em = COALESCE(fechado_em, now()) WHERE fechado = true AND recebido = false;
