@@ -199,7 +199,7 @@ export default function ContractsPage() {
       },
     });
     const p = producers.find(p => p.id === c.producerId);
-    const filename = `contrato-${p?.nome ?? 'produtor'}-${harvest.nome}.pdf`.replace(/\s+/g, '-');
+    const filename = `contrato-${p?.nome ?? 'produtor'}-${fmtHarvestName(harvest)}.pdf`.replace(/\s+/g, '-');
     return { blob, filename };
   }
 
