@@ -79,6 +79,7 @@ function NewHarvest() {
             <select className={inputCls} value={tipo} onChange={e => setTipo(e.target.value)}>
               <option value="soja">Soja</option>
               <option value="milho">Milho</option>
+              <option value="sorgo">Sorgo</option>
               <option value="trigo">Trigo</option>
               <option value="algodao">Algodão</option>
               <option value="outros">Outros</option>
