@@ -11,3 +11,25 @@ export const fmtDate = (iso: string) => {
 };
 
 export const todayISO = () => new Date().toISOString().slice(0, 10);
+
+export const fmtHarvestTipo = (tipo?: string) => {
+  const map: Record<string, string> = {
+    milho_sorgo: 'Milho/Sorgo',
+    milho: 'Milho',
+    sorgo: 'Sorgo',
+    soja: 'Soja',
+    algodao: 'Algodão',
+  };
+  if (!tipo) return '—';
+  return map[tipo] ?? (tipo.charAt(0).toUpperCase() + tipo.slice(1));
+};
+
+/** Nome padrão da safra: "Milho/Sorgo - 2026" */
+export const fmtHarvestName = (harvest?: { nome?: string; tipo?: string; ano?: number }) => {
+  if (!harvest) return '—';
+  const tipo = fmtHarvestTipo(harvest.tipo);
+  return harvest.ano ? `${tipo} - ${harvest.ano}` : tipo;
+};
+
+export const fmtCultura = (c?: string) =>
+  c === 'sorgo' ? 'Sorgo' : c === 'milho' ? 'Milho' : '';
