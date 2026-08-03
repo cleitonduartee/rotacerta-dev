@@ -112,6 +112,8 @@ export interface Trip {
   numeroNota?: string;     // número da nota fiscal (produtor para safra, transportadora para frete)
   valorTotal: number;
   observacao?: string;
+  recebido?: boolean;
+  recebidoEm?: number;
   syncStatus: SyncStatus;
   updatedAt: number;
 }
