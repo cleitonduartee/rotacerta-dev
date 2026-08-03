@@ -89,6 +89,21 @@ export default function TripsList() {
                     {t.kind === 'safra' && t.sacos != null && <> • {t.sacos.toFixed(1)} sacos</>}
                     {t.kind === 'frete' && t.pesoToneladas != null && <> • {t.pesoToneladas} t</>}
                   </p>
+
+                  {t.kind === 'frete' && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleRecebido(t); }}
+                      className={
+                        'mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ' +
+                        (t.recebido
+                          ? 'bg-success text-success-foreground'
+                          : 'border border-warning/40 bg-warning/10 text-warning')
+                      }
+                    >
+                      {t.recebido ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
+                      {t.recebido ? 'Recebido' : 'Marcar recebido'}
+                    </button>
+                  )}
                 </div>
                 <p className="font-display text-2xl text-primary whitespace-nowrap">{fmtBRL(t.valorTotal)}</p>
               </div>
