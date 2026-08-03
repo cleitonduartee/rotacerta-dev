@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
-import { fmtBRL, fmtNum, fmtDate, fmtHarvestName } from '@/lib/format';
+import { fmtBRL, fmtNum, fmtDate, fmtHarvestName, fmtHarvestTipo, slugFileName } from '@/lib/format';
 import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
