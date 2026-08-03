@@ -386,7 +386,17 @@ export default function ContractsPage() {
             <Lock className="h-3.5 w-3.5" /> Fechar contrato
           </button>
         )}
+
+        <div className="mt-3 border-t border-border pt-2">
+          <button
+            onClick={() => askRemove(c)}
+            className="flex w-full items-center justify-center gap-2 rounded-lg py-2 text-xs font-semibold text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Excluir contrato
+          </button>
+        </div>
       </li>
+
     );
   }
 
