@@ -80,6 +80,8 @@ export interface HarvestContract {
   valorPorSaco: number;  // R$ por saco de 60kg
   fechado?: boolean;
   fechadoEm?: number;
+  recebido?: boolean;
+  recebidoEm?: number;
   syncStatus: SyncStatus;
   updatedAt: number;
 }
