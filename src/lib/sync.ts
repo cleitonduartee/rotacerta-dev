@@ -197,6 +197,7 @@ async function pullTrips(uid: string, maps: Awaited<ReturnType<typeof buildIdMap
       valorPorTonelada: r.valor_por_tonelada != null ? Number(r.valor_por_tonelada) : undefined,
       observacao: r.observacao ?? undefined,
       numeroNota: r.numero_nota ?? undefined,
+      cultura: r.cultura ?? undefined,
       valorTotal: Number(r.valor_total ?? 0),
       syncStatus: 'synced' as SyncStatus,
       updatedAt: remoteUpdatedAt,
@@ -382,6 +383,7 @@ export async function pushAll(uid: string) {
       valor_por_tonelada: r.valorPorTonelada ?? null,
       observacao: r.observacao ?? null,
       numero_nota: r.numeroNota ?? null,
+      cultura: r.cultura ?? null,
       valor_total: r.valorTotal ?? 0,
       updated_at: toIso(r.updatedAt),
     };

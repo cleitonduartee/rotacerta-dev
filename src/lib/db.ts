@@ -100,6 +100,7 @@ export interface Trip {
   pesoKg?: number;          // entrada em kg
   sacos?: number;           // pesoKg/60
   valorPorSacoOverride?: number; // edição manual
+  cultura?: string;         // 'milho' | 'sorgo' — para safras Milho/Sorgo
 
   // frete avulso
   transportadora?: string;

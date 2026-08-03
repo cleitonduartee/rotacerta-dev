@@ -78,8 +78,7 @@ function NewHarvest() {
           <div className="grid grid-cols-2 gap-2">
             <select className={inputCls} value={tipo} onChange={e => setTipo(e.target.value)}>
               <option value="soja">Soja</option>
-              <option value="milho">Milho</option>
-              <option value="sorgo">Sorgo</option>
+              <option value="milho_sorgo">Milho/Sorgo</option>
               <option value="trigo">Trigo</option>
               <option value="algodao">Algodão</option>
               <option value="outros">Outros</option>
