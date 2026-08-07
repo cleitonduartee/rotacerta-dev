@@ -2,7 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtDate, todayISO } from '@/lib/format';
-import { Plus, Trash2, FileText, Truck as TruckIcon, Wallet } from 'lucide-react';
+import { Plus, Trash2, Pencil, FileText, Truck as TruckIcon, Wallet } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
