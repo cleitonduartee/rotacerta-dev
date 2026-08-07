@@ -103,7 +103,15 @@ export function ExpensesList() {
                 <div className="flex items-center gap-1 shrink-0">
                   <span className="font-display text-xl text-destructive">−{fmtBRL(e.valor)}</span>
                   <button
+                    onClick={() => navigate(`/despesas/${e.id}`)}
+                    aria-label="Editar despesa"
+                    className="rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
                     onClick={() => setToDelete(e)}
+                    aria-label="Excluir despesa"
                     className="rounded-lg p-2 text-destructive hover:bg-destructive/10"
                   >
                     <Trash2 className="h-4 w-4" />
