@@ -327,8 +327,13 @@ export default function Dashboard() {
               <Clock className="h-3.5 w-3.5 text-warning" />
               <p className="text-[10px] font-bold uppercase tracking-wider text-warning">A receber</p>
             </div>
-            <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceber)}</p>
+            <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceberLiquido)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{qtdAReceber} viagem(ns)</p>
+            {abatimentos > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Bruto {fmtBRL(aReceber)} − despesas {fmtBRL(abatimentos)}
+              </p>
+            )}
           </div>
         </div>
 
