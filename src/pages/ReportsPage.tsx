@@ -67,7 +67,8 @@ export default function ReportsPage() {
       const e = expenses.filter(x =>
         (x.contractId && cIds.has(x.contractId)) ||
         x.harvestId === Number(harvestId) ||
-        (x.tripId && tIds.has(x.tripId))
+        (x.tripId && tIds.has(x.tripId)) ||
+        (!x.contractId && !x.tripId && !x.harvestId)
       );
       const h = harvests.find(hh => hh.id === Number(harvestId));
       const abertos = cs.filter(c => !c.fechado);
