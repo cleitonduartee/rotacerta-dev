@@ -110,18 +110,33 @@ export default function Dashboard() {
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
 
   // Recebido × A receber (contrato recebido para lavoura, flag da viagem para frete avulso)
-  const { recebido, aReceber, qtdRecebidas, qtdAReceber } = useMemo(() => {
+  const { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos } = useMemo(() => {
     let recebido = 0, aReceber = 0, qtdRecebidas = 0, qtdAReceber = 0;
+    const contratosAReceber = new Set<number>();
+    const tripsAReceber = new Set<number>();
     for (const t of tripsF) {
       const v = t.valorTotal || 0;
       const pago = t.kind === 'safra'
         ? !!contracts.find(c => c.id === t.contractId)?.recebido
         : !!t.recebido;
-      if (pago) { recebido += v; qtdRecebidas++; } else { aReceber += v; qtdAReceber++; }
+      if (pago) { recebido += v; qtdRecebidas++; }
+      else {
+        aReceber += v; qtdAReceber++;
+        if (t.kind === 'safra' && t.contractId) contratosAReceber.add(t.contractId);
+        if (t.id) tripsAReceber.add(t.id);
+      }
     }
-    return { recebido, aReceber, qtdRecebidas, qtdAReceber };
-  }, [tripsF, contracts]);
+    // Despesas vinculadas a contratos ainda não recebidos são abatidas no fechamento
+    const abatimentos = expensesF.reduce((s, e) => {
+      const ligadaContrato = e.contractId && contratosAReceber.has(e.contractId);
+      const tr = e.tripId ? trips.find(tt => tt.id === e.tripId) : undefined;
+      const ligadaViagem = tr && tr.kind === 'safra' && tr.contractId && contratosAReceber.has(tr.contractId);
+      return s + (ligadaContrato || ligadaViagem ? e.valor : 0);
+    }, 0);
+    return { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos };
+  }, [tripsF, expensesF, contracts, trips]);
 
+  const aReceberLiquido = aReceber - abatimentos;
   const pctRecebido = totalReceita > 0 ? (recebido / totalReceita) * 100 : 0;
 
 
@@ -312,8 +327,13 @@ export default function Dashboard() {
               <Clock className="h-3.5 w-3.5 text-warning" />
               <p className="text-[10px] font-bold uppercase tracking-wider text-warning">A receber</p>
             </div>
-            <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceber)}</p>
+            <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceberLiquido)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{qtdAReceber} viagem(ns)</p>
+            {abatimentos > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Bruto {fmtBRL(aReceber)} − despesas {fmtBRL(abatimentos)}
+              </p>
+            )}
           </div>
         </div>
 
