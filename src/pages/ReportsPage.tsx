@@ -63,7 +63,12 @@ export default function ReportsPage() {
       const cs = contracts.filter(c => c.harvestId === Number(harvestId));
       const cIds = new Set(cs.map(c => c.id));
       const t = trips.filter(x => x.kind === 'safra' && x.contractId && cIds.has(x.contractId));
-      const e = expenses.filter(x => (x.contractId && cIds.has(x.contractId)) || x.harvestId === Number(harvestId));
+      const tIds = new Set(t.map(tt => tt.id));
+      const e = expenses.filter(x =>
+        (x.contractId && cIds.has(x.contractId)) ||
+        x.harvestId === Number(harvestId) ||
+        (x.tripId && tIds.has(x.tripId))
+      );
       const h = harvests.find(hh => hh.id === Number(harvestId));
       const abertos = cs.filter(c => !c.fechado);
       return { tripsFiltradas: t, despesasFiltradas: e, titulo: h ? `${h.nome} • ${h.tipo} ${h.ano}` : 'Safra', contratosAbertos: abertos };
