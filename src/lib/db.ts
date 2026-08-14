@@ -1,7 +1,20 @@
 import Dexie, { type Table } from 'dexie';
 
 export type SyncStatus = 'pending' | 'synced';
-export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses' | 'maintenances';
+export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses' | 'maintenances' | 'advances';
+
+/** Adiantamento de frete: valor recebido antes do fechamento */
+export interface Advance {
+  id?: number;
+  remoteId?: string;
+  contractId?: number;   // adiantamento de contrato (lavoura)
+  tripId?: number;       // adiantamento de frete avulso
+  data: string;          // ISO yyyy-MM-dd
+  valor: number;
+  observacao?: string;
+  syncStatus: SyncStatus;
+  updatedAt: number;
+}
 
 export type MaintenanceTipo =
   | 'oleo_motor'
