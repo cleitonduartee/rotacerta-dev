@@ -227,6 +227,13 @@ export default function TripsList() {
         title="Não é possível excluir a viagem"
         description={blocked.description}
       />
+
+      <AdvanceDialog
+        open={!!advanceTarget}
+        onOpenChange={(o) => !o && setAdvanceTarget(null)}
+        tripId={advanceTarget?.tripId}
+        targetLabel={advanceTarget?.label}
+      />
     </div>
   );
 }
