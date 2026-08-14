@@ -33,6 +33,9 @@ export default function ContractsPage() {
   const [closedExpanded, setClosedExpanded] = useState(false);
   const [toEdit, setToEdit] = useState<{ id: number; produtor: string; safra: string; valor: string } | null>(null);
   const [askRecalc, setAskRecalc] = useState<{ id: number; novoValor: number; nViagens: number } | null>(null);
+  const [advanceTarget, setAdvanceTarget] = useState<{ contractId: number; label: string } | null>(null);
+
+
 
 
   const openContracts = contracts.filter(c => !c.fechado);
