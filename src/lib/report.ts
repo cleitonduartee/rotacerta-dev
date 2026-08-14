@@ -107,6 +107,9 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     ['Receita bruta', fmtBRL(input.totals.receita)],
     ['Despesas', `- ${fmtBRL(input.totals.despesas)}`],
   ];
+  if (totalAdiantado > 0) {
+    linhas.push(['Adiantamentos recebidos', `- ${fmtBRL(totalAdiantado)}`]);
+  }
   let ly = y + 52;
   linhas.forEach(([k, v]) => {
     doc.setTextColor(80, 80, 80);
@@ -125,10 +128,10 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   // Valor líquido — destaque
   doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
   doc.setTextColor(20, 20, 20);
-  doc.text('VALOR LÍQUIDO', cardX + 20, ly);
+  doc.text(totalAdiantado > 0 ? 'SALDO A PAGAR' : 'VALOR LÍQUIDO', cardX + 20, ly);
   doc.setTextColor(249, 115, 22);
   doc.setFontSize(16);
-  doc.text(fmtBRL(input.totals.liquido), cardX + cardW - 20, ly, { align: 'right' });
+  doc.text(fmtBRL(liquidoFinal), cardX + cardW - 20, ly, { align: 'right' });
 
   doc.setTextColor(20, 20, 20);
   y = y + cardH + 14;
