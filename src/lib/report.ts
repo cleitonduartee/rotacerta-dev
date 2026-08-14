@@ -226,6 +226,33 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     }
   }
 
+  // Adiantamentos detalhados
+  if (advList.length) {
+    y += 10;
+    if (y > 720) { doc.addPage(); y = 40; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Adiantamentos recebidos', 40, y); y += 14;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Data', 40, y); doc.text('Observação', 100, y); doc.text('Valor', W - 50, y, { align: 'right' });
+    y += 4; doc.line(40, y, W - 40, y); y += 12;
+    const advs = [...advList].sort((a: any, b: any) => (a.data || '').localeCompare(b.data || ''));
+    for (const a of advs) {
+      if (y > 800) { doc.addPage(); y = 40; }
+      doc.text(fmtDate(a.data), 40, y);
+      doc.text((a.observacao || '—').slice(0, 60), 100, y);
+      doc.text(fmtBRL(a.valor), W - 50, y, { align: 'right' });
+      y += 13;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total adiantado', 40, y);
+    doc.text(fmtBRL(totalAdiantado), W - 50, y, { align: 'right' });
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+  }
+
+
+
 
   // Marca d'água diagonal em todas as páginas
   const year = new Date().getFullYear();
