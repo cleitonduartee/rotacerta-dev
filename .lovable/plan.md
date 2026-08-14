@@ -1,43 +1,56 @@
-## Nova área: Manutenções
+# Adiantamentos de frete
 
-### 1. Banco (Lovable Cloud + IndexedDB)
-**Nova tabela `maintenances`** no Cloud + Dexie local (com sync padrão do app):
-- `truck_id` (FK trucks)
-- `tipo` (enum como texto): `oleo_motor`, `oleo_cambio`, `oleo_diferencial`, `revisao_cubo`, `troca_pneu`, `lona_freio`, `campana`, `outro`
-- `tipo_outro` (texto livre, obrigatório quando tipo=`outro`)
-- `km` (inteiro — km atual do caminhão no momento)
-- `data` (date — padrão `now()`, editável)
-- `observacao` (texto opcional)
-- Campos padrão: `id`, `user_id`, `created_at`, `updated_at`
-- RLS por `user_id` + GRANTs para `authenticated` e `service_role`.
+Lançar adiantamentos (valores recebidos antes do fechamento) vinculados a um contrato de lavoura ou a uma viagem avulsa, refletindo em Recebíveis e no relatório de fechamento.
 
-### 2. Frontend
-**`src/lib/db.ts`**: adicionar interface `Maintenance` + store Dexie v4 com índices `truckId, data, tipo, syncStatus, remoteId`.
+## 1. Dados
 
-**`src/lib/sync.ts`**: incluir `maintenances` no push/pull (mesmo padrão dos outros).
+Nova tabela `advances` (Cloud + Dexie local, com sync igual às demais):
+- `contract_id` (opcional) ou `trip_id` (opcional) — exatamente um preenchido
+- `data` (padrão hoje)
+- `valor`
+- `observacao` (opcional)
+- Padrão: `id`, `user_id`, `created_at`, `updated_at`
+- RLS por usuário + GRANTs.
 
-**`src/pages/MaintenancePage.tsx`** (nova):
-- Header padrão `PageHeader`.
-- Botão "Nova manutenção" abre form (modal ou rota `/manutencoes/nova`).
-- Form:
-  - Select Caminhão (lista de `trucks`).
-  - Select Tipo com as opções fixas em português. Se "Troca de óleo" → segundo select com Motor / Câmbio / Diferencial. Se "Outro" → input texto obrigatório.
-  - Input Data (DatePicker já existente, default hoje).
-  - Input KM atual (numérico, obrigatório).
-  - Textarea Observação (opcional).
-- Listagem abaixo: card por manutenção mostrando placa, tipo formatado, data (dd/MM/yyyy), km e observação. Ordenada por data desc. Filtro rápido por caminhão.
-- Ações: editar/excluir com `deleteWithTombstone`.
+## 2. Onde lançar
 
-**`src/App.tsx`**: rota `/manutencoes`.
+**No card do contrato (Contratos)**
+- Botão "Adiantamento" abre modal: valor, data, observação.
+- No card aparece linha "Adiantado: R$ X" quando houver, com acesso à lista (editar/excluir).
+- Bloqueio: não permitir excluir contrato que tenha adiantamentos.
 
-**`src/components/AppLayout.tsx`**: adicionar item "Manutenção" (ícone `Wrench` do lucide) nas tabs mobile e sidebar desktop. Como já são 5 abas no mobile, vou substituir "Cadastros" por um grupo? Não — para preservar UX, mantenho 5 abas no mobile e adiciono "Manutenção" apenas na sidebar desktop + dentro da página Cadastros como atalho visível, OU trocar tab bar para 6 colunas. **Decisão**: aumentar para 6 colunas no mobile (grid-cols-6, ícones um pouco menores) — assim fica acessível em ambos.
+**No card da viagem avulsa (Viagens)**
+- Mesmo botão/modal para fretes avulsos (`kind = frete`).
+- Se a viagem já foi marcada como recebida, o botão fica oculto.
 
-### 3. Formatação
-`src/lib/format.ts`: helper `formatMaintenanceType(tipo, tipoOutro?)` → "Troca de óleo (motor)", etc.
+**Página dedicada `/adiantamentos`**
+- Item no menu (mobile + desktop), ícone `HandCoins`.
+- Formulário: escolher destino (Contrato ou Viagem avulsa) → select do registro → valor, data, observação.
+- Histórico ordenado por data desc, com filtro por contrato/viagem e ações editar/excluir.
 
-### Fora do escopo (não vou fazer)
-- Alertas por km/intervalo — não pedido.
-- Vínculo com despesas — não pedido.
-- Relatório de manutenções — não pedido.
+## 3. Dashboard (Recebíveis)
 
-Prossigo com essa estrutura?
+- "Recebido" passa a somar: valores já recebidos + adiantamentos de contratos/viagens ainda pendentes.
+- "A receber (líquido)" passa a descontar também os adiantamentos, além das despesas já abatidas hoje.
+- Detalhamento do card mostra: Bruto − Despesas − Adiantamentos.
+- Quando o contrato/viagem é marcado como recebido, o adiantamento deixa de ser contado em separado (evita duplicidade).
+
+## 4. Relatório de fechamento (PDF/WhatsApp)
+
+- Nova seção "Adiantamentos" com data, valor e observação de cada lançamento.
+- Nos totais: Receita − Despesas − Adiantamentos = **Líquido a pagar**.
+- QR Code PIX passa a usar o líquido já descontado dos adiantamentos.
+
+## Detalhes técnicos
+
+- `src/lib/db.ts`: interface `Advance` + store Dexie v6 (`++id, remoteId, contractId, tripId, data, syncStatus`); incluir em `SyncTable` e `wipeLocalData`.
+- `src/lib/sync.ts`: push/pull de `advances` no mesmo padrão (tombstones inclusos).
+- `src/components/AdvanceDialog.tsx`: modal reutilizável usado em Contratos, Viagens e na página.
+- `src/pages/AdvancesPage.tsx` + rota em `src/App.tsx` + item em `src/components/AppLayout.tsx`.
+- `src/pages/ContractsPage.tsx`, `src/pages/TripsList.tsx`: botão + resumo.
+- `src/pages/Dashboard.tsx`: incluir adiantamentos no bloco de Recebimentos.
+- `src/lib/report.ts` (+ `analyticReports.ts` se aplicável): seção e totais.
+
+## Fora do escopo
+- Adiantamento parcial por viagem dentro de contrato (fica no nível do contrato).
+- Registro de forma de pagamento/comprovante.
