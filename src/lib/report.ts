@@ -11,6 +11,8 @@ export interface ReportInput {
   trips: any[];
   expenses: any[];
   trucks: any[];
+  /** Adiantamentos já recebidos e que serão descontados do valor final */
+  advances?: any[];
   totals: { totalSacos: number; totalToneladas: number; receita: number; despesas: number; liquido: number };
 }
 
