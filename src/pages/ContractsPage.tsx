@@ -309,7 +309,10 @@ export default function ContractsPage() {
     const despesas = expenses
       .filter(e => e.contractId === c.id || (e.tripId && tripIds.has(e.tripId)))
       .reduce((s, e) => s + (e.valor || 0), 0);
-    const liquido = r.receita - despesas;
+    const adiantado = advances
+      .filter(a => a.contractId === c.id)
+      .reduce((s, a) => s + (a.valor || 0), 0);
+    const liquido = r.receita - despesas - adiantado;
     return (
       <li key={c.id} className={'rounded-xl border bg-card p-3 ' + (c.fechado ? 'border-muted opacity-90' : 'border-border')}>
         <div className="flex items-start justify-between gap-2">
