@@ -462,6 +462,25 @@ export async function pushAll(uid: string) {
       updated_at: toIso(r.updatedAt),
     };
   });
+
+  maps = await buildIdMaps();
+
+  await pushTable('advances', (r: any) => {
+    const contract_id = r.contractId ? maps.contractLocalToRemote.get(r.contractId) : null;
+    const trip_id = r.tripId ? maps.tripLocalToRemote.get(r.tripId) : null;
+    if (r.contractId && !contract_id) return null;
+    if (r.tripId && !trip_id) return null;
+    if (!contract_id && !trip_id) return null;
+    return {
+      user_id: uid,
+      contract_id: contract_id ?? null,
+      trip_id: trip_id ?? null,
+      data: r.data,
+      valor: r.valor ?? 0,
+      observacao: r.observacao ?? null,
+      updated_at: toIso(r.updatedAt),
+    };
+  });
 }
 
 // ============================================================
