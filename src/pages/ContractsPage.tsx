@@ -350,8 +350,16 @@ export default function ContractsPage() {
             <span className="text-muted-foreground">Despesas</span>
             <span className="font-display text-sm text-destructive">−{fmtBRL(despesas)}</span>
           </div>
+          {adiantado > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Adiantamentos</span>
+              <span className="font-display text-sm text-warning">−{fmtBRL(adiantado)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between border-t border-border pt-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Líquido</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {adiantado > 0 ? 'Saldo a pagar' : 'Líquido'}
+            </span>
             <span className="font-display text-base text-primary">{fmtBRL(liquido)}</span>
           </div>
         </div>
@@ -362,6 +370,16 @@ export default function ContractsPage() {
             <Pencil className="h-3.5 w-3.5" /> Editar valor
           </button>
         </div>
+
+        <button
+          onClick={() => setAdvanceTarget({ contractId: c.id!, label: `${p?.nome ?? 'Produtor'} • ${h?.nome ?? 'Safra'}` })}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 py-2 text-xs font-bold text-primary"
+        >
+          <HandCoins className="h-3.5 w-3.5" />
+          {adiantado > 0 ? `Adiantamentos • ${fmtBRL(adiantado)}` : 'Lançar adiantamento'}
+        </button>
+
+
 
 
 
