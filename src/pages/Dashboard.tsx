@@ -327,8 +327,13 @@ export default function Dashboard() {
               <CheckCircle2 className="h-3.5 w-3.5 text-success" />
               <p className="text-[10px] font-bold uppercase tracking-wider text-success">Recebido</p>
             </div>
-            <p className="mt-1 font-display text-2xl leading-none text-success">{fmtBRL(recebido)}</p>
+            <p className="mt-1 font-display text-2xl leading-none text-success">{fmtBRL(recebidoTotal)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{qtdRecebidas} viagem(ns)</p>
+            {adiantado > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Inclui {fmtBRL(adiantado)} em adiantamentos
+              </p>
+            )}
           </div>
           <div className="rounded-xl border border-warning/30 bg-warning/10 p-3">
             <div className="flex items-center gap-1.5">
@@ -337,9 +342,11 @@ export default function Dashboard() {
             </div>
             <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceberLiquido)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{qtdAReceber} viagem(ns)</p>
-            {abatimentos > 0 && (
+            {(abatimentos > 0 || adiantado > 0) && (
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Bruto {fmtBRL(aReceber)} − despesas {fmtBRL(abatimentos)}
+                Bruto {fmtBRL(aReceber)}
+                {abatimentos > 0 && <> − despesas {fmtBRL(abatimentos)}</>}
+                {adiantado > 0 && <> − adiant. {fmtBRL(adiantado)}</>}
               </p>
             )}
           </div>
