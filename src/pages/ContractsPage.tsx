@@ -19,6 +19,7 @@ export default function ContractsPage() {
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
+  const advances = useLiveQuery(() => db.advances.toArray(), []) ?? [];
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const drivers = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
 
