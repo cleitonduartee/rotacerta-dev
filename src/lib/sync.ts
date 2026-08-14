@@ -269,6 +269,32 @@ async function pullMaintenances(uid: string, maps: Awaited<ReturnType<typeof bui
   for (const m of stale) if (m.remoteId && !remoteIds.has(m.remoteId)) await db.maintenances.delete(m.id!);
 }
 
+async function pullAdvances(uid: string, maps: Awaited<ReturnType<typeof buildIdMaps>>) {
+  const { data, error } = await supabase.from('advances').select('*').eq('user_id', uid);
+  if (error) throw error;
+  const remoteIds = new Set((data ?? []).map((r: any) => r.id));
+  for (const r of data ?? []) {
+    const local = await db.advances.where('remoteId').equals(r.id).first();
+    const remoteUpdatedAt = fromIso(r.updated_at);
+    if (local && local.updatedAt > remoteUpdatedAt && local.syncStatus === 'pending') continue;
+    const payload: any = {
+      remoteId: r.id,
+      contractId: r.contract_id ? maps.contracts.get(r.contract_id) : undefined,
+      tripId: r.trip_id ? maps.trips.get(r.trip_id) : undefined,
+      data: r.data,
+      valor: Number(r.valor ?? 0),
+      observacao: r.observacao ?? undefined,
+      syncStatus: 'synced' as SyncStatus,
+      updatedAt: remoteUpdatedAt,
+    };
+    if (payload.contractId == null && payload.tripId == null) continue;
+    if (local) await db.advances.update(local.id!, payload);
+    else await db.advances.add(payload);
+  }
+  const stale = await db.advances.where('syncStatus').equals('synced').toArray();
+  for (const a of stale) if (a.remoteId && !remoteIds.has(a.remoteId)) await db.advances.delete(a.id!);
+}
+
 export async function pullAll(uid: string) {
   await pullTrucks(uid);
   await pullProducers(uid);
@@ -280,6 +306,7 @@ export async function pullAll(uid: string) {
   maps = await buildIdMaps();
   await pullExpenses(uid, maps);
   await pullMaintenances(uid, maps);
+  await pullAdvances(uid, maps);
 }
 
 // ============================================================
