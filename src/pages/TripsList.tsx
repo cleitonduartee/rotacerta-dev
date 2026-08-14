@@ -24,9 +24,11 @@ export default function TripsList() {
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
+  const advances = useLiveQuery(() => db.advances.toArray(), []) ?? [];
   const truckMap = new Map(trucks.map(t => [t.id!, t] as const));
 
   const [toDelete, setToDelete] = useState<any | null>(null);
+  const [advanceTarget, setAdvanceTarget] = useState<{ tripId: number; label: string } | null>(null);
   const [blocked, setBlocked] = useState<{ open: boolean; description: React.ReactNode }>({ open: false, description: null });
 
   function ownerInfo(t: any) {
