@@ -195,6 +195,7 @@ export default function ContractsPage() {
       trips: r.trips,
       expenses: exps,
       trucks,
+      advances: advances.filter(a => a.contractId === c.id),
       totals: {
         totalSacos: r.sacos,
         totalToneladas,
