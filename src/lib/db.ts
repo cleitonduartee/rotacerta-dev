@@ -199,6 +199,10 @@ class TruckTripDB extends Dexie {
     this.version(4).stores({
       maintenances: '++id, remoteId, truckId, data, tipo, syncStatus',
     });
+    // v5: adiantamentos de frete
+    this.version(5).stores({
+      advances: '++id, remoteId, contractId, tripId, data, syncStatus',
+    });
   }
 }
 
