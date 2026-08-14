@@ -16,6 +16,7 @@ import { ExpensesList, ExpenseForm } from "./pages/Expenses";
 import CadastrosPage from "./pages/CadastrosPage";
 import ReportsPage from "./pages/ReportsPage";
 import MaintenancePage from "./pages/MaintenancePage";
+import AdvancesPage from "./pages/AdvancesPage";
 import LoginPage from "./pages/LoginPage";
 import NotFound from "./pages/NotFound";
 
@@ -45,6 +46,7 @@ const App = () => (
                   <Route path="/despesas/:id" element={<ExpenseForm />} />
                   <Route path="/cadastros" element={<CadastrosPage />} />
                   <Route path="/manutencoes" element={<MaintenancePage />} />
+                  <Route path="/adiantamentos" element={<AdvancesPage />} />
                   <Route path="/relatorios" element={<ReportsPage />} />
                 </Route>
               </Route>

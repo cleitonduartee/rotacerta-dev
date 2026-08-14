@@ -1,7 +1,20 @@
 import Dexie, { type Table } from 'dexie';
 
 export type SyncStatus = 'pending' | 'synced';
-export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses' | 'maintenances';
+export type SyncTable = 'trucks' | 'producers' | 'harvests' | 'contracts' | 'trips' | 'expenses' | 'maintenances' | 'advances';
+
+/** Adiantamento de frete: valor recebido antes do fechamento */
+export interface Advance {
+  id?: number;
+  remoteId?: string;
+  contractId?: number;   // adiantamento de contrato (lavoura)
+  tripId?: number;       // adiantamento de frete avulso
+  data: string;          // ISO yyyy-MM-dd
+  valor: number;
+  observacao?: string;
+  syncStatus: SyncStatus;
+  updatedAt: number;
+}
 
 export type MaintenanceTipo =
   | 'oleo_motor'
@@ -153,6 +166,7 @@ class TruckTripDB extends Dexie {
   trips!: Table<Trip, number>;
   expenses!: Table<Expense, number>;
   maintenances!: Table<Maintenance, number>;
+  advances!: Table<Advance, number>;
   settings!: Table<Setting, string>;
   tombstones!: Table<Tombstone, number>;
 
@@ -184,6 +198,10 @@ class TruckTripDB extends Dexie {
     // v4: adiciona manutenções
     this.version(4).stores({
       maintenances: '++id, remoteId, truckId, data, tipo, syncStatus',
+    });
+    // v5: adiantamentos de frete
+    this.version(5).stores({
+      advances: '++id, remoteId, contractId, tripId, data, syncStatus',
     });
   }
 }
@@ -224,7 +242,7 @@ export async function deleteWithTombstone(table: SyncTable, localId: number) {
 export async function wipeLocalData() {
   await db.transaction(
     'rw',
-    [db.trucks, db.producers, db.harvests, db.contracts, db.trips, db.expenses, db.maintenances, db.tombstones, db.drivers],
+    [db.trucks, db.producers, db.harvests, db.contracts, db.trips, db.expenses, db.maintenances, db.advances, db.tombstones, db.drivers],
     async () => {
       await Promise.all([
         db.trucks.clear(),
@@ -234,6 +252,7 @@ export async function wipeLocalData() {
         db.trips.clear(),
         db.expenses.clear(),
         db.maintenances.clear(),
+        db.advances.clear(),
         db.tombstones.clear(),
         db.drivers.clear(),
       ]);

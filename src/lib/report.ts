@@ -11,6 +11,8 @@ export interface ReportInput {
   trips: any[];
   expenses: any[];
   trucks: any[];
+  /** Adiantamentos já recebidos e que serão descontados do valor final */
+  advances?: any[];
   totals: { totalSacos: number; totalToneladas: number; receita: number; despesas: number; liquido: number };
 }
 
@@ -18,6 +20,10 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
+
+  const advList = input.advances ?? [];
+  const totalAdiantado = advList.reduce((s: number, a: any) => s + (a.valor || 0), 0);
+  const liquidoFinal = input.totals.liquido - totalAdiantado;
 
   // Quando é relatório de um único contrato, mostra o produtor no cabeçalho
   const singleContract = input.contracts.length === 1 ? input.contracts[0] : null;
@@ -66,14 +72,15 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   }
 
   // ============ PIX (logo abaixo do cabeçalho) ============
-  y = await drawPixBlock(doc, y, input.driver, input.totals.liquido);
+  y = await drawPixBlock(doc, y, input.driver, liquidoFinal);
 
   // TOTAIS GERAIS — card moderno
   y += 14;
 
   const cardX = 30;
   const cardW = W - 60;
-  const cardH = 150;
+  const cardH = totalAdiantado > 0 ? 166 : 150;
+
 
   // Sombra sutil + fundo branco com borda laranja
   doc.setFillColor(255, 247, 237); // laranja muito claro
@@ -100,6 +107,9 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     ['Receita bruta', fmtBRL(input.totals.receita)],
     ['Despesas', `- ${fmtBRL(input.totals.despesas)}`],
   ];
+  if (totalAdiantado > 0) {
+    linhas.push(['Adiantamentos recebidos', `- ${fmtBRL(totalAdiantado)}`]);
+  }
   let ly = y + 52;
   linhas.forEach(([k, v]) => {
     doc.setTextColor(80, 80, 80);
@@ -118,10 +128,10 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   // Valor líquido — destaque
   doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
   doc.setTextColor(20, 20, 20);
-  doc.text('VALOR LÍQUIDO', cardX + 20, ly);
+  doc.text(totalAdiantado > 0 ? 'SALDO A PAGAR' : 'VALOR LÍQUIDO', cardX + 20, ly);
   doc.setTextColor(249, 115, 22);
   doc.setFontSize(16);
-  doc.text(fmtBRL(input.totals.liquido), cardX + cardW - 20, ly, { align: 'right' });
+  doc.text(fmtBRL(liquidoFinal), cardX + cardW - 20, ly, { align: 'right' });
 
   doc.setTextColor(20, 20, 20);
   y = y + cardH + 14;
@@ -215,6 +225,33 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
       y += 13;
     }
   }
+
+  // Adiantamentos detalhados
+  if (advList.length) {
+    y += 10;
+    if (y > 720) { doc.addPage(); y = 40; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Adiantamentos recebidos', 40, y); y += 14;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+    doc.text('Data', 40, y); doc.text('Observação', 100, y); doc.text('Valor', W - 50, y, { align: 'right' });
+    y += 4; doc.line(40, y, W - 40, y); y += 12;
+    const advs = [...advList].sort((a: any, b: any) => (a.data || '').localeCompare(b.data || ''));
+    for (const a of advs) {
+      if (y > 800) { doc.addPage(); y = 40; }
+      doc.text(fmtDate(a.data), 40, y);
+      doc.text((a.observacao || '—').slice(0, 60), 100, y);
+      doc.text(fmtBRL(a.valor), W - 50, y, { align: 'right' });
+      y += 13;
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.text('Total adiantado', 40, y);
+    doc.text(fmtBRL(totalAdiantado), W - 50, y, { align: 'right' });
+    y += 16;
+    doc.setFont('helvetica', 'normal');
+  }
+
+
 
 
   // Marca d'água diagonal em todas as páginas

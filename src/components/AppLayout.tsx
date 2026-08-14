@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut, WifiOff, HelpCircle, Wrench } from 'lucide-react';
+import { Home, Truck, FileSignature, Receipt, FileText, Plus, LogOut, WifiOff, HelpCircle, Wrench, HandCoins } from 'lucide-react';
 import { SyncIndicator } from './SyncIndicator';
 import { OnboardingTour } from './OnboardingTour';
 import { HelpCenter } from './HelpCenter';
@@ -14,6 +14,7 @@ const tabs = [
   { to: '/viagens', icon: Truck, label: 'Viagens', tourKey: 'tab-viagens' },
   { to: '/contratos', icon: FileSignature, label: 'Contratos', tourKey: 'tab-contratos' },
   { to: '/despesas', icon: Receipt, label: 'Despesas', tourKey: 'tab-despesas' },
+  { to: '/adiantamentos', icon: HandCoins, label: 'Adiant.', tourKey: 'tab-adiantamentos' },
   { to: '/manutencoes', icon: Wrench, label: 'Manutenção', tourKey: 'tab-manutencoes' },
   { to: '/cadastros', icon: FileText, label: 'Cadastros', tourKey: 'tab-cadastros' },
 ];
@@ -164,7 +165,7 @@ export function AppLayout() {
 
         {/* Tab bar — apenas mobile */}
         <nav className="md:hidden safe-bottom fixed bottom-0 left-1/2 z-30 w-full max-w-md -translate-x-1/2 border-t border-border/60 bg-card/95 backdrop-blur">
-          <ul className="grid grid-cols-6">
+          <ul className="grid grid-cols-7">
             {tabs.map((t) => (
               <li key={t.to} data-tour={t.tourKey}>
                 <NavLink

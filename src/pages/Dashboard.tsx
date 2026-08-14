@@ -31,6 +31,7 @@ export default function Dashboard() {
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
+  const advances = useLiveQuery(() => db.advances.toArray(), []) ?? [];
 
   const hoje = new Date();
   const [mode, setMode] = useState<PeriodMode>('tudo');
@@ -110,7 +111,7 @@ export default function Dashboard() {
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
 
   // Recebido × A receber (contrato recebido para lavoura, flag da viagem para frete avulso)
-  const { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos } = useMemo(() => {
+  const { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos, adiantado } = useMemo(() => {
     let recebido = 0, aReceber = 0, qtdRecebidas = 0, qtdAReceber = 0;
     const contratosAReceber = new Set<number>();
     const tripsAReceber = new Set<number>();
@@ -133,11 +134,18 @@ export default function Dashboard() {
       const ligadaViagem = tr && tr.kind === 'safra' && tr.contractId && contratosAReceber.has(tr.contractId);
       return s + (ligadaContrato || ligadaViagem ? e.valor : 0);
     }, 0);
-    return { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos };
-  }, [tripsF, expensesF, contracts, trips]);
+    // Adiantamentos de contratos/viagens ainda não recebidos: já entraram no caixa
+    const adiantado = advances.reduce((s, a) => {
+      const doContrato = a.contractId && contratosAReceber.has(a.contractId);
+      const daViagem = a.tripId && tripsAReceber.has(a.tripId);
+      return s + (doContrato || daViagem ? (a.valor || 0) : 0);
+    }, 0);
+    return { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos, adiantado };
+  }, [tripsF, expensesF, contracts, trips, advances]);
 
-  const aReceberLiquido = aReceber - abatimentos;
-  const pctRecebido = totalReceita > 0 ? (recebido / totalReceita) * 100 : 0;
+  const recebidoTotal = recebido + adiantado;
+  const aReceberLiquido = aReceber - abatimentos - adiantado;
+  const pctRecebido = totalReceita > 0 ? (recebidoTotal / totalReceita) * 100 : 0;
 
 
   
@@ -319,8 +327,13 @@ export default function Dashboard() {
               <CheckCircle2 className="h-3.5 w-3.5 text-success" />
               <p className="text-[10px] font-bold uppercase tracking-wider text-success">Recebido</p>
             </div>
-            <p className="mt-1 font-display text-2xl leading-none text-success">{fmtBRL(recebido)}</p>
+            <p className="mt-1 font-display text-2xl leading-none text-success">{fmtBRL(recebidoTotal)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{qtdRecebidas} viagem(ns)</p>
+            {adiantado > 0 && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Inclui {fmtBRL(adiantado)} em adiantamentos
+              </p>
+            )}
           </div>
           <div className="rounded-xl border border-warning/30 bg-warning/10 p-3">
             <div className="flex items-center gap-1.5">
@@ -329,9 +342,11 @@ export default function Dashboard() {
             </div>
             <p className="mt-1 font-display text-2xl leading-none text-warning">{fmtBRL(aReceberLiquido)}</p>
             <p className="mt-1 text-[11px] text-muted-foreground">{qtdAReceber} viagem(ns)</p>
-            {abatimentos > 0 && (
+            {(abatimentos > 0 || adiantado > 0) && (
               <p className="mt-1 text-[11px] text-muted-foreground">
-                Bruto {fmtBRL(aReceber)} − despesas {fmtBRL(abatimentos)}
+                Bruto {fmtBRL(aReceber)}
+                {abatimentos > 0 && <> − despesas {fmtBRL(abatimentos)}</>}
+                {adiantado > 0 && <> − adiant. {fmtBRL(adiantado)}</>}
               </p>
             )}
           </div>

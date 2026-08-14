@@ -3,7 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db, stamp, deleteWithTombstone } from '@/lib/db';
 import { PageHeader } from '@/components/PageHeader';
 import { fmtBRL, fmtNum, fmtDate, fmtHarvestName, fmtHarvestTipo, slugFileName } from '@/lib/format';
-import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign, Pencil } from 'lucide-react';
+import { Plus, Trash2, Lock, Unlock, FileDown, Share2, ChevronDown, ChevronUp, CheckCircle2, CircleDollarSign, Pencil, HandCoins } from 'lucide-react';
+import { AdvanceDialog } from '@/components/AdvanceDialog';
 import { toast } from 'sonner';
 import { generateHarvestReport, shareWhatsApp } from '@/lib/report';
 import { maskMoneyInput, parseMoney } from '@/lib/masks';
@@ -18,6 +19,7 @@ export default function ContractsPage() {
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
   const trips = useLiveQuery(() => db.trips.toArray(), []) ?? [];
   const expenses = useLiveQuery(() => db.expenses.toArray(), []) ?? [];
+  const advances = useLiveQuery(() => db.advances.toArray(), []) ?? [];
   const trucks = useLiveQuery(() => db.trucks.toArray(), []) ?? [];
   const drivers = useLiveQuery(() => db.drivers.toArray(), []) ?? [];
 
@@ -32,6 +34,9 @@ export default function ContractsPage() {
   const [closedExpanded, setClosedExpanded] = useState(false);
   const [toEdit, setToEdit] = useState<{ id: number; produtor: string; safra: string; valor: string } | null>(null);
   const [askRecalc, setAskRecalc] = useState<{ id: number; novoValor: number; nViagens: number } | null>(null);
+  const [advanceTarget, setAdvanceTarget] = useState<{ contractId: number; label: string } | null>(null);
+
+
 
 
   const openContracts = contracts.filter(c => !c.fechado);
@@ -190,6 +195,7 @@ export default function ContractsPage() {
       trips: r.trips,
       expenses: exps,
       trucks,
+      advances: advances.filter(a => a.contractId === c.id),
       totals: {
         totalSacos: r.sacos,
         totalToneladas,
@@ -304,7 +310,10 @@ export default function ContractsPage() {
     const despesas = expenses
       .filter(e => e.contractId === c.id || (e.tripId && tripIds.has(e.tripId)))
       .reduce((s, e) => s + (e.valor || 0), 0);
-    const liquido = r.receita - despesas;
+    const adiantado = advances
+      .filter(a => a.contractId === c.id)
+      .reduce((s, a) => s + (a.valor || 0), 0);
+    const liquido = r.receita - despesas - adiantado;
     return (
       <li key={c.id} className={'rounded-xl border bg-card p-3 ' + (c.fechado ? 'border-muted opacity-90' : 'border-border')}>
         <div className="flex items-start justify-between gap-2">
@@ -342,8 +351,16 @@ export default function ContractsPage() {
             <span className="text-muted-foreground">Despesas</span>
             <span className="font-display text-sm text-destructive">−{fmtBRL(despesas)}</span>
           </div>
+          {adiantado > 0 && (
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Adiantamentos</span>
+              <span className="font-display text-sm text-warning">−{fmtBRL(adiantado)}</span>
+            </div>
+          )}
           <div className="flex items-center justify-between border-t border-border pt-1">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Líquido</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              {adiantado > 0 ? 'Saldo a pagar' : 'Líquido'}
+            </span>
             <span className="font-display text-base text-primary">{fmtBRL(liquido)}</span>
           </div>
         </div>
@@ -354,6 +371,16 @@ export default function ContractsPage() {
             <Pencil className="h-3.5 w-3.5" /> Editar valor
           </button>
         </div>
+
+        <button
+          onClick={() => setAdvanceTarget({ contractId: c.id!, label: `${p?.nome ?? 'Produtor'} • ${h?.nome ?? 'Safra'}` })}
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-lg border border-primary/40 bg-primary/10 py-2 text-xs font-bold text-primary"
+        >
+          <HandCoins className="h-3.5 w-3.5" />
+          {adiantado > 0 ? `Adiantamentos • ${fmtBRL(adiantado)}` : 'Lançar adiantamento'}
+        </button>
+
+
 
 
 
@@ -553,6 +580,15 @@ export default function ContractsPage() {
         title={blocked?.title}
         description={blocked?.message}
       />
+
+      <AdvanceDialog
+        open={!!advanceTarget}
+        onOpenChange={(o) => !o && setAdvanceTarget(null)}
+        contractId={advanceTarget?.contractId}
+        targetLabel={advanceTarget?.label}
+      />
+
+
 
       <ConfirmDeleteDialog
         open={!!askSend}
