@@ -110,7 +110,7 @@ export default function Dashboard() {
   const totalSacos = tripsF.filter(t => t.kind === 'safra').reduce((s, t) => s + (t.sacos || 0), 0);
 
   // Recebido × A receber (contrato recebido para lavoura, flag da viagem para frete avulso)
-  const { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos } = useMemo(() => {
+  const { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos, adiantado } = useMemo(() => {
     let recebido = 0, aReceber = 0, qtdRecebidas = 0, qtdAReceber = 0;
     const contratosAReceber = new Set<number>();
     const tripsAReceber = new Set<number>();
@@ -133,11 +133,18 @@ export default function Dashboard() {
       const ligadaViagem = tr && tr.kind === 'safra' && tr.contractId && contratosAReceber.has(tr.contractId);
       return s + (ligadaContrato || ligadaViagem ? e.valor : 0);
     }, 0);
-    return { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos };
-  }, [tripsF, expensesF, contracts, trips]);
+    // Adiantamentos de contratos/viagens ainda não recebidos: já entraram no caixa
+    const adiantado = advances.reduce((s, a) => {
+      const doContrato = a.contractId && contratosAReceber.has(a.contractId);
+      const daViagem = a.tripId && tripsAReceber.has(a.tripId);
+      return s + (doContrato || daViagem ? (a.valor || 0) : 0);
+    }, 0);
+    return { recebido, aReceber, qtdRecebidas, qtdAReceber, abatimentos, adiantado };
+  }, [tripsF, expensesF, contracts, trips, advances]);
 
-  const aReceberLiquido = aReceber - abatimentos;
-  const pctRecebido = totalReceita > 0 ? (recebido / totalReceita) * 100 : 0;
+  const recebidoTotal = recebido + adiantado;
+  const aReceberLiquido = aReceber - abatimentos - adiantado;
+  const pctRecebido = totalReceita > 0 ? (recebidoTotal / totalReceita) * 100 : 0;
 
 
   
