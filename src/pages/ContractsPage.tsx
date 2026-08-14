@@ -580,6 +580,15 @@ export default function ContractsPage() {
         description={blocked?.message}
       />
 
+      <AdvanceDialog
+        open={!!advanceTarget}
+        onOpenChange={(o) => !o && setAdvanceTarget(null)}
+        contractId={advanceTarget?.contractId}
+        targetLabel={advanceTarget?.label}
+      />
+
+
+
       <ConfirmDeleteDialog
         open={!!askSend}
         onOpenChange={(open) => !open && setAskSend(null)}
