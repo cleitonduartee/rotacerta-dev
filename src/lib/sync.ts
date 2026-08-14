@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 
 type IdMap = Map<string, number>; // remoteId -> localId
 
-const ORDER: SyncTable[] = ['trucks', 'producers', 'harvests', 'contracts', 'trips', 'expenses', 'maintenances'];
+const ORDER: SyncTable[] = ['trucks', 'producers', 'harvests', 'contracts', 'trips', 'expenses', 'maintenances', 'advances'];
 
 let syncing = false;
 const syncErrors: string[] = [];
