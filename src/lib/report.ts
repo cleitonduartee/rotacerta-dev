@@ -21,6 +21,10 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
   const W = doc.internal.pageSize.getWidth();
   let y = 40;
 
+  const advList = input.advances ?? [];
+  const totalAdiantado = advList.reduce((s: number, a: any) => s + (a.valor || 0), 0);
+  const liquidoFinal = input.totals.liquido - totalAdiantado;
+
   // Quando é relatório de um único contrato, mostra o produtor no cabeçalho
   const singleContract = input.contracts.length === 1 ? input.contracts[0] : null;
   const singleProducer = singleContract
