@@ -159,20 +159,37 @@ export default function TripsList() {
                     {t.kind === 'frete' && t.pesoToneladas != null && <> • {t.pesoToneladas} t</>}
                   </p>
 
-                  {t.kind === 'frete' && (
-                    <button
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleRecebido(t); }}
-                      className={
-                        'mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ' +
-                        (t.recebido
-                          ? 'bg-success text-success-foreground'
-                          : 'border border-warning/40 bg-warning/10 text-warning')
-                      }
-                    >
-                      {t.recebido ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
-                      {t.recebido ? 'Recebido' : 'Marcar recebido'}
-                    </button>
-                  )}
+                  {t.kind === 'frete' && (() => {
+                    const adiantado = advances
+                      .filter(a => a.tripId === t.id)
+                      .reduce((s, a) => s + (a.valor || 0), 0);
+                    return (
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <button
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleRecebido(t); }}
+                          className={
+                            'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wider ' +
+                            (t.recebido
+                              ? 'bg-success text-success-foreground'
+                              : 'border border-warning/40 bg-warning/10 text-warning')
+                          }
+                        >
+                          {t.recebido ? <CheckCircle2 className="h-3.5 w-3.5" /> : <CircleDollarSign className="h-3.5 w-3.5" />}
+                          {t.recebido ? 'Recebido' : 'Marcar recebido'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            setAdvanceTarget({ tripId: t.id!, label: `${t.transportadora || 'Frete avulso'} • ${t.origem} → ${t.destino}` });
+                          }}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-primary"
+                        >
+                          <HandCoins className="h-3.5 w-3.5" />
+                          {adiantado > 0 ? `Adiant. ${fmtBRL(adiantado)}` : 'Adiantamento'}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <p className="font-display text-2xl text-primary whitespace-nowrap">{fmtBRL(t.valorTotal)}</p>
