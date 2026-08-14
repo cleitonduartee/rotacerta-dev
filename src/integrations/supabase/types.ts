@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      advances: {
+        Row: {
+          contract_id: string | null
+          created_at: string
+          data: string
+          id: string
+          observacao: string | null
+          trip_id: string | null
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          contract_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          trip_id?: string | null
+          updated_at?: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          contract_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          observacao?: string | null
+          trip_id?: string | null
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advances_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advances_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contracts: {
         Row: {
           created_at: string
