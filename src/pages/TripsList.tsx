@@ -9,7 +9,7 @@ import { ConfirmDeleteDialog } from '@/components/ConfirmDeleteDialog';
 import { BlockedDeleteDialog } from '@/components/BlockedDeleteDialog';
 import { Plus, Truck as TruckIcon, User, FileText, Building2, CheckCircle2, CircleDollarSign, Trash2, HandCoins } from 'lucide-react';
 import { AdvanceDialog } from '@/components/AdvanceDialog';
-import { fmtBRL as fmtBRLAdv } from '@/lib/format';
+
 
 async function toggleRecebido(t: any) {
   const novo = !t.recebido;
