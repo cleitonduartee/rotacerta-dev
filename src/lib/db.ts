@@ -166,6 +166,7 @@ class TruckTripDB extends Dexie {
   trips!: Table<Trip, number>;
   expenses!: Table<Expense, number>;
   maintenances!: Table<Maintenance, number>;
+  advances!: Table<Advance, number>;
   settings!: Table<Setting, string>;
   tombstones!: Table<Tombstone, number>;
 
