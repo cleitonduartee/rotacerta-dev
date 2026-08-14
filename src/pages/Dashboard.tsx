@@ -31,6 +31,7 @@ export default function Dashboard() {
   const harvests = useLiveQuery(() => db.harvests.toArray(), []) ?? [];
   const contracts = useLiveQuery(() => db.contracts.toArray(), []) ?? [];
   const producers = useLiveQuery(() => db.producers.toArray(), []) ?? [];
+  const advances = useLiveQuery(() => db.advances.toArray(), []) ?? [];
 
   const hoje = new Date();
   const [mode, setMode] = useState<PeriodMode>('tudo');
