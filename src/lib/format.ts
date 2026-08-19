@@ -31,6 +31,13 @@ export const fmtHarvestName = (harvest?: { nome?: string; tipo?: string; ano?: n
   return harvest.ano ? `${tipo} - ${harvest.ano}` : tipo;
 };
 
+/** Nome de arquivo da safra: "milho/sorgo-2026" (minúsculo, underscore vira barra) */
+export const fmtHarvestFileName = (harvest?: { tipo?: string; ano?: number }) => {
+  if (!harvest) return 'safra';
+  const tipo = (harvest.tipo || 'safra').replace(/_/g, '/').toLowerCase();
+  return harvest.ano ? `${tipo}-${harvest.ano}` : tipo;
+};
+
 export const fmtCultura = (c?: string) =>
   c === 'sorgo' ? 'Sorgo' : c === 'milho' ? 'Milho' : '';
 
