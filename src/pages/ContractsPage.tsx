@@ -205,8 +205,7 @@ export default function ContractsPage() {
       },
     });
     const p = producers.find(p => p.id === c.producerId);
-    const tipo = fmtHarvestTipo(harvest.tipo);
-    const safraFile = harvest.ano ? `${tipo}-${harvest.ano}` : tipo;
+    const safraFile = fmtHarvestFileName(harvest);
     const filename = `Fechamento-${slugFileName(p?.nome ?? 'produtor')}-${slugFileName(safraFile)}.pdf`;
     return { blob, filename };
   }
