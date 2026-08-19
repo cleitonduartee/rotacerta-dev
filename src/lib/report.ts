@@ -216,13 +216,18 @@ export async function generateHarvestReport(input: ReportInput): Promise<Blob> {
     doc.text('Data', 40, y); doc.text('Tipo', 100, y); doc.text('Descrição', 200, y); doc.text('Valor', W - 50, y, { align: 'right' });
     y += 4; doc.line(40, y, W - 40, y); y += 12;
     const exps = [...input.expenses].sort((a, b) => (a.data || '').localeCompare(b.data || ''));
+    const descW = (W - 50) - 200 - 60; // espaço disponível até a coluna de valor
     for (const e of exps) {
-      if (y > 800) { doc.addPage(); y = 40; }
+      const descLines: string[] = doc.splitTextToSize(e.descricao || '—', descW);
+      const tipoLines: string[] = doc.splitTextToSize(e.tipo || '—', 95);
+      const nLines = Math.max(descLines.length, tipoLines.length, 1);
+      const blockH = nLines * 11;
+      if (y + blockH > 800) { doc.addPage(); y = 40; }
       doc.text(fmtDate(e.data), 40, y);
-      doc.text((e.tipo || '—').slice(0, 18), 100, y);
-      doc.text((e.descricao || '—').slice(0, 50), 200, y);
+      tipoLines.forEach((l, i) => doc.text(l, 100, y + i * 11));
+      descLines.forEach((l, i) => doc.text(l, 200, y + i * 11));
       doc.text(fmtBRL(e.valor), W - 50, y, { align: 'right' });
-      y += 13;
+      y += blockH + 3;
     }
   }
 
